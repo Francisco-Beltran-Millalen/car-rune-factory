@@ -465,7 +465,7 @@ a {
 .lbl {
   font-size: 14px;
 }
-.lbl-small {
+.stage-svg .lbl-small {
   font-size: 11px;
   fill: var(--muted);
 }

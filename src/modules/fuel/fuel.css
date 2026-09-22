@@ -1,0 +1,133 @@
+/* Estilos propios del módulo de combustible (§12). Sólo usa tokens de src/styles.css (§9). */
+.fuel .lbl-mono {
+  font-family: var(--mono);
+}
+.fuel .key-blade {
+  stroke: var(--fg);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: transform 0.15s;
+}
+.fuel .contact {
+  fill: var(--fg);
+}
+.fuel .relay-arm {
+  stroke: var(--fg);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: transform 0.05s;
+}
+.fuel .fluid-signal {
+  stroke: var(--muted);
+  opacity: 0.6 !important;
+}
+.fuel .signal-wire {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+.fuel .signal-wire.pulse {
+  stroke: var(--electric);
+  stroke-width: 2.5;
+}
+.fuel .tank-body {
+  fill: var(--panel);
+}
+.fuel .liquid-surface {
+  fill: none;
+  stroke: var(--fuel);
+  stroke-width: 2;
+}
+.fuel .pump-body {
+  fill: var(--metal);
+  fill-opacity: 0.55;
+}
+.fuel .rotor {
+  fill: var(--part);
+  stroke: var(--metal-dark);
+  stroke-width: 2;
+}
+.fuel .rotor-vane {
+  stroke: var(--metal-dark);
+  stroke-width: 3;
+}
+.fuel .strainer-body {
+  fill: var(--part);
+  stroke-dasharray: 3 2;
+}
+.fuel .check-flap {
+  fill: var(--metal-dark);
+  transition: transform 0.08s;
+}
+.fuel .filter-body {
+  fill: var(--part);
+}
+.fuel .filter-pleat {
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.fuel .filter-dirt {
+  fill: var(--oil);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.fuel .flow-arrow {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+}
+.fuel .manifold-body {
+  fill: var(--mixture);
+  fill-opacity: 0.12;
+}
+.fuel .needle {
+  stroke: var(--metal-dark);
+  stroke-width: 3;
+}
+.fuel .inj-num {
+  font-weight: 700;
+}
+.fuel .spray {
+  fill: var(--fuel);
+  pointer-events: none;
+}
+.fuel .diaphragm {
+  stroke: var(--fg);
+  stroke-width: 3;
+}
+.fuel .spring {
+  fill: none;
+  stroke: var(--metal-dark);
+  stroke-width: 2;
+}
+.fuel .drop {
+  fill: var(--fuel);
+  pointer-events: none;
+}
+.fuel .warn-text {
+  fill: var(--bad) !important;
+  font-weight: 700;
+}
+.fuel .tag {
+  stroke: none;
+}
+.fuel .tag-text {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--bg) !important;
+}
+.fuel .tag-off {
+  fill: var(--muted);
+}
+.fuel .tag-cranking {
+  fill: var(--accent);
+}
+.fuel .tag-running {
+  fill: var(--ok);
+}
+.fuel .tag-misfire {
+  fill: var(--warn);
+}
+.fuel .tag-stalled {
+  fill: var(--bad);
+}

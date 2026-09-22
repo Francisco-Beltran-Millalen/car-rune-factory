@@ -110,3 +110,14 @@ describe('narración del combustible', () => {
     expect(texts(narr, m)).toContain('se detuvo');
   });
 });
+
+describe('vista ↔ contenido (§10)', () => {
+  it('cada data-part que dibuja la vista tiene ficha', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync(new URL('../../src/modules/fuel/view.js', import.meta.url), 'utf8');
+    const ids = new Set([...src.matchAll(/part: '([\w]+)'/g)].map((m) => m[1]));
+    if (src.includes('part: `injector${i + 1}`')) [1, 2, 3, 4].forEach((n) => ids.add(`injector${n}`));
+    for (const id of ids) expect(parts, id).toHaveProperty(id);
+    for (const id of PART_IDS) expect(ids.has(id), `la vista no dibuja ${id}`).toBe(true);
+  });
+});

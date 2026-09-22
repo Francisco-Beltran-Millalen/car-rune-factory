@@ -17,9 +17,9 @@ Cada una cierra con `npm test` + `npm run build` en verde y un commit.
 | T1 | Core de simulación (`types, rng, math, loop, history, particles, svg, dom`) | T0-b | ✅ |
 | T2 | Shell de la UI + módulo `_demo` | T0-b | ✅ |
 | T3 | Modelo de combustible + 11 tests | T1 | ✅ |
-| T4 | Vista de combustible | T1, T2 | ⏳ |
+| T4 | Vista de combustible | T1, T2 | ✅ (falta revisión visual del usuario) |
 | T5 | Contenido de combustible (fichas, narración, presets, descriptor) | T0-b | ✅ |
-| T6 | Integración + verificación visual del combustible | T3, T4, T5 | ⏳ |
+| T6 | Integración + verificación visual del combustible | T3, T4, T5 | 🔍 integrado; **pendiente: revisión manual del usuario** con la checklist de abajo |
 
 Orden: T0-a → T0-b → {T1, T2} → {T3, T4, T5} → T6.
 
@@ -32,6 +32,63 @@ T7 ciclo de 4 tiempos, T8 encendido, T9 refrigeración, T10 lubricación.
 Antes de programar, cada agente amplía su `docs/modules/<id>.md` al nivel de
 detalle de `fuel.md` (tablas de params, fallas, física, estado y tests) y lo
 guarda como plan en `docs/plans/`.
+
+## PENDIENTE — T6: revisión manual del combustible (usuario, Firefox)
+
+`npm run dev` → abrir la URL que imprime Vite → tarjeta "Sistema de
+combustible". Anotar aquí lo que se vea mal (captura si se puede) para
+corregirlo en la siguiente sesión.
+
+1. **Reposo**: se ve el estanque con bencina (~40 L), la bomba dentro, el
+   filtro, el riel con 4 inyectores, el regulador, el múltiple y la línea de
+   retorno. La etiqueta del múltiple dice "Motor detenido". No hay
+   partículas.
+2. **Contacto**: partículas amarillas (corriente) en los cables. El relé
+   cierra, el rotor de la bomba gira, las partículas ámbar suben por la
+   alimentación, el manómetro sube a ~3 bar y el riel se ve más saturado. A
+   los 2 s el relé se abre, las partículas se detienen y la aguja se queda
+   en ~3 (presión residual).
+3. **Arranque → Marcha**: "Arrancando…" y luego "En marcha". Hay flujo de
+   retorno. En "Riel − múltiple" se leen ~3,08 bar y en la presión de riel
+   ~2,4.
+4. **Inyectores** a 0,05×: los conos de spray aparecen en orden 1-3-4-2 y el
+   cable de señal de cada uno se pinta amarillo. A 1× y 6000 rpm parpadean
+   todos.
+5. **Acelerador a fondo**: el caudal inyectado sube (~29 L/h), el retorno
+   baja (~38 L/h) y la presión sube a ~3,0 (el vacío desaparece).
+6. **Cada falla** (sección Fallas) y lo que debería pasar:
+   - filtro 90 % + fondo → "Falla (mezcla)", mensaje del filtro, el filtro
+     se ve sucio;
+   - manguera de vacío suelta → la manguera se dibuja suelta y la presión en
+     ralentí sube ~0,6;
+   - regulador pegado cerrado → la aguja se va a ~6,7 y el retorno queda
+     vacío;
+   - regulador pegado abierto → gira y no parte;
+   - relé muerto → no hay cebado;
+   - inyector 2 gotea → goteo bajo el inyector 2 y la presión residual cae
+     con la llave en Contacto;
+   - fuga en la línea → gotas cerca de x = 390;
+   - estanque casi vacío (preset "Me quedé sin bencina") → burbujas huecas
+     en la aspiración y luego "Se detuvo".
+7. **Casos para probar**: los 5 presets cargan y muestran su nota.
+8. **Clic en cada pieza** → ficha correcta + contorno azul. Hover → nombre.
+9. **Tema oscuro** (◐) legible. Con < 1024 px el panel pasa debajo.
+10. Consola del navegador (F12) sin errores. Ir a la portada y volver no
+    acelera la animación.
+
+## CERRADO 2026-09-22 — T4 vista de combustible
+
+- `fuel/view.js` + `fuel/fuel.css` (estilos propios del módulo) +
+  `fuel/index.js` (descriptor). `registry.js` ahora lista `fuel`. `_demo`
+  sale del registro pero se queda en el repo como ejemplo mínimo de módulo
+  (su test sigue).
+- Los pulsos de inyección se detectan por **cruce de ángulo del cigüeñal
+  entre frames**, no sólo por `injectors[i].open`: a 1× un pulso de 2,5 ms
+  cae entre dos frames y no se vería.
+- La opacidad por presión va en `style.opacity`: un atributo de
+  presentación pierde contra la regla CSS `.pipe-fluid`.
+- Test nuevo: todo `data-part` de la vista tiene ficha y toda pieza de la
+  spec se dibuja (54 tests).
 
 ## CERRADO 2026-09-22 — T5 contenido de combustible
 
@@ -64,7 +121,8 @@ guarda como plan en `docs/plans/`.
 - Tema claro/oscuro/auto con el botón ◐ (guardado en `localStorage`, con
   try/catch). Espacio = pausa. `window.__sim.model.state` para depurar desde
   la consola.
-- **Checklist de revisión manual** (`npm run dev`, abrir en Firefox):
+- **Checklist de revisión manual** (quedó cubierta por la de T6; `_demo`
+  ya no está en el registro. Para verlo, agrégalo a `registry.js`):
   1. La portada muestra la tarjeta "Demo: estanque". Al hacer clic se ve el
      estanque con líquido, la válvula y el manómetro.
   2. Partículas ámbar recorren la tubería de salida. El nivel baja y el
