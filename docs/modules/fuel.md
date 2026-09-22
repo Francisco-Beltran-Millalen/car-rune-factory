@@ -54,7 +54,7 @@ Constantes: `Qmax0 = 120 L/h` (a 13.5 V, caudal libre), `Pmax0 = 6.5 bar` (cierr
    - `Kinj = injFlow3bar / √3`. El caudal instantáneo de un inyector abierto es `Kinj·√max(0, pRail − pMan)`.
    - `qInjTotal` = suma de los inyectores abiertos (instantáneo). `qInjAvg` = media exponencial con τ = 0.2 s (para mostrar).
    - `mixtureRatio = qInjAvg / qInjExpected`, donde `qInjExpected` es el mismo cálculo con `pRail − pMan = 3.0` (presión correcta).
-8. **Estado del motor según la mezcla** (solo si está en marcha): `ratio < 0.4` durante 0.3 s → `stalled`. `ratio < 0.75` → `misfire`. `ratio > 1.35` → `misfire` (mezcla rica). En otro caso → `running`.
+8. **Estado del motor según la mezcla** (solo si está en marcha): `ratio < 0.4` durante 0.3 s → `stalled`. `ratio < 0.8` → `misfire` (era 0.75, ver §9b). `ratio > 1.35` → `misfire` (mezcla rica). En otro caso → `running`.
 9. **Fugas**: `qLeakInj` y `qLeakLine` según las fallas (0 si `pRail ≤ 0`).
 10. **Riel**: `pRail += (qPump − qInjTotal − qReturn − qLeakInj − qLeakLine) / 3600 / C · dt` y `pRail = max(0, pRail)`.
 11. **Estanque**: `tankLevel −= (qInjTotal + qLeakInj + qLeakLine)/3600·dt·(fastConsumption ? 100 : 1)`. El retorno vuelve al estanque, así que no cuenta. `tankLevel = max(0, …)`.
@@ -145,6 +145,14 @@ Medido con `startEngine` → 3 s → promedio de 1 s (`dt = 1 ms`):
 | Regulador pegado abierto | 0.24 | 0.89 | 87.4 | 0.33 | 87.2 | 0.54 | cranking: gira y no parte |
 | Bomba gastada + 11 V, a fondo | 1.31 | 1.29 | 18.8 | 18.8 | 0 | 0.65 | misfire |
 | Colador 1.0, a fondo | 3.02 | 3.02 | 45.3 | 28.9 | 16.5 | 1.00 | running |
+
+**Umbral de mezcla pobre 0.75 → 0.8.** Con el filtro tapado, la presión a
+fondo cae con una constante de tiempo de ~2 s (la pendiente neta de la curva
+bomba − inyectores es chica frente a la compliancia `C`). Con 0.75 el filtro
+al 90 % dejaba la mezcla en 0.776 y el motor nunca fallaba. 0.8 equivale a
+λ ≈ 1.25, cerca del límite real de falla por mezcla pobre. Los valores de la
+tabla se midieron con 0.75; sólo cambia la columna "estado" en las filas del
+filtro (0.8 → misfire).
 
 Consecuencia para los presets (§10): con filtro 0.8 el motor queda justo en el
 límite y no tironea. El preset "Tironea al acelerar en subida" usa **0.9**.

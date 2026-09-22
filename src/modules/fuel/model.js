@@ -46,7 +46,7 @@ export const K = {
   startTime: 0.5,
   stallRatio: 0.4,
   stallTime: 0.3,
-  leanRatio: 0.75,
+  leanRatio: 0.8, // λ ≈ 1.25: límite de falla por mezcla pobre (fuel.md §9b)
   richRatio: 1.35,
   injTau: 0.2,
   relayCutTime: 0.3,

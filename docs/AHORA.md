@@ -33,6 +33,18 @@ Antes de programar, cada agente amplía su `docs/modules/<id>.md` al nivel de
 detalle de `fuel.md` (tablas de params, fallas, física, estado y tests) y lo
 guarda como plan en `docs/plans/`.
 
+## CERRADO 2026-09-22 — T5 contenido de combustible
+
+- `fuel/content.js` (fichas de las 19 piezas), `fuel/narrate.js`
+  (`createNarrator()`, con memoria para detectar que cae la presión
+  residual), `fuel/specs.js` (controles, fallas, lecturas, 5 presets).
+  `tests/fuel/content.test.js`: 10 tests (claves válidas, narración por
+  escenario). 53 tests en total.
+- Cambio de física: umbral de mezcla pobre 0.75 → 0.8 (ver
+  `modules/fuel.md` §9b). Sin él, el preset "tironea" no fallaba nunca.
+- Los specs quedaron en `specs.js` en vez de dentro de `index.js`, para
+  que `index.js` sea sólo el ensamblado.
+
 ## CERRADO 2026-09-22 — T3 modelo de combustible
 
 - `src/modules/fuel/model.js` + `tests/fuel/model.test.js`: los 11 criterios
