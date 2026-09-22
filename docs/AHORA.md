@@ -33,6 +33,36 @@ Antes de programar, cada agente amplía su `docs/modules/<id>.md` al nivel de
 detalle de `fuel.md` (tablas de params, fallas, física, estado y tests) y lo
 guarda como plan en `docs/plans/`.
 
+## CERRADO 2026-09-22 — T2 shell de la UI
+
+- `src/main.js`, `styles.css`, `core/{router,shell}.js`,
+  `core/ui/{controls,faults,readouts,infoPanel,timebar}.js`,
+  `modules/registry.js`, `modules/_demo/`. 30 tests (se suman los de la
+  lógica pura de la UI y `_demo`).
+- El shell delega los clics y el hover sobre `[data-part]`: la vista no
+  cablea eventos (documentado en `CONTRATOS.md` 4.3).
+- Tema claro/oscuro/auto con el botón ◐ (guardado en `localStorage`, con
+  try/catch). Espacio = pausa. `window.__sim.model.state` para depurar desde
+  la consola.
+- **Checklist de revisión manual** (`npm run dev`, abrir en Firefox):
+  1. La portada muestra la tarjeta "Demo: estanque". Al hacer clic se ve el
+     estanque con líquido, la válvula y el manómetro.
+  2. Partículas ámbar recorren la tubería de salida. El nivel baja y el
+     manómetro y las sparklines de "Mediciones" se mueven.
+  3. Slider de válvula a 0 → las partículas se detienen. "Llenado abierto" →
+     partículas en la tubería de entrada y se habilita "Caudal de llenado".
+  4. Fallas → "Salida tapada" 80 % → el caudal cae y el rótulo se pinta
+     rojo; "Reparar todo" lo restablece.
+  5. Clic en el estanque → ficha en "Pieza seleccionada" + contorno azul.
+     Hover → tooltip con el nombre.
+  6. Timebar: ⏸ (y la barra espaciadora) pausa; ⏭ avanza en pausa; 0,05× es
+     cámara lenta; ⟲ reinicia.
+  7. Barra inferior "¿Qué está pasando?" cambia con las fallas.
+  8. ◐ cambia de tema y todo se lee bien en oscuro. Con la ventana a
+     < 1024 px el panel pasa debajo.
+  9. Ir a la portada y volver no acelera la animación (no se duplican
+     loops). La consola no muestra errores.
+
 ## CERRADO 2026-09-22 — T1 core de simulación
 
 - `src/core/{types,rng,math,loop,history,dom,svg,particles}.js`. 25 tests en

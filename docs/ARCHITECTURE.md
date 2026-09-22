@@ -39,8 +39,9 @@ Código que viole estas leyes no se implementa ni mergea.
 - **§12** Propiedad de archivos: un módulo vive en `src/modules/<id>/` y
   `tests/<id>/`. `src/core/` sólo se toca en tareas de core. Los pedidos van
   a `docs/core-requests.md`.
-- **§13** Checkpoint = verificado **en el navegador** (checklist + captura),
-  no sólo con tests en verde.
+- **§13** Checkpoint = verificado **en el navegador** por el usuario, a mano
+  (Firefox), siguiendo una checklist que deja el agente. No sólo tests en
+  verde. Sin automatización de navegador en el proyecto.
 - **§14** Los números de física los respalda un test con rangos. Si un rango
   no cuadra, se ajustan las constantes (no el test) y el cambio se documenta
   en `docs/modules/<id>.md` con la cuenta.

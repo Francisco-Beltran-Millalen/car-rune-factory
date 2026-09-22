@@ -40,6 +40,7 @@ export default {
  */
 ```
 - Cada `model.js` exporta `DEFAULT_PARAMS`, `DEFAULT_FAULTS` y `createXModel(overrides = {})`.
+- `reset()` restaura **en el mismo objeto** (`Object.assign(params, DEFAULT_PARAMS)`): la UI guarda referencias a `params`/`faults`/`state` y no se re-cablea.
 - `step` debe tolerar cualquier combinación de params/faults sin producir `NaN` ni `Infinity`. Se limita todo con `clamp`.
 
 ### 4.3 Vista — `createView(ctx)`
@@ -57,6 +58,8 @@ export default {
  */
 ```
 - Todo elemento clickeable lleva `data-part="<partId>"`. Los `partId` deben existir en `parts`.
+- La vista **no** cablea clics ni hover: el shell delega sobre `[data-part]`, abre la ficha, muestra el tooltip con el nombre y agrega la clase `.selected` a todos los elementos de esa pieza. `highlight` es opcional, para efectos extra.
+- Clases CSS disponibles (`src/styles.css`): `.part-body`, `.pipe-wall`, `.pipe-fluid`, `.fluid-{fuel,coolant,oil,electric,vacuum}`, `.liquid`, `.p-*`, `.lbl`, `.lbl-small`, `.valve-bar`, `.gauge-*`.
 - La vista dibuja la geometría **una sola vez** en `createView`. En `update` solo cambia atributos (transform, fill, opacity, puntos de partículas).
 - Colores **solo vía variables CSS** (`var(--fuel)` etc.) para que funcione el tema oscuro.
 

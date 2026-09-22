@@ -12,8 +12,10 @@ Reglas para cualquier agente/asistente que trabaje en este repo.
    corrígelo con evidencia. Vale también para la física: si una constante
    o un rango de test no cuadra, se dice y se muestra la cuenta.
 4. **El checkpoint se mira funcionando** (§13): tests en verde no prueban
-   que la simulación se entienda. Antes de cerrar algo, abre la página en el
-   navegador y mírala.
+   que la simulación se entienda. **La verificación visual la hace el
+   usuario a mano en Firefox**: no instales navegadores, Playwright ni
+   herramientas de automatización. Al cerrar una tarea visual, deja en
+   `docs/AHORA.md` una checklist concreta de qué abrir y qué mirar.
 5. **Los planes se guardan.** Todo plan nuevo va a
    `docs/plans/AAAA-MM-DD-<tema>.md` antes de implementarlo. Los planes son
    registro histórico; lo vivo son los docs de `docs/`.
