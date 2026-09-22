@@ -14,11 +14,11 @@ Cada una cierra con `npm test` + `npm run build` en verde y un commit.
 |---|---|---|---|
 | T0-a | Docs (este set) | — | ✅ |
 | T0-b | Scaffold (git, Vite, Vitest) | T0-a | ✅ |
-| T1 | Core de simulación (`types, rng, math, loop, history, particles, svg, dom`) | T0-b | ⏳ |
-| T2 | Shell de la UI + módulo `_demo` | T0-b | ⏳ |
+| T1 | Core de simulación (`types, rng, math, loop, history, particles, svg, dom`) | T0-b | ✅ |
+| T2 | Shell de la UI + módulo `_demo` | T0-b | ✅ |
 | T3 | Modelo de combustible + 11 tests | T1 | ⏳ |
 | T4 | Vista de combustible | T1, T2 | ⏳ |
-| T5 | Contenido de combustible (fichas, narración, presets, descriptor) | T0-b | ⏳ |
+| T5 | Contenido de combustible (fichas, narración, presets, descriptor) | T0-b | ✅ |
 | T6 | Integración + verificación visual del combustible | T3, T4, T5 | ⏳ |
 
 Orden: T0-a → T0-b → {T1, T2} → {T3, T4, T5} → T6.
@@ -32,6 +32,23 @@ T7 ciclo de 4 tiempos, T8 encendido, T9 refrigeración, T10 lubricación.
 Antes de programar, cada agente amplía su `docs/modules/<id>.md` al nivel de
 detalle de `fuel.md` (tablas de params, fallas, física, estado y tests) y lo
 guarda como plan en `docs/plans/`.
+
+## CERRADO 2026-09-22 — T1 core de simulación
+
+- `src/core/{types,rng,math,loop,history,dom,svg,particles}.js`. 25 tests en
+  `tests/core/` (loop, history, rng, math, parte pura de particles/gauge).
+- `loop.tick(realDt)` es público: sirve para tests y para el paso a paso.
+  `stepOnce()` avanza 1 ms aunque esté en pausa. Tolerancia `EPS` en el
+  acumulador: sin ella 0.02 s daba 19 pasos y no 20.
+- `history.createRecorder(readouts)` muestrea cada 50 ms simulados; el shell
+  llama `recorder.sample(model)` en `onFrame`.
+- `particles.createFlow` suma `setAir(f)` (fracción de burbujas), que no
+  estaba en el contrato: la necesita el aire en la aspiración de
+  combustible. Precalcula la tabla de puntos del path (sin
+  `getPointAtLength` por frame).
+- `svg.pipe` devuelve `{ g, outer, inner, path }`: `outer` = pared
+  (`.pipe-wall`), `inner` = fluido (`.pipe-fluid .fluid-*`).
+- Las partes DOM (svg/particles/dom) se verifican en el navegador en T2/T4.
 
 ## CERRADO 2026-09-22 — T0-b scaffold
 

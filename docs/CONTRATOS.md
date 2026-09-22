@@ -93,7 +93,8 @@ export default {
 ### 4.5 Bucle — `core/loop.js`
 ```js
 createLoop({ model, fixedDt = 0.001, maxStepsPerFrame = 4000, onFrame })
-// → { start(), stop(), setTimeScale(x), setPaused(b), get timeScale, get paused, destroy() }
+// → { tick(realDt), start(), stop(), stepOnce(), setTimeScale(x), setPaused(b), get timeScale, get paused, get running, destroy() }
+// onFrame(simDt, steps). El historial: createRecorder(readouts) de core/history.js, .sample(model) en onFrame.
 ```
 - En cada frame: `realDt = min(ahora - antes, 0.1)`. Luego `acc += realDt * timeScale`. Mientras `acc ≥ fixedDt` (y sin pasar `maxStepsPerFrame`) se llama `model.step(fixedDt)`. Al final, `onFrame(realDt * timeScale)`.
 - `timeScale` va de 0.01 a 4, con valores predefinidos: 0.01, 0.05, 0.25, 1, 2, 4. La cámara lenta es clave para ver los inyectores y el ciclo de 4 tiempos.
@@ -102,7 +103,7 @@ createLoop({ model, fixedDt = 0.001, maxStepsPerFrame = 4000, onFrame })
 ### 4.6 Partículas — `core/particles.js`
 ```js
 createFlow({ path /* SVGPathElement */, layer /* SVGGElement */, spacing = 14, radius = 3, className = 'p-fuel' })
-// → { setSpeed(pxPerSec /* puede ser negativo */), setStyle(className), setDensity(0..1), update(dt), destroy() }
+// → { setSpeed(pxPerSec /* puede ser negativo */), setStyle(className), setDensity(0..1), setAir(0..1), update(dt), destroy() }
 ```
 - Las partículas están distribuidas a lo largo del path (`getTotalLength`/`getPointAtLength`) y avanzan con `speed·dt`. La densidad visible = `density` (se ocultan partículas). Así se ven tramos vacíos o con aire.
 - Convención visual: **velocidad ∝ caudal**, con escala `PX_PER_LH = 2.5` (100 L/h → 250 px/s). Cada módulo puede cambiar la escala.
