@@ -117,5 +117,37 @@ Helper: `run(model, seconds)` avanza con `dt = 0.001`.
 
 Si algún rango no cuadra con las constantes, el agente **ajusta las constantes** (no los tests) y documenta el cambio en `docs/modules/fuel.md`.
 
+## 9b. Decisiones de implementación (T3) y valores medidos
+
+- Pasar la llave directo a `run` con el motor en `off` equivale a pasar por
+  `start`: el motor entra en `cranking` (así la UI no obliga a pasar por
+  "Arranque").
+- Con el motor en marcha, `rpm` se limita a ≥ 600 (ralentí mínimo).
+- Offsets de inyección por inyector (1..4) = `[0, 540, 180, 360]`°, que da el
+  orden 1-3-4-2.
+- `mixtureRatio` = promedio real / promedio esperado, los dos filtrados con
+  τ = 0.2 s sobre el **mismo** patrón de pulsos. Así el ratio sólo refleja la
+  presión (≈ √(Δp/3)) y no el ruido de los pulsos a bajas rpm.
+- El relé intermitente usa el rng con semilla (`overrides.seed`, 12345 por
+  defecto): corte de 0.3 s con probabilidad `dt/2` por paso.
+
+Medido con `startEngine` → 3 s → promedio de 1 s (`dt = 1 ms`):
+
+| Caso | pRail | pRail−pMan | qPump | qInj | qReturn | mezcla | estado |
+|---|---|---|---|---|---|---|---|
+| Ralentí sano | 2.43 | 3.08 | 77.7 | 0.69 | 77.1 | 1.01 | running |
+| A fondo 6000 rpm | 3.04 | 3.04 | 67.0 | 29.0 | 38.0 | 1.01 | running |
+| Filtro 1.0, ralentí | 2.37 | 3.02 | 18.4 | 0.68 | 17.7 | 1.00 | running |
+| Filtro 1.0, a fondo | 1.66 | 1.60 | 20.2 | 20.7 | 0 | 0.71 | misfire |
+| Filtro 0.8, a fondo | 1.85 | 1.80 | 21.7 | 22.1 | 0 | 0.76 | running (límite) |
+| Manguera de vacío suelta | 3.07 | 3.72 | 66.5 | 0.76 | 65.8 | 1.11 | running |
+| Regulador pegado cerrado | 6.68 | 7.34 | 1.0 | 1.07 | 0 | 1.56 | misfire (rica) |
+| Regulador pegado abierto | 0.24 | 0.89 | 87.4 | 0.33 | 87.2 | 0.54 | cranking: gira y no parte |
+| Bomba gastada + 11 V, a fondo | 1.31 | 1.29 | 18.8 | 18.8 | 0 | 0.65 | misfire |
+| Colador 1.0, a fondo | 3.02 | 3.02 | 45.3 | 28.9 | 16.5 | 1.00 | running |
+
+Consecuencia para los presets (§10): con filtro 0.8 el motor queda justo en el
+límite y no tironea. El preset "Tironea al acelerar en subida" usa **0.9**.
+
 ## 10. Presets
-"Arranque normal", "Tironea al acelerar en subida" (filtro 0.8), "Ralentí rico" (manguera suelta), "Cuesta partir en la mañana" (inyector goteando + pierde la presión residual), "Me quedé sin bencina" (estanque 0.5 L + consumo acelerado).
+"Arranque normal", "Tironea al acelerar en subida" (filtro 0.9), "Ralentí rico" (manguera suelta), "Cuesta partir en la mañana" (inyector goteando + pierde la presión residual), "Me quedé sin bencina" (estanque 0.5 L + consumo acelerado).

@@ -16,7 +16,7 @@ Cada una cierra con `npm test` + `npm run build` en verde y un commit.
 | T0-b | Scaffold (git, Vite, Vitest) | T0-a | ✅ |
 | T1 | Core de simulación (`types, rng, math, loop, history, particles, svg, dom`) | T0-b | ✅ |
 | T2 | Shell de la UI + módulo `_demo` | T0-b | ✅ |
-| T3 | Modelo de combustible + 11 tests | T1 | ⏳ |
+| T3 | Modelo de combustible + 11 tests | T1 | ✅ |
 | T4 | Vista de combustible | T1, T2 | ⏳ |
 | T5 | Contenido de combustible (fichas, narración, presets, descriptor) | T0-b | ✅ |
 | T6 | Integración + verificación visual del combustible | T3, T4, T5 | ⏳ |
@@ -32,6 +32,14 @@ T7 ciclo de 4 tiempos, T8 encendido, T9 refrigeración, T10 lubricación.
 Antes de programar, cada agente amplía su `docs/modules/<id>.md` al nivel de
 detalle de `fuel.md` (tablas de params, fallas, física, estado y tests) y lo
 guarda como plan en `docs/plans/`.
+
+## CERRADO 2026-09-22 — T3 modelo de combustible
+
+- `src/modules/fuel/model.js` + `tests/fuel/model.test.js`: los 11 criterios
+  de `modules/fuel.md` §9, más reset e inyección en orden 1-3-4-2 (13
+  tests). Pasaron sin tocar constantes.
+- Valores medidos y decisiones de implementación en `modules/fuel.md` §9b.
+  El preset "tironea" pasa de filtro 0.8 a 0.9.
 
 ## CERRADO 2026-09-22 — T2 shell de la UI
 
