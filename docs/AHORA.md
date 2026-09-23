@@ -31,7 +31,8 @@ Detalle de archivos y criterios de aceptación de cada tarea: sección 12 de
 T7 ciclo de 4 tiempos, T8 encendido, T9 refrigeración, T10 lubricación.
 Antes de programar, cada agente amplía su `docs/modules/<id>.md` al nivel de
 detalle de `fuel.md` (tablas de params, fallas, física, estado y tests) y lo
-guarda como plan en `docs/plans/`.
+guarda como plan en `docs/plans/`. **Nuevo**: las coordenadas de la vista
+van en un `layout.js` del módulo (ver `HORIZONTE_JUEGO.md`, "Seguro barato").
 
 ## PENDIENTE — T6: revisión manual del combustible (usuario, Firefox)
 

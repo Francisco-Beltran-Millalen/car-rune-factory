@@ -34,10 +34,13 @@ Uso personal, en español. JavaScript puro + Vite, sin framework.
 3. **Encendido** (bobina por cilindro, sensor de cigüeñal, osciloscopio) ⏳
 4. **Refrigeración** ⏳ y **lubricación** ⏳
 5. **Motor completo** 💭 — los módulos conectados por señales (ver §11).
+6. **Modo juego** 💭 — mover piezas y luego armar circuitos; quizá 3D.
+   Ver `HORIZONTE_JUEGO.md`.
 
 ## Qué NO estamos construyendo
 
 - Un juego de manejo ni un simulador de conducción.
-- 3D. Todo es 2D esquemático, estilo diagrama de manual técnico.
+- 3D, **por ahora**. Todo es 2D esquemático con layout fijo. El horizonte de
+  juego (piezas movibles, armar el circuito, 3D) está en `HORIZONTE_JUEGO.md`.
 - Exactitud de ingeniería (CFD, termodinámica completa). Coherente > exacto.
 - Multiusuario, cuentas, backend.

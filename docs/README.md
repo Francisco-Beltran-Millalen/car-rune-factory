@@ -12,6 +12,8 @@
   specs de UI, loop, partículas, shell).
 - `modules/<id>.md` — spec de cada módulo: piezas, params, fallas, física,
   estado, vista, narración y tests.
+- `HORIZONTE_JUEGO.md` — ideas a futuro: piezas movibles, armar circuitos,
+  engines candidatos (2D/3D). No es prioridad.
 - `core-requests.md` — pedidos de los módulos al core, pendientes.
 
 **Registro histórico:** `plans/` — cada plan tal como se aprobó, con fecha.
