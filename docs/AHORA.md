@@ -19,14 +19,29 @@ Cada una cierra con `npm test` + `npm run build` en verde y un commit.
 | T3 | Modelo de combustible + 11 tests | T1 | ✅ |
 | T4 | Vista de combustible | T1, T2 | ✅ (falta revisión visual del usuario) |
 | T5 | Contenido de combustible (fichas, narración, presets, descriptor) | T0-b | ✅ |
-| T6 | Integración + verificación visual del combustible | T3, T4, T5 | 🔍 integrado; **pendiente: revisión manual del usuario** con la checklist de abajo |
+| T6 | Integración + verificación visual del combustible | T3, T4, T5 | ✅ probado por el usuario el 2026-09-22 ("me gustó mucho"). La checklist de abajo queda para una pasada detallada |
 
 Orden: T0-a → T0-b → {T1, T2} → {T3, T4, T5} → T6.
 
 Detalle de archivos y criterios de aceptación de cada tarea: sección 12 de
 `plans/2026-09-22-plan-maestro.md`.
 
-## PRÓXIMO — Fase 2+
+## PRÓXIMO — definir la dirección de juego (sesión 2026-09-23)
+
+El usuario fijó el norte: *mechanic simulator* con diagramas, sin personaje,
+todo con el mouse (ver `NORTE.md`). Propuesta de etapas en
+`plans/2026-09-22-hoja-de-ruta-juego.md`:
+- E1 nombrar piezas;
+- E2 diagnóstico;
+- E3 solver de redes + combustible portado;
+- E4 armar circuitos con Phaser;
+- E5+ resto de módulos.
+
+**Queda en pausa** la Fase 2 original (T7–T10) hasta diseñar eso: la
+refrigeración y la lubricación deberían nacer sobre el solver. El plan trae
+preguntas abiertas.
+
+## Fase 2 original (en pausa)
 
 T7 ciclo de 4 tiempos, T8 encendido, T9 refrigeración, T10 lubricación.
 Antes de programar, cada agente amplía su `docs/modules/<id>.md` al nivel de
@@ -34,7 +49,7 @@ detalle de `fuel.md` (tablas de params, fallas, física, estado y tests) y lo
 guarda como plan en `docs/plans/`. **Nuevo**: las coordenadas de la vista
 van en un `layout.js` del módulo (ver `HORIZONTE_JUEGO.md`, "Seguro barato").
 
-## PENDIENTE — T6: revisión manual del combustible (usuario, Firefox)
+## Checklist detallada del combustible (opcional, usuario, Firefox)
 
 `npm run dev` → abrir la URL que imprime Vite → tarjeta "Sistema de
 combustible". Anotar aquí lo que se vea mal (captura si se puede) para

@@ -1,13 +1,20 @@
 # Norte — qué estamos construyendo
 
-**car-rune-factory** — laboratorio web didáctico para entender cómo funciona el
-motor de un auto **sistema por sistema**. Cada sistema se aísla en una
-simulación 2D esquemática: se ve por dónde va el fluido (o la corriente, o el
-calor), se tocan los controles, se provocan fallas y se leen los números.
+**car-rune-factory** — un *mechanic simulator* sencillo hecho de
+**diagramas**: aprender cómo funciona un auto **jugando**. En la línea de
+*Car Mechanic Simulator*, *Wrench* o *My Summer Car*, pero mucho más simple:
+sin personaje movible, todo con el **mouse**, texto y el simulador. Varios
+jueguitos cortos (nombrar partes, diagnosticar fallas, armar circuitos) en
+**etapas** que se agregan a medida que mejoran las simulaciones.
+
+La base es un laboratorio: cada sistema del auto se aísla en una simulación
+2D esquemática. Se ve por dónde va el fluido (o la corriente, o el calor), se
+tocan los controles, se provocan fallas y se leen los números.
 (≤200 líneas; visión. Táctico en `AHORA.md`, reglas en `ARCHITECTURE.md`,
 catálogo en `SISTEMAS.md`.)
 
-Uso personal, en español. JavaScript puro + Vite, sin framework.
+Uso personal, en español. JavaScript puro + Vite, sin framework. Phaser es
+el candidato para cuando llegue "armar circuitos" (ver `HORIZONTE_JUEGO.md`).
 
 ## Pilares
 
@@ -34,12 +41,13 @@ Uso personal, en español. JavaScript puro + Vite, sin framework.
 3. **Encendido** (bobina por cilindro, sensor de cigüeñal, osciloscopio) ⏳
 4. **Refrigeración** ⏳ y **lubricación** ⏳
 5. **Motor completo** 💭 — los módulos conectados por señales (ver §11).
-6. **Modo juego** 💭 — mover piezas y luego armar circuitos; quizá 3D.
-   Ver `HORIZONTE_JUEGO.md`.
+6. **Juegos** 💭 — E1 nombrar piezas, E2 diagnóstico, E3 solver de redes,
+   E4 armar circuitos (Phaser). Ver `plans/2026-09-22-hoja-de-ruta-juego.md`.
 
 ## Qué NO estamos construyendo
 
 - Un juego de manejo ni un simulador de conducción.
+- Un personaje que camina por un taller: todo es mouse + diagramas.
 - 3D, **por ahora**. Todo es 2D esquemático con layout fijo. El horizonte de
   juego (piezas movibles, armar el circuito, 3D) está en `HORIZONTE_JUEGO.md`.
 - Exactitud de ingeniería (CFD, termodinámica completa). Coherente > exacto.

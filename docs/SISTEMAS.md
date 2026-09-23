@@ -44,3 +44,12 @@ Catálogo de a dónde apuntar, no compromiso de orden. La prioridad real vive en
 - **Motor completo** 💭 `engine` — orquestador que conecta módulos copiando
   señales de un `state` al `params` de otro (§11). Ver sección 11 del plan
   maestro.
+
+## Juegos (ver `plans/2026-09-22-hoja-de-ruta-juego.md`)
+
+- **Nombrar piezas** 💭 E1 — sobre cualquier diagrama con `parts`.
+- **Diagnóstico** 💭 E2 — falla escondida + herramientas + reemplazar piezas.
+- **Solver de redes hidráulicas** 💭 E3 — base común para combustible,
+  refrigeración y lubricación armables. Luego un solver eléctrico para
+  encendido y carga.
+- **Armar circuitos** 💭 E4 — arrastrar y conectar; prueba con Phaser.

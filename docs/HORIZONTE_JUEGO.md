@@ -3,6 +3,11 @@
 Ideas registradas el 2026-09-22 para **más adelante**. Nada de esto es prioridad
 hoy (ver `NORTE.md` y `AHORA.md`). Sirve para no cerrarnos puertas.
 
+> **Actualización 2026-09-22:** el usuario se inclina por **Phaser +
+> armar circuitos**, con jueguitos de nombrar partes y diagnóstico antes.
+> Hoja de ruta E1–E5 en `plans/2026-09-22-hoja-de-ruta-juego.md`. El
+> solver de redes (nivel 2 de abajo) va **antes** que los módulos 2 a 4.
+
 ## La idea
 
 Se aprende mejor jugando. Hoy cada simulación tiene un **layout fijo**: las
