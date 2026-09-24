@@ -26,10 +26,10 @@ Orden: T0-a → T0-b → {T1, T2} → {T3, T4, T5} → T6.
 Detalle de archivos y criterios de aceptación de cada tarea: sección 12 de
 `plans/2026-09-22-plan-maestro.md`.
 
-## PRÓXIMO — arquitectura de juego (plan revisado, esperando aprobación)
+## PRÓXIMO — implementar la arquitectura de juego (plan aprobado 2026-09-23)
 
-Plan: `plans/2026-09-23-arquitectura-juego.md` (revisión adversaria hecha,
-triaje en su sección 13). Reemplaza el orden de
+Plan: `plans/2026-09-23-arquitectura-juego.md` (dos revisiones adversarias,
+triaje en su sección 13). **Aprobado por el usuario para implementar.** Reemplaza el orden de
 `plans/2026-09-22-hoja-de-ruta-juego.md`.
 
 Tareas A0–A9:
@@ -48,7 +48,8 @@ Tareas A0–A9:
 
 Con un solo agente: A0 → A1 → A2 → A3 → A4 → …
 
-**Siguiente paso:** el usuario aprueba el plan → A0.
+**Siguiente paso:** A0 (docs), luego A1. Cada tarea cierra con su bloque
+CERRADO aquí, `npm test` + `npm run build` en verde, y un commit.
 
 ## Fase 2 original (en pausa)
 

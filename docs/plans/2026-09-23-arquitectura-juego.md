@@ -1,6 +1,6 @@
 # Plan: arquitectura para juegos (modos, solver de redes y renderer intercambiable)
 
-Fecha: 2026-09-23. Estado: **revisado** (revisión adversaria 2026-09-23, triaje en la sección 13).
+Fecha: 2026-09-23. Estado: **revisado dos veces** (revisiones adversarias 2026-09-23, triaje en la sección 13). **Listo para implementar desde A0.**
 Reemplaza el orden de `plans/2026-09-22-hoja-de-ruta-juego.md` (que queda como
 registro de la conversación) y deja en pausa T7–T10 del plan maestro.
 
@@ -185,6 +185,8 @@ para tests y para depurar ("la etapa 3, intento 2, me dio X").
 - **§26** Los ids de fallas son API pública estable: `<partId>.<falla>` (p.
   ej. `filter.clog`). Etapas, guardado y tests los usan. Renombrar uno exige
   migración.
+- **§27** Guardado versionado (`crf.save.v1`), leído con try/catch y con
+  valores por defecto si falta o está corrupto. Nunca bloquea el juego.
 - **§28** Señales del vehículo con **un solo dueño**: cada señal compartida
   entre sistemas (`engine.rpm`, `engine.state`, `engine.coolantTemp`,
   `fuel.mixture`, `ignition.spark`…) tiene exactamente un sistema que la
@@ -195,10 +197,12 @@ para tests y para depurar ("la etapa 3, intento 2, me dio X").
   las entrega un **stub ideal** (chispa siempre buena, 90 °C, 13,5 V…). El
   mismo sistema funciona dentro del vehículo sin cambios.
 - **§30** Los fluidos no se mezclan salvo por un elemento de falla explícito
-  (p. ej. `headGasket.breach`). Nunca por una conexión accidental entre
-  redes de dominios distintos (lo impide `validate`).
-- **§27** Guardado versionado (`crf.save.v1`), leído con try/catch y con
-  valores por defecto si falta o está corrupto. Nunca bloquea el juego.
+  (p. ej. `headGasket.breach`). Todo puerto hidráulico declara su `fluid`
+  (`fuel` | `coolant` | `oil` | `brake` | `atf` | `air`, este último para el
+  vacío), y `validate` rechaza una conexión entre fluidos distintos aunque
+  los dos sean `hydraulic`. Los elementos genéricos (restrictor, volume…)
+  toman el `fluid` de la instancia (`params.fluid`, por defecto el
+  `CircuitDef.fluid`).
 
 ## 4. Contratos (A0 los agrega a `CONTRATOS.md` como sección "Juego")
 
@@ -248,6 +252,7 @@ fallen en los tests.
 | `removeTool` | `{ toolId }` | HUD | diagnosis |
 | `replacePart` | `{ partId }` | HUD | diagnosis |
 | `deliver` | `{}` | HUD ("Entregar auto") | diagnosis |
+| `markSuspect` | `{ partId, mark: 'suspect'\|'cleared'\|null }` | HUD / renderer | diagnosis (reservado para 14.3; A3 lo acepta y lo guarda en su estado aunque no lo puntúe) |
 | `placePart` | `{ type, x, y }` | renderer (arrastre desde paleta) | assembly |
 | `movePart` | `{ partId, x, y }` | renderer | assembly |
 | `rotatePart` | `{ partId }` | renderer / tecla R | assembly |
@@ -400,6 +405,7 @@ Panel DOM genérico que pinta un `HudModel`:
   prompt?: { text, choices?: [{ id, label }] },   // quiz
   tools?: [{ id, label, active, cost }],     // diagnosis
   actions?: [{ intent, label, disabled }],   // p. ej. Entregar auto, Probar circuito
+  suspects?: [{ partId, label, mark: 'suspect'|'cleared'|null }],  // reservado (14.3); A3 puede dejarlo sin usar
   log: [{ level, text }],                    // últimos 6 feedbacks
 }
 ```
@@ -609,7 +615,7 @@ Contrato (§24):
 
 ```js
 {
-  ports: [{ id: 'in', domain: 'hydraulic' }, …],
+  ports: [{ id: 'in', domain: 'hydraulic', fluid: 'fuel' }, …],   // fluid obligatorio si domain='hydraulic' (§30)
   params, control: {},                            // entradas que escriben los controladores
   state: {},                                      // interno (p. ej. corriente de una inductancia)
   capacitance?: { [portId]: Ĉ },                  // aporte al nodo, YA en unidades de flujo/(potencial·s) (8.1)
@@ -663,9 +669,18 @@ su medición.
   800 rpm.
 - Para el combustible: `ecuFuel` (cebado de 2 s, relé, ancho de pulso,
   apertura de inyectores por ángulo, enriquecimiento de arranque),
-  `engineFuel` (máquina de estados `engineState`, rpm efectivas, ángulo de
-  cigüeñal, `mixtureRatio` con los mismos filtros τ = 0,2 s,
-  `pMan` → `control.p` de la fuente del múltiple), `alternator`
+  **`engineCore`** en `src/sim/controllers/engineCore.js` (máquina de estados
+  `engineState`, rpm efectivas, ángulo de cigüeñal, `mixtureRatio` con los
+  mismos filtros τ = 0,2 s, `pMan` → `control.p` de la fuente del
+  múltiple). Se escribe **desde el inicio como el `engineCore` de la
+  sección 14**: recibe un objeto `inputs` con `mixture`, `spark`, `airOk`,
+  `compression`, `oilPressure`, `coolantTemp` y `crankVoltage`. En el
+  circuito del combustible, todas salvo `mixture` salen de
+  `src/sim/controllers/stubs.js` (valores ideales, §29). Con los stubs
+  ideales, las reglas equivalen exactamente a los pasos 1 y 8 de
+  `fuel/model.js`, y lo verifican los 13 tests. **No habrá un `engineFuel`
+  aparte**: una sola implementación, para que el laboratorio y el vehículo
+  nunca diverjan; `alternator`
   (+1,4 V en marcha, −2 V en arranque → `battery.control.v`) y
   `fuelSupply` (lee `tank.pickupAir` → `pump.control.air`).
 - Es la misma lógica de los pasos 1, 5, 7 y 8 de `fuel/model.js`, movida sin
@@ -676,7 +691,9 @@ su medición.
 ```js
 /** CircuitDef */
 {
-  id: 'fuel-return', title,
+  id: 'fuel-return', title, fluid: 'fuel',        // fluido por defecto de las piezas hidráulicas
+  // Reservado para A10 (no implementar antes): buses: { '12v': ['battery.+', …] } para enganchar al bus del vehículo.
+  // A5 debe dejar el esquema abierto a claves nuevas (no rechazar claves desconocidas, sólo avisar).
   parts: [{ id: 'filter', type: 'restrictor', x: 560, y: 330, rot: 0, params: { k: 1e-5, clogFactor: 1000 }, label: 'Filtro' }],
   links: [{ id: 'feedA', from: 'check.out', to: 'filter.in', route: [[220,330],[520,330]] }],  // route opcional
   controllers: [{ id: 'ecu', type: 'ecuFuel', params: {…} }],
@@ -704,6 +721,7 @@ su medición.
 - `validate(def, types) → Issue[]`:
   - puerto inexistente;
   - dominios distintos en una conexión;
+  - **fluidos distintos** en una conexión hidráulica (§30);
   - puerto con más de una conexión (salvo tipo `tee`);
   - puerto sin conectar (**aviso, no error**: en el armado es una fuga o
     un circuito abierto, y es didáctico).
@@ -780,13 +798,13 @@ Reglas comunes:
 
 | # | Tarea | Depende | Archivos propios | Aceptación |
 |---|---|---|---|---|
-| **A0** | Docs: leyes §17 (enmienda) y §19–§30 en `ARCHITECTURE.md`; sección "Juego" en `CONTRATOS.md` (4.1–4.8); actualizar `AHORA.md`, `NORTE.md` y `SISTEMAS.md` | — | `docs/**` | Docs consistentes; `ARCHITECTURE.md` ≤ 200 líneas |
+| **A0** | Docs: leyes §17 (enmienda) y §19–§30 en `ARCHITECTURE.md`; sección "Juego" en `CONTRATOS.md` (4.1–4.8); actualizar `AHORA.md`. `NORTE.md` y `SISTEMAS.md` ya se actualizaron (commit `fbe7bf3` y revisión 2); sólo verificar que coincidan con el plan | — | `docs/**` | Docs consistentes; `ARCHITECTURE.md` ≤ 200 líneas |
 | **A1** | Sesión + intents + labMode + shell nuevo + `legacyRenderer` + paneles que emiten intents + router con rutas nuevas | A0 | `src/game/{session,intents,types}.js`, `src/game/modes/lab.js`, `src/render/legacy/`, `src/core/{shell,router}.js`, `src/core/ui/*` (firmas nuevas), `src/modules/fuel/index.js` (sólo `defaultParams`/`defaultFaults`), `tests/game/**` | Los 54 tests actuales pasan. Tests nuevos: sesión con driver externo, intents, labMode (params/fallas/presets), `parseHash`. **El laboratorio se ve y se usa igual** (checklist). Ningún `model.params[...] =` fuera de modos/tests (`grep` en la checklist de cierre) |
 | **A2** | E1 Quiz + HUD + guardado + campaña + portada con Etapas + separar las etiquetas de nombre en la vista del combustible | A1 | `src/game/modes/quiz.js`, `src/game/{save,campaign}.js`, `src/game/stages/fuel-quiz-*.js`, `src/ui/hud.js`, `src/core/shell.js` (portada), `src/modules/fuel/view.js` (sólo clases de etiquetas), `tests/game/quiz*.js` | Tests: generación de preguntas con semilla, distractores válidos (sin inyectores entre sí), puntaje/estrellas, save con storage en memoria y storage corrupto. Checklist: las 2 etapas jugables, sin etiquetas delatoras |
 | **A3** | E2 Diagnóstico + `faultCatalog` del combustible + herramientas + visibilidad de indicios en la vista del combustible | A2 | `src/game/modes/diagnosis.js`, `src/game/stages/fuel-diag-*.js`, `src/modules/fuel/faults.js` (catálogo), `src/modules/fuel/diagnosis.js` (perceptibles, herramientas, síntomas), `src/modules/fuel/index.js` (sumar `faultCatalog` y `diagnosis`), `src/modules/fuel/view.js` (lectura de fallas reveladas), `tests/game/diagnosis*.js` | Tests: la falla elegida por semilla es la esperada; las herramientas agregan lecturas; reparar la pieza correcta sana el modelo; entregar sano gana / con falla penaliza; el presupuesto agotado pierde; la suciedad del filtro no se revela sin estar en `revealedFaults`. Checklist: las 3 etapas |
 | **A4** | Solver nodal + linalg | A0 (independiente de A1–A3: **puede ir en paralelo**) | `src/sim/solver/**`, `tests/sim/solver*.js`, `docs/modules/solver.md` | Tests analíticos: divisor de tensión, RC (carga al 63 % en τ), RL, dos restrictores en serie vs. fórmula cerrada, nodo flotante sin NaN (gmin), matriz singular detectada. Benchmark impreso y anotado |
 | **A5** | Elementos + circuito (compile/validate) + controladores base | A4 | `src/sim/elements/**`, `src/sim/circuit/**`, `src/sim/controllers/{index,base}.js`, `tests/sim/**` | Un test por elemento (ley + jacobiano contra diferencias finitas, error relativo < 1e-4). `validate` detecta cada tipo de problema de 8.4. Un circuito de juguete (batería-switch-resistencia; bomba-restrictor-tanque) compila y da el valor analítico |
-| **A6** | Combustible sobre el solver: `fuel/circuit.js` + controladores del combustible; `model.js` → `reference-model.js` | A5 **y A3** (usa `fuel/faults.js` para traducir claves) | `src/modules/fuel/{circuit,controllers,reference-model,index}.js`, `tests/fuel/**` | La suite de los 13 tests parametrizada con `describe.each([reference, compiled])` pasa para ambos. Test de trayectoria: 8 escenarios (tabla de `fuel.md` §9b), diferencia en `pRail` ≤ 0,05 bar y en caudales ≤ 3 % en régimen. `solver.failures === 0`. Fuzz §6 contra el compilado **reducido** (200 combinaciones × 1000 pasos; el de 1000 × 2000 sigue sólo para la referencia), con el tiempo medido anotado. El descriptor usa el compilado; lab, quiz y diagnóstico siguen funcionando (checklist) |
+| **A6** | Combustible sobre el solver: `fuel/circuit.js` + controladores del combustible; `model.js` → `reference-model.js` | A5 **y A3** (usa `fuel/faults.js` para traducir claves) | `src/modules/fuel/{circuit,controllers,reference-model,index}.js`, `src/sim/controllers/{engineCore,stubs}.js`, `tests/fuel/**` | La suite de los 13 tests parametrizada con `describe.each([reference, compiled])` pasa para ambos. Test de trayectoria: 8 escenarios (tabla de `fuel.md` §9b), diferencia en `pRail` ≤ 0,05 bar y en caudales ≤ 3 % en régimen. `solver.failures === 0`. Fuzz §6 contra el compilado **reducido** (200 combinaciones × 1000 pasos; el de 1000 × 2000 sigue sólo para la referencia), con el tiempo medido anotado. El descriptor usa el compilado; lab, quiz y diagnóstico siguen funcionando (checklist) |
 | **A7** | Presenter + renderer SVG genérico + drawers; coordenadas de `view.js` → `fuel/circuit.js`; el combustible deja el legacy | A6 | `src/presenter/**`, `src/render/svg/**`, `src/modules/fuel/{circuit,index}.js`, `tests/presenter/**` | Tests del presenter (canales y flujos por conexión desde un estado conocido; filtrado de indicios). Paridad visual con la checklist del combustible (el usuario). `legacyRenderer` queda sin uso y se borra junto con `fuel/view.js` |
 | **A8** | Prueba con Phaser (rama aparte) | A7 | rama `spike/phaser`, `docs/decisiones/0001-phaser.md` | Las 7 preguntas de 8.6 respondidas con mediciones. Decisión tomada **con el usuario** |
 | **A9** | E4 Armar circuitos | A8 | según la decisión | Diseño detallado en un plan propio (`docs/plans/`) antes de programar |
@@ -834,7 +852,10 @@ Valores por defecto para no bloquear; el usuario puede cambiarlos:
 - **Estilo del diagnóstico**: E2 ya se diseña con el vocabulario de la
   sección 14.3: reclamo, perceptibles, herramientas, sospechosos, orden de
   trabajo. Así crece hacia los casos entre sistemas sin rehacerlo. Lo que E2
-  **no** tiene todavía: la entrevista, el mapa del auto y los rangos.
+  **no** tiene todavía (recorte de alcance deliberado, no olvido): la
+  entrevista, el mapa del auto, los rangos y la puntuación de sospechosos.
+  `markSuspect`/`suspects` quedan reservados en los contratos. Un
+  `ModeContext` con varios sistemas lo define A10.
 
 ## 13. Revisión adversaria (2026-09-23) — triaje
 
@@ -862,6 +883,23 @@ Revisor: subagente Sonnet sin contexto previo. Verificó contra el código
 Además, del triaje: el estanque con dos puertos y "presión 0" se resuelve con
 el nodo fijo `tank`, distinto de `atm` (8.1), así el retorno vuelve y las
 fugas se pierden.
+
+### 13.2 Segunda revisión (sección 14, §28–§30, NORTE, SISTEMAS)
+
+| # | Hallazgo | Veredicto | Dónde |
+|---|---|---|---|
+| 1 | Matriz: Motor×Frenos "nunca" contradice el caso del servo | CONFIRMADO | SISTEMAS.md (· vacío vía admisión) |
+| 2 | §30: `hydraulic` no distingue fluidos | CONFIRMADO | §30, 8.2 (`fluid`), 8.4 (`validate`) |
+| 3 | `engineCore` no cabe en el contrato de controlador por circuito | CONFIRMADO | 14.4.1 (A10) |
+| 4 | Buses vs. union-find local | CONFIRMADO | 8.4 (reservado), 14.4.2 |
+| 5 | Composición de solvers por componente | CONFIRMADO | 14.4.3 |
+| 6 | `engineFuel` y `engineCore` duplicados | CONFIRMADO, con otra solución: una sola implementación desde A6 | 8.3, fila A6, 14.4.4 |
+| 7 | Sospechosos sin lugar en HUD/intents | CONFIRMADO: reservado + recorte explícito | 4.2, 4.7, 12 |
+| 8 | §27 fuera de orden | CONFIRMADO | 3 |
+| 9 | Eléctrico×Transmisión (TCU) | CONFIRMADO | SISTEMAS.md |
+
+Veredicto del revisor: listo para A0–A1 una vez corregidos el 1 y el 8
+(hecho).
 
 ## 14. Vehículo: sistemas entrelazados y casos entre sistemas (diseño general; detalle en A10)
 
@@ -956,3 +994,26 @@ cerrarse esa puerta:
   - casos de un sistema con sospechosos de dos sistemas (la bomba no
     funciona: ¿relé, fusible o batería?);
   - casos entre sistemas sobre el vehículo.
+
+### 14.4 Requisitos obligatorios para el plan de A10 (de la revisión 2)
+
+1. **Contrato de controlador de vehículo** (superconjunto del de 8.3):
+   - lee y escribe sobre la unión de sondas y controles de todos los
+     componentes;
+   - las señales §28 se leen del paso anterior, y el orden de ejecución
+     entre controladores de distintos componentes queda definido.
+2. **Buses**: extender `CircuitDef` con `buses` (ya reservado en 8.4). El
+   compilador del vehículo une esos puertos en nodos compartidos.
+3. **`compileVehicle`**:
+   - reusa `{ nodes, elements, portToNode }` de cada `compile()`;
+   - arma **nuevas** instancias de `createSolver` por componente conexa;
+   - **no** compone los `Model` ya armados (cada uno tiene su propio
+     solver y reloj).
+4. **`engineCore` único**: el vehículo usa el mismo `engineCore` de A6,
+   con entradas reales en vez de stubs. Test: con todas las entradas en su
+   valor ideal, el vehículo y el laboratorio del combustible dan el mismo
+   `engineState` en los escenarios de `fuel.md` §9b.
+5. **`ModeContext` de varios sistemas** (mapa del auto, sospechosos entre
+   sistemas), sin romper los modos de un solo sistema.
+6. **Fluidos** (§30): tests de `validate` que rechacen fuel↔coolant.
+   Elementos de falla de cruce (`headGasket`) con tests.

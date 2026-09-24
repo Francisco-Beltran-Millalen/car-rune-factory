@@ -74,13 +74,13 @@ tocan sólo a través del motor o por una falla, `—` nunca.
 | **Combustible** | | ○ vacío ref. | — | ○ mezcla | — | · dilución | ● bomba/relé | ○ lambda | — | — | — |
 | **Admisión/aire** | ○ | | — | ○ aire | — | — | ○ sensores | — | — | ○ servo de vacío | — |
 | **Encendido** | — | — | | ○ chispa | — | — | ● bobinas | — | — | — | — |
-| **Motor (4T)** | ○ | ○ | ○ | | ○ calor + correa | ○ engranaje | ○ arranque/alternador | ○ gases | ○ embrague | — | ○ correa |
+| **Motor (4T)** | ○ | ○ | ○ | | ○ calor + correa | ○ engranaje | ○ arranque/alternador | ○ gases | ○ embrague | · vacío (vía admisión) | ○ correa |
 | **Refrigeración** | — | — | — | ○ | | · culata/enfriador | ● ventilador | — | · enfriador ATF | — | — |
 | **Lubricación** | · | — | — | ○ | · | | ○ sensor presión | — | — | — | — |
-| **Eléctrico** | ● | ○ | ● | ○ | ● | ○ | | ○ sonda | — | ○ ABS | ○ EPS |
+| **Eléctrico** | ● | ○ | ● | ○ | ● | ○ | | ○ sonda | ○ TCU (automáticas) | ○ ABS | ○ EPS |
 | **Escape** | ○ | — | — | ○ | — | — | ○ | | — | — | — |
-| **Transmisión** | — | — | — | ○ | · | — | — | — | | — | — |
-| **Frenos** | — | ○ | — | — | — | — | ○ | — | — | | — |
+| **Transmisión** | — | — | — | ○ | · | — | ○ TCU | — | | — | — |
+| **Frenos** | — | ○ | — | · vacío | — | — | ○ | — | — | | — |
 | **Dirección** | — | — | — | ○ | — | — | ○ | — | — | — | |
 
 **Sistemas que nunca se tocan directamente** (la matriz con `—`), por
@@ -88,6 +88,10 @@ ejemplo:
 - combustible con refrigeración, frenos, dirección o transmisión;
 - encendido con refrigeración, lubricación o frenos;
 - frenos con refrigeración o lubricación.
+
+(La matriz es de **contacto**: úsala para descartar, pero un generador de
+casos también debe seguir las celdas `·`, porque ahí están las pistas falsas
+útiles.)
 
 Esto es útil para el juego: un síntoma de frenos **no** sirve de pista para
 el encendido. Los descartes también enseñan.
