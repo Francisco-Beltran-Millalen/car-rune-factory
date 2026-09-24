@@ -505,6 +505,12 @@ a {
   stroke-linejoin: round;
   opacity: 0.35;
 }
+/* Una tubería es un trazo, nunca un área: sin esto, .fluid-fuel (que rellena el
+   líquido del estanque) rellena cada tubería con codo como un polígono (triángulos). */
+.pipe .pipe-fluid,
+.pipe .pipe-wall {
+  fill: none;
+}
 .fluid-fuel {
   stroke: var(--fuel);
   fill: var(--fuel);

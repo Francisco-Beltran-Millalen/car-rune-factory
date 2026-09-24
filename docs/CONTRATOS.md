@@ -62,6 +62,7 @@ export default {
 - Clases CSS disponibles (`src/styles.css`): `.part-body`, `.pipe-wall`, `.pipe-fluid`, `.fluid-{fuel,coolant,oil,electric,vacuum}`, `.liquid`, `.p-*`, `.lbl`, `.lbl-small`, `.valve-bar`, `.gauge-*`.
 - La vista dibuja la geometría **una sola vez** en `createView`. En `update` solo cambia atributos (transform, fill, opacity, puntos de partículas).
 - Colores **solo vía variables CSS** (`var(--fuel)` etc.) para que funcione el tema oscuro.
+- **Trampa conocida (mordió dos veces)**: en SVG, una regla CSS le gana a un atributo de presentación (`fill="none"`, `opacity="…"`). Lo que la vista cambia en vivo va en `el.style.*`, y un trazo que no debe rellenarse necesita una regla CSS `fill: none` con más especificidad que la clase de color (p. ej. `.pipe .pipe-fluid`). Vale también para los drawers de A7.
 
 ### 4.4 Specs declarativas de la UI
 ```js

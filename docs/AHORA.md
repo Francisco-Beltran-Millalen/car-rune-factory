@@ -66,6 +66,15 @@ Orden con un solo agente: A0 (✅) → A1 → A2 → A3 → A4 → …
    - **Consola**: abrir F12, sin errores de consola. En la consola ejecutar `window.__sim.model.state` y verificar que el estado del modelo es accesible.
    - **Verificación de invariante**: ejecutar `grep -rn "params.*=" src/` y comprobar que no hay escrituras directas a `model.params` fuera de `src/game/modes/` ni constructores.
 
+## FIX 2026-09-23 — triángulos cafés entre las tuberías (bug de T4)
+
+Lo reportó el usuario al probar. Las tuberías con codo se rellenaban como
+polígonos: `.fluid-fuel { fill }` le gana al atributo `fill="none"` de
+`svg.pipe()`. Corregido con `.pipe .pipe-fluid, .pipe .pipe-wall { fill: none }`
+en `styles.css`. Trampa anotada en `CONTRATOS.md` (vista). **Revisar**: ya
+no deben verse triángulos en la alimentación ni en el retorno; el líquido del
+estanque sigue relleno.
+
 ## REVISIÓN 2026-09-23 — A0 + A1 (segundo agente)
 
 Resultado: bien encaminado. Leyes y contratos copiados, cero escrituras a
