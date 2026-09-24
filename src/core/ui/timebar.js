@@ -49,6 +49,15 @@ export function createTimebar(container, { loop, onReset }) {
     setClock(t) {
       clock.textContent = `t = ${fmt(t, 2)} s`;
     },
+    setMaxScale(maxScale) {
+      TIME_SCALES.forEach((s, i) => {
+        scaleBtns[i].disabled = s > maxScale;
+      });
+      if (loop.timeScale > maxScale) {
+        loop.setTimeScale(maxScale);
+        sync();
+      }
+    },
     destroy() {
       window.removeEventListener('keydown', onKey);
       container.replaceChildren();

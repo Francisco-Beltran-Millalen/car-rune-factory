@@ -7,10 +7,12 @@ import { createDemoModel } from '../../src/modules/_demo/model.js';
 
 describe('router', () => {
   it('parseHash', () => {
-    expect(parseHash('#/fuel')).toBe('fuel');
-    expect(parseHash('#/four-stroke')).toBe('four-stroke');
-    expect(parseHash('#/')).toBe(null);
-    expect(parseHash('')).toBe(null);
+    expect(parseHash('#/fuel')).toEqual({ kind: 'lab', id: 'fuel' });
+    expect(parseHash('#/lab/fuel')).toEqual({ kind: 'lab', id: 'fuel' });
+    expect(parseHash('#/four-stroke')).toEqual({ kind: 'lab', id: 'four-stroke' });
+    expect(parseHash('#/stage/fuel-quiz-1')).toEqual({ kind: 'stage', id: 'fuel-quiz-1' });
+    expect(parseHash('#/')).toEqual({ kind: 'home', id: null });
+    expect(parseHash('')).toEqual({ kind: 'home', id: null });
   });
 });
 

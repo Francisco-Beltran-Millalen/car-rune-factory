@@ -82,5 +82,12 @@ export function createReadoutsPanel(container, specs, recorder) {
         if (buf) r.line.setAttribute('points', sparklinePoints(buf.toArray()));
       }
     },
+    /** Muestra u oculta lecturas según la política del modo activo. */
+    setVisible(visibleIds) {
+      for (const r of rows) {
+        const isVis = visibleIds === 'all' || (Array.isArray(visibleIds) && visibleIds.includes(r.spec.id));
+        r.node.hidden = !isVis;
+      }
+    },
   };
 }

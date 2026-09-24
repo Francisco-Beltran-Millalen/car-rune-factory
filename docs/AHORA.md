@@ -34,8 +34,8 @@ Orden con un solo agente: A0 (✅) → A1 → A2 → A3 → A4 → …
 | # | Tarea | Depende de | Estado |
 |---|---|---|---|
 | A0 | Docs: leyes §17, §19–§30 en ARCHITECTURE, contratos de juego 6.1–6.8 | — | ✅ |
-| A1 | Sesión + intents + labMode + shell nuevo + legacyRenderer + paneles DOM + router | A0 | ⏳ en curso |
-| A2 | Quiz (E1) + HUD + guardado + campaña + etiquetas de nombre separadas | A1 | ⏳ |
+| A1 | Sesión + intents + labMode + shell nuevo + legacyRenderer + paneles DOM + router | A0 | ✅ |
+| A2 | Quiz (E1) + HUD + guardado + campaña + etiquetas de nombre separadas | A1 | ⏳ siguiente paso |
 | A3 | Diagnóstico (E2) + faultCatalog combustible + herramientas + visibilidad | A2 | ⏳ |
 | A4 | Solver nodal + linalg | A0 | ⏳ |
 | A5 | Elementos + circuito (compile/validate) + controladores base | A4 | ⏳ |
@@ -45,7 +45,38 @@ Orden con un solo agente: A0 (✅) → A1 → A2 → A3 → A4 → …
 | A9 | Armar circuitos (E4) | A8 | ⏳ |
 | A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
 
-**Siguiente paso:** A1 (sesión, intents, labMode, legacyRenderer).
+**Siguiente paso:** A2 (Quiz E1 + HUD + guardado + campaña).
+
+## Checklist de verificación manual de A1 (Firefox)
+
+`npm run dev` → abrir la URL de Vite:
+
+1. **Rutas y redirección**:
+   - Abrir `#/fuel` → la URL debe cambiar automáticamente a `#/lab/fuel` y cargar el sistema de combustible.
+   - Navegar a `#/` → se ve la portada con la tarjeta de combustible cuyo enlace apunta a `#/lab/fuel`.
+2. **Laboratorio idéntico**:
+   - El escenario SVG carga con el estanque, bomba, filtro, riel, 4 inyectores, retorno y manómetros.
+   - **Controles**: cambiar RPM, llave a "Contacto" (las partículas amarillas recorren cables, manómetro sube a ~3 bar), "Arranque" y "Marcha". Mover el acelerador.
+   - **Fallas**: mover slider de filtro a 90 %, verificar que el botón "Reparar todo" se habilita. Clic en "Reparar todo" → vuelve a 0 % y se deshabilita.
+   - **Presets**: clic en "Caso: tironea en subida" → aplica el preset, se ve la nota explicativa y la simulación responde.
+   - **Selección de pieza**: clic en el filtro o la bomba → se resalta con contorno azul (`.selected`), el panel "Pieza seleccionada" se abre mostrando su nombre y ficha. Clic fuera o en la misma pieza → se deselecciona.
+   - **Hover**: pasar el mouse sobre una pieza → aparece el tooltip con su nombre.
+   - **Timebar**: botón ⏸ o espacio pausa la simulación; ⏭ da un paso de 1 ms; botones de velocidad 0.05× a 4× aceleran/desaceleran; ⟲ reinicia todo a los valores iniciales.
+   - **Tema**: botón ◐ alterna entre auto/claro/oscuro y se ve correctamente.
+   - **Consola**: abrir F12, sin errores de consola. En la consola ejecutar `window.__sim.model.state` y verificar que el estado del modelo es accesible.
+   - **Verificación de invariante**: ejecutar `grep -rn "params.*=" src/` y comprobar que no hay escrituras directas a `model.params` fuera de `src/game/modes/` ni constructores.
+
+## CERRADO 2026-09-23 — A1 sesión, intents, labMode, legacyRenderer
+
+- `src/game/{types,intents,session}.js`: tipos JSDoc, catálogo de intents y constructores puros, sesión desacoplada del shell con soporte para driver `raf` y `external`.
+- `src/game/modes/lab.js`: máquina de estados del laboratorio que centraliza la aplicación de `setParam`, `setFault`, `resetFaults`, `applyPreset` y `action`. Único escritor en `params`/`faults`.
+- `src/render/legacy/index.js`: adaptador `legacyRenderer` sobre `module.createView` con soporte para delegación de clics (`selectPart`), hover (`hoverPart`), `highlight` y ocultamiento de `.part-label` cuando `labels: false`.
+- `src/core/router.js`: `parseHash` devuelve `{ kind: 'lab'|'stage'|'home', id }` con compatibilidad y redirección para URLs antiguas `#/<id>`.
+- `src/core/ui/*`: `controls.js` y `faults.js` migrados para emitir intents vía `emit(intent)` en lugar de mutar `model.params` / `model.faults` directamente. Métodos `setVisible()` agregados a controles, fallas y lecturas. `timebar.js` suma `setMaxScale()`.
+- `src/core/shell.js`: composición según contrato A1: sesión + modo + legacyRenderer + paneles DOM con intents.
+- `src/modules/fuel/index.js`: exporta `defaultParams` y `defaultFaults`.
+- Tests: 73 tests en verde (los 54 tests existentes + 19 tests nuevos en `tests/game/` cubriendo sesión, intents, labMode y router). `npm run build` en verde.
+- Invariante comprobada: cero escrituras a `model.params[...] =` fuera de `src/game/modes/` y constructores de modelo.
 
 ## CERRADO 2026-09-23 — A0 docs de arquitectura de juego
 

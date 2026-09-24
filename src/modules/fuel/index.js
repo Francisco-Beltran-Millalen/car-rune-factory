@@ -1,5 +1,5 @@
 // Descriptor del módulo de combustible (CONTRATOS.md 4.1).
-import { createFuelModel } from './model.js';
+import { createFuelModel, DEFAULT_PARAMS, DEFAULT_FAULTS } from './model.js';
 import { createFuelView } from './view.js';
 import { parts } from './content.js';
 import { createNarrator } from './narrate.js';
@@ -13,6 +13,8 @@ export default {
   viewBox: [0, 0, 1240, 680],
   createModel: () => createFuelModel(),
   createView: createFuelView,
+  defaultParams: DEFAULT_PARAMS,
+  defaultFaults: DEFAULT_FAULTS,
   controls,
   faults,
   readouts,
@@ -20,3 +22,4 @@ export default {
   narrate: createNarrator(),
   presets,
 };
+

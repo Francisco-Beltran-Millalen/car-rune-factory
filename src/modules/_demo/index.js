@@ -1,5 +1,4 @@
-// Módulo de prueba del shell (T2). Se saca del registry cuando exista `fuel`.
-import { createDemoModel } from './model.js';
+import { createDemoModel, DEFAULT_PARAMS, DEFAULT_FAULTS } from './model.js';
 import { createDemoView } from './view.js';
 
 export default {
@@ -10,6 +9,8 @@ export default {
   viewBox: [0, 0, 800, 460],
   createModel: () => createDemoModel(),
   createView: createDemoView,
+  defaultParams: DEFAULT_PARAMS,
+  defaultFaults: DEFAULT_FAULTS,
   controls: [
     { type: 'slider', key: 'valve', label: 'Apertura de la válvula', min: 0, max: 1, step: 0.05, group: 'Válvula' },
     { type: 'toggle', key: 'inflow', label: 'Llenado abierto', group: 'Llenado' },

@@ -1,6 +1,7 @@
-// Panel de controles generado desde ControlSpec[] (§8). Escribe sólo en model.params (§2).
+// Panel de controles generado desde ControlSpec[] (§8). Emite intents (§20).
 
 import { h, fmt } from '../dom.js';
+import { intents } from '../../game/intents.js';
 
 /** Grupo de botones excluyentes (para selects cortos, p. ej. la llave). */
 export function segmented(options, getValue, setValue) {
@@ -22,7 +23,7 @@ function decimalsFor(step) {
   return Math.min(3, Math.ceil(-Math.log10(step)));
 }
 
-function slider(spec, model) {
+function slider(spec, getValue, emit) {
   const out = h('output', { class: 'ctl-value' });
   const input = h('input', {
     type: 'range',
@@ -30,13 +31,13 @@ function slider(spec, model) {
     max: spec.max ?? 1,
     step: spec.step ?? 0.01,
     oninput: () => {
-      model.params[spec.key] = Number(input.value);
+      emit(intents.setParam(spec.key, Number(input.value)));
       show();
     },
   });
   const dec = decimalsFor(spec.step ?? 0.01);
   const show = () => {
-    const v = model.params[spec.key];
+    const v = getValue(spec.key);
     out.textContent = `${fmt(v, dec)}${spec.unit ? ' ' + spec.unit : ''}`;
   };
   const node = h('label', { class: 'ctl ctl-slider' }, h('span', { class: 'ctl-label' }, spec.label), out, input);
@@ -44,27 +45,27 @@ function slider(spec, model) {
     node,
     input,
     sync() {
-      if (document.activeElement !== input) input.value = String(model.params[spec.key]);
+      if (document.activeElement !== input) input.value = String(getValue(spec.key));
       show();
     },
   };
 }
 
-function toggle(spec, model) {
+function toggle(spec, getValue, emit) {
   const input = h('input', {
     type: 'checkbox',
-    onchange: () => (model.params[spec.key] = input.checked),
+    onchange: () => emit(intents.setParam(spec.key, input.checked)),
   });
   const node = h('label', { class: 'ctl ctl-toggle' }, input, h('span', { class: 'ctl-label' }, spec.label));
-  return { node, input, sync: () => (input.checked = !!model.params[spec.key]) };
+  return { node, input, sync: () => (input.checked = !!getValue(spec.key)) };
 }
 
-function select(spec, model) {
+function select(spec, getValue, emit) {
   const seg = segmented(
     spec.options,
-    () => model.params[spec.key],
+    () => getValue(spec.key),
     (v) => {
-      model.params[spec.key] = v;
+      emit(intents.setParam(spec.key, v));
       seg.sync();
     },
   );
@@ -72,10 +73,10 @@ function select(spec, model) {
   return { node, input: seg.node, sync: seg.sync };
 }
 
-function button(spec, model) {
+function button(spec, getValue, emit) {
   const input = h(
     'button',
-    { type: 'button', class: 'btn', onclick: () => model.actions?.[spec.action]?.() },
+    { type: 'button', class: 'btn', onclick: () => emit(intents.action(spec.action)) },
     spec.label,
   );
   return { node: h('div', { class: 'ctl ctl-button' }, input), input, sync() {} };
@@ -86,15 +87,17 @@ const BUILDERS = { slider, toggle, select, button };
 /**
  * @param {HTMLElement} container
  * @param {import('../types.js').ControlSpec[]} specs
- * @param {import('../types.js').Model} model
+ * @param {(key: string) => any} getValue
+ * @param {(intent: import('../../game/types.js').Intent) => void} emit
+ * @param {import('../types.js').Model} [modelContext]
  */
-export function createControlsPanel(container, specs, model) {
+export function createControlsPanel(container, specs, getValue, emit = () => {}, modelContext) {
   const items = [];
   const groups = new Map();
   for (const spec of specs) {
     const build = BUILDERS[spec.type];
     if (!build) continue;
-    const item = build(spec, model);
+    const item = build(spec, getValue, emit);
     item.spec = spec;
     const gname = spec.group || '';
     if (!groups.has(gname)) {
@@ -105,16 +108,34 @@ export function createControlsPanel(container, specs, model) {
     groups.get(gname).append(item.node);
     items.push(item);
   }
+
+  const evalModel = modelContext || {
+    get params() {
+      return new Proxy({}, { get: (_, k) => getValue(String(k)) });
+    },
+  };
+
   return {
     /** Refleja params en los inputs y evalúa disabledWhen. Barato: llamar ~10 Hz. */
     sync() {
       for (const it of items) {
         it.sync();
         if (it.spec.disabledWhen) {
-          const dis = !!it.spec.disabledWhen(model);
+          const dis = !!it.spec.disabledWhen(evalModel);
           it.node.classList.toggle('disabled', dis);
           if ('disabled' in it.input) it.input.disabled = dis;
         }
+      }
+    },
+    /** Muestra u oculta controles según la política del modo activo. */
+    setVisible(visibleKeys) {
+      for (const it of items) {
+        const isVis = visibleKeys === 'all' || (Array.isArray(visibleKeys) && visibleKeys.includes(it.spec.key));
+        it.node.hidden = !isVis;
+      }
+      for (const fs of groups.values()) {
+        const hasVisibleChild = Array.from(fs.children).some((c) => c.tagName !== 'LEGEND' && !c.hidden);
+        fs.hidden = !hasVisibleChild;
       }
     },
   };

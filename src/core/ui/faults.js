@@ -1,7 +1,8 @@
-// Panel de fallas generado desde FaultSpec[] (§8). Escribe sólo en model.faults (§2).
+// Panel de fallas generado desde FaultSpec[] (§8). Emite intents (§20).
 
 import { h } from '../dom.js';
 import { segmented } from './controls.js';
+import { intents } from '../../game/intents.js';
 
 /** ¿La falla está activa (distinta de su valor sano por defecto)? */
 export function isFaultActive(value, healthy) {
@@ -9,7 +10,7 @@ export function isFaultActive(value, healthy) {
   return value !== healthy;
 }
 
-function severity(spec, model) {
+function severity(spec, getValue, emit) {
   const out = h('output', { class: 'ctl-value' });
   const input = h('input', {
     type: 'range',
@@ -17,31 +18,34 @@ function severity(spec, model) {
     max: 1,
     step: 0.05,
     oninput: () => {
-      model.faults[spec.key] = Number(input.value);
+      emit(intents.setFault(spec.key, Number(input.value)));
       show();
     },
   });
-  const show = () => (out.textContent = `${Math.round(model.faults[spec.key] * 100)} %`);
+  const show = () => (out.textContent = `${Math.round(Number(getValue(spec.key)) * 100)} %`);
   return {
     body: [out, input],
     sync() {
-      if (document.activeElement !== input) input.value = String(model.faults[spec.key]);
+      if (document.activeElement !== input) input.value = String(getValue(spec.key));
       show();
     },
   };
 }
 
-function toggle(spec, model) {
-  const input = h('input', { type: 'checkbox', onchange: () => (model.faults[spec.key] = input.checked) });
-  return { body: [input], sync: () => (input.checked = !!model.faults[spec.key]) };
+function toggle(spec, getValue, emit) {
+  const input = h('input', {
+    type: 'checkbox',
+    onchange: () => emit(intents.setFault(spec.key, input.checked)),
+  });
+  return { body: [input], sync: () => (input.checked = !!getValue(spec.key)) };
 }
 
-function enumFault(spec, model) {
+function enumFault(spec, getValue, emit) {
   const seg = segmented(
     spec.options,
-    () => model.faults[spec.key],
+    () => getValue(spec.key),
     (v) => {
-      model.faults[spec.key] = v;
+      emit(intents.setFault(spec.key, v));
       seg.sync();
     },
   );
@@ -53,15 +57,25 @@ const BUILDERS = { severity, toggle, enum: enumFault };
 /**
  * @param {HTMLElement} container
  * @param {import('../types.js').FaultSpec[]} specs
- * @param {import('../types.js').Model} model
+ * @param {(key: string) => any} getValue
+ * @param {(intent: import('../../game/types.js').Intent) => void} emit
+ * @param {Record<string, any>} [defaultFaults]
  */
-export function createFaultsPanel(container, specs, model) {
-  const healthy = { ...model.faults };
+export function createFaultsPanel(container, specs, getValue, emit = () => {}, defaultFaults = {}) {
+  const healthy = { ...defaultFaults };
+
+  // Si healthy no tiene claves para algún spec, inicializarlo con el valor actual
+  for (const spec of specs) {
+    if (!(spec.key in healthy)) {
+      healthy[spec.key] = getValue(spec.key);
+    }
+  }
+
   const items = [];
   for (const spec of specs) {
     const build = BUILDERS[spec.kind];
     if (!build) continue;
-    const item = build(spec, model);
+    const item = build(spec, getValue, emit);
     const labelEl = h('span', { class: 'ctl-label' }, spec.label);
     const node =
       spec.kind === 'toggle'
@@ -70,30 +84,37 @@ export function createFaultsPanel(container, specs, model) {
     container.append(node);
     items.push({ spec, node, sync: item.sync });
   }
-  const repair = h(
+
+  const repairBtn = h(
     'button',
     {
       type: 'button',
       class: 'btn btn-small',
-      onclick: () => {
-        Object.assign(model.faults, healthy);
-        api.sync();
-      },
+      onclick: () => emit(intents.resetFaults()),
     },
     'Reparar todo',
   );
-  container.append(h('div', { class: 'ctl ctl-button' }, repair));
+  const repairWrapper = h('div', { class: 'ctl ctl-button' }, repairBtn);
+  container.append(repairWrapper);
 
   const api = {
     sync() {
       let any = false;
       for (const it of items) {
         it.sync();
-        const active = isFaultActive(model.faults[it.spec.key], healthy[it.spec.key]);
+        const active = isFaultActive(getValue(it.spec.key), healthy[it.spec.key]);
         it.node.classList.toggle('active', active);
         any ||= active;
       }
-      repair.disabled = !any;
+      repairBtn.disabled = !any;
+    },
+    setVisible(visibleKeys) {
+      const isNone = visibleKeys === 'none' || (Array.isArray(visibleKeys) && visibleKeys.length === 0);
+      for (const it of items) {
+        const isVis = !isNone && (visibleKeys === 'all' || (Array.isArray(visibleKeys) && visibleKeys.includes(it.spec.key)));
+        it.node.hidden = !isVis;
+      }
+      repairWrapper.hidden = isNone;
     },
   };
   return api;

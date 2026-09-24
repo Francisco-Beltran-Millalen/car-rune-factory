@@ -1,14 +1,16 @@
-// Layout de la app + montaje/desmontaje de módulos (CONTRATOS.md 4.8).
+// Layout de la app + composición de sesión, modo, renderer y paneles (CONTRATOS.md §6).
 
 import { h, clear } from './dom.js';
-import { el, arrowMarkers } from './svg.js';
-import { createLoop } from './loop.js';
-import { createRecorder } from './history.js';
 import { createControlsPanel } from './ui/controls.js';
 import { createFaultsPanel } from './ui/faults.js';
 import { createReadoutsPanel } from './ui/readouts.js';
 import { createInfoPanel, createNarrationBar } from './ui/infoPanel.js';
 import { createTimebar } from './ui/timebar.js';
+import { createSession } from '../game/session.js';
+import { createLabMode } from '../game/modes/lab.js';
+import { createLegacyRenderer } from '../render/legacy/index.js';
+import { intents, INTENT_TYPES } from '../game/intents.js';
+import { parseHash } from './router.js';
 
 const NARRATE_EVERY = 0.25; // s reales
 const SYNC_EVERY = 0.1;
@@ -17,6 +19,10 @@ const SPARK_EVERY = 0.2;
 const THEMES = ['auto', 'light', 'dark'];
 const THEME_ICON = { auto: '◐', light: '☀', dark: '☾' };
 
+const MODES = {
+  lab: createLabMode,
+};
+
 function loadTheme() {
   try {
     return localStorage.getItem('theme') || 'auto';
@@ -24,6 +30,7 @@ function loadTheme() {
     return 'auto';
   }
 }
+
 function applyTheme(t) {
   if (t === 'auto') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme', t);
@@ -43,7 +50,7 @@ function section(title, open = true) {
 /**
  * @param {HTMLElement} root
  * @param {import('./types.js').ModuleDescriptor[]} modules  ordenados por `order`
- * @param {{ go: (id: string|null) => void }} nav
+ * @param {{ go: (target: any) => void }} nav
  */
 export function createShell(root, modules, nav) {
   let theme = loadTheme();
@@ -82,7 +89,7 @@ export function createShell(root, modules, nav) {
   );
 
   for (const m of modules) {
-    navList.append(h('a', { href: `#/${m.id}`, class: 'navlink', dataset: { id: m.id } }, m.title));
+    navList.append(h('a', { href: `#/lab/${m.id}`, class: 'navlink', dataset: { id: m.id } }, m.title));
   }
 
   let current = null;
@@ -97,7 +104,7 @@ export function createShell(root, modules, nav) {
     modTitle.textContent = '';
     setActiveNav(null);
     const cards = modules.map((m) =>
-      h('a', { class: 'card', href: `#/${m.id}` }, h('h2', {}, m.title), h('p', {}, m.summary)),
+      h('a', { class: 'card', href: `#/lab/${m.id}` }, h('h2', {}, m.title), h('p', {}, m.summary)),
     );
     stage.append(
       h(
@@ -109,25 +116,34 @@ export function createShell(root, modules, nav) {
     );
   }
 
-  /** @param {import('./types.js').ModuleDescriptor} desc */
-  function mount(desc) {
+  /**
+   * @param {import('./types.js').ModuleDescriptor|{ module: import('./types.js').ModuleDescriptor, stage: any }} target
+   */
+  function mount(target) {
     unmount();
     root.firstChild.classList.remove('home');
+
+    const desc = target?.createModel ? target : target.module;
+    const stageDef = target?.createModel ? null : target?.stage || null;
+
     modTitle.textContent = desc.title;
     setActiveNav(desc.id);
 
-    const svg = el('svg', {
-      class: 'stage-svg',
-      viewBox: desc.viewBox.join(' '),
-      preserveAspectRatio: 'xMidYMid meet',
-      role: 'img',
-      'aria-label': desc.title,
+    const session = createSession({
+      createModel: desc.createModel,
+      readouts: desc.readouts || [],
     });
-    arrowMarkers(svg);
-    stage.append(svg);
 
-    const model = desc.createModel();
-    const recorder = createRecorder(desc.readouts || []);
+    const modeKey = stageDef?.mode ?? 'lab';
+    const modeFactory = MODES[modeKey] || createLabMode;
+    const mode = modeFactory({
+      session,
+      module: desc,
+      stage: stageDef,
+      rng: null,
+      save: null,
+    });
+
     const ctlSec = section('Controles');
     const presetSec = desc.presets?.length ? section('Casos para probar', false) : null;
     const faultSec = section('Fallas', false);
@@ -136,55 +152,47 @@ export function createShell(root, modules, nav) {
     const info = createInfoPanel(infoSec.body, desc.parts || {});
     const narr = createNarrationBar(narration);
 
-    let selected = null;
-    const view = desc.createView({ svg, model, selectPart });
+    const renderer = createLegacyRenderer({
+      container: stage,
+      module: desc,
+      emit,
+      model: session.model,
+      tooltip,
+    });
 
-    function selectPart(id) {
-      selected = id;
-      for (const n of svg.querySelectorAll('.selected')) n.classList.remove('selected');
-      if (id) for (const n of svg.querySelectorAll(`[data-part="${CSS.escape(id)}"]`)) n.classList.add('selected');
-      view.highlight?.(id);
-      info.show(id);
-      infoSec.node.open = true;
-    }
-
-    // Delegación: cualquier [data-part] es clickeable sin que la vista cablee nada (§10).
-    const onClick = (e) => {
-      const p = e.target.closest?.('[data-part]');
-      selectPart(p && p.dataset.part !== selected ? p.dataset.part : null);
-    };
-    const onMove = (e) => {
-      const p = e.target.closest?.('[data-part]');
-      const name = p && desc.parts?.[p.dataset.part]?.name;
-      if (!name) {
-        tooltip.hidden = true;
-        return;
-      }
-      const r = stage.getBoundingClientRect();
-      tooltip.textContent = name;
-      tooltip.hidden = false;
-      tooltip.style.left = `${e.clientX - r.left + 14}px`;
-      tooltip.style.top = `${e.clientY - r.top + 14}px`;
-    };
-    const onLeave = () => (tooltip.hidden = true);
-    svg.addEventListener('click', onClick);
-    svg.addEventListener('pointermove', onMove);
-    svg.addEventListener('pointerleave', onLeave);
-
-    // Panel lateral
     side.append(ctlSec.node);
     if (presetSec) side.append(presetSec.node);
     side.append(faultSec.node, roSec.node, infoSec.node);
 
-    const controls = createControlsPanel(ctlSec.body, desc.controls || [], model);
-    const faults = createFaultsPanel(faultSec.body, desc.faults || [], model);
-    const readouts = createReadoutsPanel(roSec.body, desc.readouts || [], recorder);
+    const controls = createControlsPanel(
+      ctlSec.body,
+      desc.controls || [],
+      (k) => session.model.params[k],
+      emit,
+      session.model,
+    );
+    const faults = createFaultsPanel(
+      faultSec.body,
+      desc.faults || [],
+      (k) => session.model.faults[k],
+      emit,
+      desc.defaultFaults,
+    );
+    const readouts = createReadoutsPanel(roSec.body, desc.readouts || [], session.recorder);
 
     const presetNote = h('p', { class: 'preset-note' });
     if (presetSec) {
       for (const p of desc.presets) {
         presetSec.body.append(
-          h('button', { type: 'button', class: 'btn preset', onclick: () => applyPreset(p) }, p.label),
+          h(
+            'button',
+            {
+              type: 'button',
+              class: 'btn preset',
+              onclick: () => emit(intents.applyPreset(p.id)),
+            },
+            p.label,
+          ),
         );
       }
       presetSec.body.append(presetNote);
@@ -197,71 +205,112 @@ export function createShell(root, modules, nav) {
     }
 
     function resetAll() {
-      model.reset();
-      recorder.clear();
+      session.reset();
       presetNote.textContent = '';
       syncAll();
     }
 
-    function applyPreset(p) {
-      model.reset();
-      recorder.clear();
-      Object.assign(model.params, p.params || {});
-      Object.assign(model.faults, p.faults || {});
-      for (const [name, args] of Object.entries(p.setup || {})) model.actions?.[name]?.(...(args || []));
-      presetNote.textContent = p.note || '';
+    function emit(intent) {
+      const events = mode.handle(intent);
+      if (intent.type === INTENT_TYPES.applyPreset) {
+        if (presetNote) presetNote.textContent = mode.activePreset?.note || '';
+      }
+      if (intent.type === INTENT_TYPES.selectPart) {
+        const partId = intent.partId;
+        if (mode.ui.infoPanel) {
+          info.show(partId);
+          if (partId) infoSec.node.open = true;
+        }
+        renderer.highlight(partId ? [partId] : [], 'selected');
+      }
+      for (const ev of events) {
+        if (ev.type === 'feedback' && ev.text && presetNote) {
+          presetNote.textContent = ev.text;
+        }
+      }
       syncAll();
     }
+
+    function applyUi(ui) {
+      renderer.applyUi(ui);
+      ctlSec.node.hidden = Array.isArray(ui.controls) && ui.controls.length === 0;
+      controls.setVisible(ui.controls);
+      faultSec.node.hidden = ui.faults === 'none' || (Array.isArray(ui.faults) && ui.faults.length === 0);
+      faults.setVisible(ui.faults);
+      roSec.node.hidden = Array.isArray(ui.readouts) && ui.readouts.length === 0;
+      readouts.setVisible(ui.readouts);
+      if (presetSec) presetSec.node.hidden = !ui.presets;
+      infoSec.node.hidden = !ui.infoPanel;
+      if (ui.timebar?.maxScale) timebar.setMaxScale(ui.timebar.maxScale);
+    }
+
+    const timebar = createTimebar(timebarSlot, { loop: session.loop, onReset: resetAll });
 
     let tSync = 0;
     let tNarr = 0;
     let tSpark = 0;
+    let tUiCheck = 0;
     let lastReal = performance.now();
-    const loop = createLoop({
-      model,
-      onFrame(simDt) {
-        const now = performance.now();
-        const real = (now - lastReal) / 1000;
-        lastReal = now;
-        view.update(simDt);
-        recorder.sample(model);
-        readouts.update(model.state);
-        timebar.setClock(model.time);
-        if ((tSync += real) >= SYNC_EVERY) {
-          tSync = 0;
-          controls.sync();
-          faults.sync();
-        }
-        if ((tSpark += real) >= SPARK_EVERY) {
-          tSpark = 0;
-          readouts.updateSparks();
-        }
-        if ((tNarr += real) >= NARRATE_EVERY) {
-          tNarr = 0;
-          narr.set(desc.narrate ? desc.narrate(model) : []);
-        }
-      },
-    });
-    const timebar = createTimebar(timebarSlot, { loop, onReset: resetAll });
+    let lastUiSnapshot = JSON.stringify(mode.ui);
 
+    applyUi(mode.ui);
     syncAll();
-    readouts.update(model.state);
-    narr.set(desc.narrate ? desc.narrate(model) : []);
-    loop.start();
+    readouts.update(session.model.state);
+    narr.set(desc.narrate ? desc.narrate(session.model) : []);
+
+    const unframe = session.onFrame((simDt) => {
+      const now = performance.now();
+      const real = (now - lastReal) / 1000;
+      lastReal = now;
+
+      mode.update(simDt);
+      renderer.update(null, simDt);
+      readouts.update(session.model.state);
+      timebar.setClock(session.model.time);
+
+      if ((tSync += real) >= SYNC_EVERY) {
+        tSync = 0;
+        controls.sync();
+        faults.sync();
+      }
+      if ((tSpark += real) >= SPARK_EVERY) {
+        tSpark = 0;
+        readouts.updateSparks();
+      }
+      if ((tNarr += real) >= NARRATE_EVERY) {
+        tNarr = 0;
+        if (mode.ui.narration === 'off') {
+          narr.set([]);
+        } else {
+          narr.set(desc.narrate ? desc.narrate(session.model) : []);
+        }
+      }
+      if ((tUiCheck += real) >= 0.1) {
+        tUiCheck = 0;
+        const snap = JSON.stringify(mode.ui);
+        if (snap !== lastUiSnapshot) {
+          lastUiSnapshot = snap;
+          applyUi(mode.ui);
+        }
+      }
+    });
+
+    session.start();
 
     current = {
-      model,
-      loop,
+      session,
+      model: session.model,
+      mode,
+      renderer,
       destroy() {
-        loop.destroy();
+        unframe();
+        session.destroy();
+        mode.destroy();
+        renderer.destroy();
         timebar.destroy();
-        view.destroy();
-        svg.removeEventListener('click', onClick);
-        svg.removeEventListener('pointermove', onMove);
-        svg.removeEventListener('pointerleave', onLeave);
       },
     };
-    // Acceso de depuración desde la consola: window.__sim.model.state
+    // Acceso de depuración desde la consola (§148): window.__sim.model.state
     window.__sim = current;
   }
 
@@ -278,11 +327,37 @@ export function createShell(root, modules, nav) {
   }
 
   return {
-    route(id) {
-      const desc = modules.find((m) => m.id === id);
-      if (desc) mount(desc);
-      else {
-        if (id) nav.go(null);
+    mount,
+    route(target) {
+      if (!target) {
+        showHome();
+        return;
+      }
+      let kind = 'lab';
+      let id = null;
+      if (typeof target === 'string') {
+        const parsed = parseHash(target.startsWith('#') ? target : `#/lab/${target}`);
+        kind = parsed.kind;
+        id = parsed.id;
+      } else {
+        kind = target.kind;
+        id = target.id;
+      }
+
+      if (kind === 'home' || !id) {
+        showHome();
+        return;
+      }
+
+      if (kind === 'lab') {
+        const desc = modules.find((m) => m.id === id);
+        if (desc) {
+          mount({ module: desc, stage: null });
+        } else {
+          nav.go(null);
+          showHome();
+        }
+      } else if (kind === 'stage') {
         showHome();
       }
     },
