@@ -195,6 +195,37 @@ describe('fuel model — §9', () => {
     expect(m.time).toBe(0);
   });
 
+  it('reset vuelve a los overrides de creación, no a los valores por defecto', () => {
+    const m = createFuelModel({ params: { rpm: 3000 }, faults: { filterClog: 0.5 } });
+    m.params.rpm = 5000;
+    m.faults.filterClog = 1;
+    m.reset();
+    expect(m.params.rpm).toBe(3000);
+    expect(m.faults.filterClog).toBe(0.5);
+  });
+
+  it('robustez: un NaN en cualquier parámetro numérico no contamina el estado (§6)', () => {
+    const numeric = [
+      ['params', 'rpm'],
+      ['params', 'throttle'],
+      ['params', 'batteryV'],
+      ['faults', 'strainerClog'],
+      ['faults', 'filterClog'],
+      ['faults', 'pumpWear'],
+      ['faults', 'injectorLeak'],
+      ['faults', 'lineLeak'],
+    ];
+    for (const [group, key] of numeric) {
+      const m = createFuelModel();
+      startEngine(m);
+      m[group][key] = NaN;
+      run(m, 1);
+      for (const [name, v] of Object.entries(m.state)) {
+        if (typeof v === 'number') expect(Number.isFinite(v), `${name} con ${key}=NaN`).toBe(true);
+      }
+    }
+  });
+
   it('inyectores pulsan en orden 1-3-4-2', () => {
     const m = createFuelModel();
     startEngine(m);

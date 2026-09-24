@@ -66,6 +66,25 @@ Orden con un solo agente: A0 (✅) → A1 → A2 → A3 → A4 → …
    - **Consola**: abrir F12, sin errores de consola. En la consola ejecutar `window.__sim.model.state` y verificar que el estado del modelo es accesible.
    - **Verificación de invariante**: ejecutar `grep -rn "params.*=" src/` y comprobar que no hay escrituras directas a `model.params` fuera de `src/game/modes/` ni constructores.
 
+## CERRADO 2026-09-24 — revisión: NaN, reset con overrides, ⟲ y preset
+
+Plan: `plans/2026-09-24-fix-revision-robustez.md`.
+- `clamp(NaN)` → `min` (`core/math.js`, tocado como arreglo de revisión §12).
+  Antes, `throttle = NaN` o `filterClog = NaN` dejaba `pRail = NaN` para siempre.
+- `labMode` rechaza `setParam`/`setFault` con NaN/Infinity o con otro tipo.
+- `createFuelModel().reset()` vuelve a los overrides de creación.
+- `labMode.onReset()` reinicia la sesión y olvida `activePreset`.
+- Tests: 77 en verde (+4: NaN en el modelo, overrides en reset, validación de
+  intents, onReset; los 4 fallan sin el arreglo). `npm run build` en verde.
+
+**Revisar en Firefox** (`npm run dev` → `#/lab/fuel`):
+1. Clic en un caso de "Casos para probar" → aparece su nota. Clic en ⟲ → la
+   nota desaparece, fallas en 0 y llave en "Apagado".
+2. Mover sliders de fallas y controles → responden igual que antes.
+3. F12, sin errores. En la consola:
+   `window.__sim.mode.handle({type:'setParam', key:'throttle', value:NaN})`
+   y luego `window.__sim.model.params.throttle` → sigue siendo el valor anterior.
+
 ## FIX 2026-09-23 — triángulos cafés entre las tuberías (bug de T4)
 
 Lo reportó el usuario al probar. Las tuberías con codo se rellenaban como

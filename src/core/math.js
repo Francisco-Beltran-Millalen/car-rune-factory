@@ -1,4 +1,5 @@
-export const clamp = (v, min, max) => (v < min ? min : v > max ? max : v);
+// NaN → min: sin esto un NaN cruza todos los clamp y contamina la física (§6).
+export const clamp = (v, min, max) => (v < min || Number.isNaN(v) ? min : v > max ? max : v);
 
 export const lerp = (a, b, t) => a + (b - a) * t;
 

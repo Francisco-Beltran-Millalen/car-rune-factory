@@ -312,7 +312,7 @@ export function createShell(root, modules, nav) {
         timebar.destroy();
       },
     };
-    // Acceso de depuración desde la consola (§148): window.__sim.model.state
+    // Acceso de depuración desde la consola: window.__sim.model.state
     window.__sim = current;
   }
 

@@ -138,4 +138,30 @@ describe('labMode', () => {
     expect(mode.handle({ type: 'unknown' })).toEqual([]);
     expect(mode.update(0.01)).toEqual([]);
   });
+
+  it('setParam/setFault rechazan NaN, Infinity y tipos distintos (§6)', () => {
+    const mod = createMockModule();
+    const session = createSession({ createModel: mod.createModel, driver: 'external' });
+    const mode = createLabMode({ session, module: mod, stage: null });
+
+    mode.handle(intents.setParam('rpm', NaN));
+    mode.handle(intents.setParam('throttle', Infinity));
+    mode.handle(intents.setParam('rpm', '3000'));
+    mode.handle(intents.setFault('filterClog', NaN));
+    mode.handle(intents.setFault('relayDead', 1));
+    expect(session.model.params).toEqual({ rpm: 800, throttle: 0 });
+    expect(session.model.faults).toEqual({ filterClog: 0, relayDead: false });
+  });
+
+  it('onReset reinicia la sesión y olvida el preset activo', () => {
+    const mod = createMockModule();
+    const session = createSession({ createModel: mod.createModel, driver: 'external' });
+    const mode = createLabMode({ session, module: mod, stage: null });
+
+    mode.handle(intents.applyPreset('case-clogged'));
+    mode.onReset();
+    expect(mode.activePreset).toBe(null);
+    expect(session.model.params.rpm).toBe(800);
+    expect(session.model.faults.filterClog).toBe(0);
+  });
 });

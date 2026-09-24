@@ -7,6 +7,12 @@ import { INTENT_TYPES } from '../intents.js';
  * @param {import('../types.js').ModeContext} ctx
  * @returns {import('../types.js').GameMode}
  */
+// Un intent sólo escribe un valor del mismo tipo que el actual, y los números deben ser finitos (§6).
+function accepts(current, value) {
+  if (typeof value !== typeof current) return false;
+  return typeof value !== 'number' || Number.isFinite(value);
+}
+
 export function createLabMode(ctx) {
   const { session, module } = ctx;
   const model = session.model;
@@ -41,13 +47,13 @@ export function createLabMode(ctx) {
       if (!intent) return [];
       switch (intent.type) {
         case INTENT_TYPES.setParam:
-          if (model.params && intent.key in model.params) {
+          if (model.params && intent.key in model.params && accepts(model.params[intent.key], intent.value)) {
             model.params[intent.key] = intent.value;
           }
           return [];
 
         case INTENT_TYPES.setFault:
-          if (model.faults && intent.key in model.faults) {
+          if (model.faults && intent.key in model.faults && accepts(model.faults[intent.key], intent.value)) {
             model.faults[intent.key] = intent.value;
           }
           return [];
@@ -84,6 +90,10 @@ export function createLabMode(ctx) {
         default:
           return [];
       }
+    },
+    onReset() {
+      activePreset = null;
+      session.reset();
     },
     update(simDt) {
       return [];
