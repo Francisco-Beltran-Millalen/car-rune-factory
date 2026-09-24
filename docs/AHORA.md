@@ -42,6 +42,9 @@ Tareas A0–A9:
 - **A7**: renderer SVG genérico.
 - **A8**: prueba con Phaser 4.2.
 - **A9**: armar circuitos.
+- **A10**: plan del vehículo con sistemas entrelazados y casos al estilo
+  Carmen Sandiego (sección 14).
+- **A11+**: los demás sistemas sobre el solver.
 
 Con un solo agente: A0 → A1 → A2 → A3 → A4 → …
 

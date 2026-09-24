@@ -14,8 +14,13 @@ registro de la conversación) y deja en pausa T7–T10 del plan maestro.
 
 ## 1. Contexto y objetivo
 
-El norte (`docs/NORTE.md`) es un *mechanic simulator* sencillo hecho de
-diagramas: jueguitos con el mouse y texto, sin personaje. Los tres primeros
+El norte (`docs/NORTE.md`) es un **juego de diagnóstico de autos en 2D al
+estilo Carmen Sandiego**: llega un caso, se juntan pistas, se descartan
+sospechosos y se acusa (y repara) la pieza culpable, como en *Car Mechanic
+Simulator*, *Wrench* o *My Summer Car*, pero con diagramas, mouse y texto,
+sin personaje. Los sistemas del auto **se entrelazan** (mapa en
+`docs/SISTEMAS.md`), y el objetivo final son **casos entre sistemas**
+(sección 14). Todo lo anterior son etapas hacia eso. Los tres primeros
 jueguitos son:
 
 - **E1 Nombrar piezas** (quiz).
@@ -180,6 +185,18 @@ para tests y para depurar ("la etapa 3, intento 2, me dio X").
 - **§26** Los ids de fallas son API pública estable: `<partId>.<falla>` (p.
   ej. `filter.clog`). Etapas, guardado y tests los usan. Renombrar uno exige
   migración.
+- **§28** Señales del vehículo con **un solo dueño**: cada señal compartida
+  entre sistemas (`engine.rpm`, `engine.state`, `engine.coolantTemp`,
+  `fuel.mixture`, `ignition.spark`…) tiene exactamente un sistema que la
+  escribe. Los demás la leen con un paso de retraso (§25). Un test fija el
+  dueño de cada señal.
+- **§29** Todo sistema corre aislado: cuando un sistema está solo (el
+  laboratorio o un caso de un solo sistema), las señales que leería de otros
+  las entrega un **stub ideal** (chispa siempre buena, 90 °C, 13,5 V…). El
+  mismo sistema funciona dentro del vehículo sin cambios.
+- **§30** Los fluidos no se mezclan salvo por un elemento de falla explícito
+  (p. ej. `headGasket.breach`). Nunca por una conexión accidental entre
+  redes de dominios distintos (lo impide `validate`).
 - **§27** Guardado versionado (`crf.save.v1`), leído con try/catch y con
   valores por defecto si falta o está corrupto. Nunca bloquea el juego.
 
@@ -763,7 +780,7 @@ Reglas comunes:
 
 | # | Tarea | Depende | Archivos propios | Aceptación |
 |---|---|---|---|---|
-| **A0** | Docs: leyes §17 (enmienda) y §19–§27 en `ARCHITECTURE.md`; sección "Juego" en `CONTRATOS.md` (4.1–4.8); actualizar `AHORA.md`, `NORTE.md` y `SISTEMAS.md` | — | `docs/**` | Docs consistentes; `ARCHITECTURE.md` ≤ 200 líneas |
+| **A0** | Docs: leyes §17 (enmienda) y §19–§30 en `ARCHITECTURE.md`; sección "Juego" en `CONTRATOS.md` (4.1–4.8); actualizar `AHORA.md`, `NORTE.md` y `SISTEMAS.md` | — | `docs/**` | Docs consistentes; `ARCHITECTURE.md` ≤ 200 líneas |
 | **A1** | Sesión + intents + labMode + shell nuevo + `legacyRenderer` + paneles que emiten intents + router con rutas nuevas | A0 | `src/game/{session,intents,types}.js`, `src/game/modes/lab.js`, `src/render/legacy/`, `src/core/{shell,router}.js`, `src/core/ui/*` (firmas nuevas), `src/modules/fuel/index.js` (sólo `defaultParams`/`defaultFaults`), `tests/game/**` | Los 54 tests actuales pasan. Tests nuevos: sesión con driver externo, intents, labMode (params/fallas/presets), `parseHash`. **El laboratorio se ve y se usa igual** (checklist). Ningún `model.params[...] =` fuera de modos/tests (`grep` en la checklist de cierre) |
 | **A2** | E1 Quiz + HUD + guardado + campaña + portada con Etapas + separar las etiquetas de nombre en la vista del combustible | A1 | `src/game/modes/quiz.js`, `src/game/{save,campaign}.js`, `src/game/stages/fuel-quiz-*.js`, `src/ui/hud.js`, `src/core/shell.js` (portada), `src/modules/fuel/view.js` (sólo clases de etiquetas), `tests/game/quiz*.js` | Tests: generación de preguntas con semilla, distractores válidos (sin inyectores entre sí), puntaje/estrellas, save con storage en memoria y storage corrupto. Checklist: las 2 etapas jugables, sin etiquetas delatoras |
 | **A3** | E2 Diagnóstico + `faultCatalog` del combustible + herramientas + visibilidad de indicios en la vista del combustible | A2 | `src/game/modes/diagnosis.js`, `src/game/stages/fuel-diag-*.js`, `src/modules/fuel/faults.js` (catálogo), `src/modules/fuel/diagnosis.js` (perceptibles, herramientas, síntomas), `src/modules/fuel/index.js` (sumar `faultCatalog` y `diagnosis`), `src/modules/fuel/view.js` (lectura de fallas reveladas), `tests/game/diagnosis*.js` | Tests: la falla elegida por semilla es la esperada; las herramientas agregan lecturas; reparar la pieza correcta sana el modelo; entregar sano gana / con falla penaliza; el presupuesto agotado pierde; la suciedad del filtro no se revela sin estar en `revealedFaults`. Checklist: las 3 etapas |
@@ -773,6 +790,8 @@ Reglas comunes:
 | **A7** | Presenter + renderer SVG genérico + drawers; coordenadas de `view.js` → `fuel/circuit.js`; el combustible deja el legacy | A6 | `src/presenter/**`, `src/render/svg/**`, `src/modules/fuel/{circuit,index}.js`, `tests/presenter/**` | Tests del presenter (canales y flujos por conexión desde un estado conocido; filtrado de indicios). Paridad visual con la checklist del combustible (el usuario). `legacyRenderer` queda sin uso y se borra junto con `fuel/view.js` |
 | **A8** | Prueba con Phaser (rama aparte) | A7 | rama `spike/phaser`, `docs/decisiones/0001-phaser.md` | Las 7 preguntas de 8.6 respondidas con mediciones. Decisión tomada **con el usuario** |
 | **A9** | E4 Armar circuitos | A8 | según la decisión | Diseño detallado en un plan propio (`docs/plans/`) antes de programar |
+| **A10** | **Plan** del vehículo y los casos entre sistemas (sección 14): contratos de `VehicleDef`, señales y `engineCore`; tabla de dueños de señales; formato de caso; análisis del tamaño del solver por componente conexa | A6 (y conviene A3 jugado) | `docs/plans/AAAA-MM-DD-vehiculo.md` | Plan con el mismo nivel de detalle que éste, con revisión adversaria. **Sin código** |
+| A11+ | Sistemas 2–5 (4 tiempos, encendido, refrigeración, lubricación) sobre el solver, cada uno con su stub de señales (§29), y luego el vehículo y los casos | A10 | por sistema | Por plan propio |
 
 Paralelismo: `A0 → A1 → A2 → A3` y, en paralelo, `A0 → A4 → A5`. Las dos
 ramas se juntan en `A6 → A7 → A8 → A9`. **Con un solo agente**, el orden es
@@ -812,6 +831,10 @@ Valores por defecto para no bloquear; el usuario puede cambiarlos:
 - **Economía del diagnóstico**: presupuesto por etapa (no acumulado entre
   etapas).
 - **Castigo**: entrega fallida −150; cambiar una pieza sana se cobra igual.
+- **Estilo del diagnóstico**: E2 ya se diseña con el vocabulario de la
+  sección 14.3: reclamo, perceptibles, herramientas, sospechosos, orden de
+  trabajo. Así crece hacia los casos entre sistemas sin rehacerlo. Lo que E2
+  **no** tiene todavía: la entrevista, el mapa del auto y los rangos.
 
 ## 13. Revisión adversaria (2026-09-23) — triaje
 
@@ -839,3 +862,97 @@ Revisor: subagente Sonnet sin contexto previo. Verificó contra el código
 Además, del triaje: el estanque con dos puertos y "presión 0" se resuelve con
 el nodo fijo `tank`, distinto de `atm` (8.1), así el retorno vuelve y las
 fugas se pierden.
+
+## 14. Vehículo: sistemas entrelazados y casos entre sistemas (diseño general; detalle en A10)
+
+### 14.1 Por qué importa desde ya
+
+"El auto no parte" tiene sospechosos en cuatro sistemas: batería, arranque,
+combustible y encendido. Un caso al estilo Carmen Sandiego necesita que esos
+sistemas **coexistan y se afecten** en una misma simulación. Si cada módulo
+decide solo si el motor "anda" (hoy `fuel/model.js` tiene su propio
+`engineState`), no hay forma de componerlos. Lo que se decide ahora para no
+cerrarse esa puerta:
+
+1. **Tres tipos de acople** (mapa en `docs/SISTEMAS.md`):
+   - **Red eléctrica compartida (fuerte).** Es una sola red para todo el
+     vehículo. En el solver, las piezas eléctricas de cada sistema cuelgan
+     de nodos de **bus** con nombre (`bus.12v`, `bus.chassis`). El
+     compilador del vehículo une los buses de todos los sistemas en los
+     mismos nodos.
+   - **Señales (débil).** Rpm, estado del motor, temperatura, mezcla y
+     chispa van por un **bus de señales** con dueño único (§28), leído con
+     un paso de retraso.
+   - **Calor y giro del eje.** Son señales. El calor de combustión es una
+     entrada del sistema de refrigeración; las bombas movidas por correa
+     leen `engine.rpm`.
+2. **`engineCore`**: un controlador a nivel vehículo, **dueño** de
+   `engine.state` y `engine.rpm`. Decide si el motor parte, falla, se
+   detiene o se daña con **todos** los aportes:
+   - `fuel.mixture` (combustible);
+   - `ignition.spark` (encendido);
+   - `air.flow` (admisión);
+   - `engine.compression` (4 tiempos);
+   - `lubrication.pressure`;
+   - `engine.coolantTemp`;
+   - `electrical.crankVoltage` (el arranque gira sólo si hay tensión).
+
+   El `engineState` que hoy está en `fuel/model.js` es una **versión de un
+   solo aporte** de `engineCore`. En el laboratorio del combustible queda
+   igual (con stubs ideales para los otros aportes, §29), y cuando exista el
+   vehículo pasa a `engineCore` sin cambiar los tests del combustible.
+3. **Los fluidos no se mezclan** (§30). Los cruces por falla (empaquetadura
+   de culata, inyector que diluye el aceite) son elementos de falla que
+   conectan redes a propósito y generan pistas: aceite con refrigerante, humo
+   blanco.
+
+### 14.2 Contratos a detallar en A10 (bosquejo)
+
+```js
+/** VehicleDef */
+{ id: 'hatch-1', title: 'Hatchback 1.6',
+  systems: [{ id: 'fuel', circuit: 'fuel-return' }, { id: 'ignition', circuit: 'cop-4' }, …],
+  buses: { '12v': 'electric', chassis: 'electric' },          // nodos compartidos
+  signals: { 'engine.rpm': { owner: 'engineCore', unit: 'rpm' }, 'fuel.mixture': { owner: 'fuel', unit: '' }, … },
+  engineCore: { params: { … } } }
+```
+
+- `compileVehicle(def)` compila cada circuito, une los buses y arma **un
+  solver por componente conexa**. Hidráulico-combustible + eléctrico quedan
+  en una componente (por la bomba); refrigeración y aceite en otras. Así
+  ningún sistema lineal crece a cien nodos densos.
+
+  *Riesgo*: 100×100 denso cuesta ~27 veces más que 30×30. A10 lo mide con
+  el benchmark de A4. Si no alcanza: un solver disperso, o cortar el acople
+  bomba↔red eléctrica con un paso de retraso.
+- **Stub por sistema** (§29): `stubs.js` con los valores ideales de cada
+  señal que el sistema lee.
+
+### 14.3 El bucle de juego "Carmen Sandiego" (diseño general)
+
+| Carmen Sandiego | Aquí |
+|---|---|
+| El caso (el robo) | **Orden de ingreso**: el reclamo del cliente, con su propia voz ("tironea en subida", "no parte en las mañanas") |
+| Pistas de testigos | **Entrevista** (preguntas cerradas: ¿desde cuándo?, ¿en frío o en caliente?) y **prueba de manejo** (mover los controles y mirar los perceptibles) |
+| Viajar entre ciudades | **Mapa del auto**: un diagrama general de los sistemas. Entrar a un sistema cuesta tiempo; dentro se usan herramientas (manómetro, multímetro, escáner, inspección) |
+| El dossier de sospechosos | **Sospechosos**: piezas candidatas que el jugador marca y descarta. El juego **no** las descarta solo |
+| La orden de arresto | **Orden de trabajo**: el jugador escribe (elige) la pieza y la reparación **antes** de cobrar. Con una orden equivocada, el cliente vuelve |
+| El reloj | Tiempo del taller + presupuesto del cliente |
+| Rangos (detective → jefe) | **Rangos del taller**: aprendiz → mecánico → maestro → jefe de taller. Desbloquean sistemas, herramientas y casos entre sistemas |
+
+- **Pistas honestas**: los síntomas los produce la simulación, no un
+  guion.
+- **Conocimiento como datos**: la relación síntoma ↔ sistemas ↔ fallas
+  (`content/diagnostics.js`) sirve para generar casos, dar pistas
+  graduadas y evaluar si una orden de trabajo "tenía sentido" (hubo pistas
+  que la justificaban).
+- La matriz de `SISTEMAS.md` define qué pistas **descartan** sistemas: un
+  síntoma de frenos no incrimina al encendido. Los casos con "pista falsa"
+  útil (servo de frenos → ralentí inestable) salen de las celdas `○` entre
+  sistemas lejanos.
+- **Progresión** (E2 del plan es la primera versión, dentro de un solo
+  sistema):
+  - casos de un sistema (combustible);
+  - casos de un sistema con sospechosos de dos sistemas (la bomba no
+    funciona: ¿relé, fusible o batería?);
+  - casos entre sistemas sobre el vehículo.
