@@ -57,8 +57,11 @@ const FIRING_OFFSETS = [0, 540, 180, 360]; // inyectores 1..4 con orden 1-3-4-2
 const KINJ = K.injFlow3bar / Math.sqrt(3);
 
 export function createFuelModel(overrides = {}) {
-  const params = { ...DEFAULT_PARAMS, ...overrides.params };
-  const faults = { ...DEFAULT_FAULTS, ...overrides.faults };
+  // reset() vuelve a estos valores iniciales, overrides incluidos.
+  const initialParams = { ...DEFAULT_PARAMS, ...overrides.params };
+  const initialFaults = { ...DEFAULT_FAULTS, ...overrides.faults };
+  const params = { ...initialParams };
+  const faults = { ...initialFaults };
   const state = {};
   let rng;
   let prevKey;
@@ -227,8 +230,8 @@ export function createFuelModel(overrides = {}) {
   }
 
   function reset() {
-    Object.assign(params, DEFAULT_PARAMS);
-    Object.assign(faults, DEFAULT_FAULTS);
+    Object.assign(params, initialParams);
+    Object.assign(faults, initialFaults);
     model.time = 0;
     initState();
   }
