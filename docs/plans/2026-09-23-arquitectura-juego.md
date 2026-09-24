@@ -253,7 +253,7 @@ fallen en los tests.
 | `replacePart` | `{ partId }` | HUD | diagnosis |
 | `deliver` | `{}` | HUD ("Entregar auto") | diagnosis |
 | `markSuspect` | `{ partId, mark: 'suspect'\|'cleared'\|null }` | HUD / renderer | diagnosis (reservado para 14.3; A3 lo acepta y lo guarda en su estado aunque no lo puntúe) |
-| `placePart` | `{ type, x, y }` | renderer (arrastre desde paleta) | assembly |
+| `placePart` | `{ partType, x, y }` (no `type`: chocaría con `intent.type`) | renderer (arrastre desde paleta) | assembly |
 | `movePart` | `{ partId, x, y }` | renderer | assembly |
 | `rotatePart` | `{ partId }` | renderer / tecla R | assembly |
 | `deletePart` | `{ partId }` | renderer / tecla Supr | assembly |
@@ -302,6 +302,7 @@ createXMode(ctx) → {
   handle(intent): ModeEvent[],
   update(simDt): ModeEvent[],
   hud(): HudModel,           // datos para el panel HUD (4.7)
+  onReset?(),                // opcional: ⟲ lo llama en vez de session.reset() (agregado en la revisión de A1)
   get status(): 'playing'|'won'|'lost'|'free',
   destroy(),
 }
@@ -506,6 +507,10 @@ Rutas: `#/lab/<moduleId>` (y `#/<moduleId>` redirige ahí, compatibilidad),
 
 - **Al empezar**: `rng` elige una falla del pool y el modo la aplica con la
   misma ruta que un intent interno (`modelKey` ← `value`).
+- **`onReset()` obligatorio** en este modo: el botón ⟲ reinicia el auto
+  (`session.reset()`) y el modo **vuelve a aplicar** la falla escondida y
+  las reparaciones ya hechas. Sin esto, ⟲ borraría la falla (hallazgo de la
+  revisión de A1). Test: tras `onReset`, la falla sigue activa.
 - **Datos del diagnóstico por módulo**: `src/modules/fuel/diagnosis.js`
   (archivo nuevo, dueño A3), expuesto en el descriptor como `diagnosis`:
 

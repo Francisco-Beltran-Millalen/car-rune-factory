@@ -66,6 +66,24 @@ Orden con un solo agente: A0 (✅) → A1 → A2 → A3 → A4 → …
    - **Consola**: abrir F12, sin errores de consola. En la consola ejecutar `window.__sim.model.state` y verificar que el estado del modelo es accesible.
    - **Verificación de invariante**: ejecutar `grep -rn "params.*=" src/` y comprobar que no hay escrituras directas a `model.params` fuera de `src/game/modes/` ni constructores.
 
+## REVISIÓN 2026-09-23 — A0 + A1 (segundo agente)
+
+Resultado: bien encaminado. Leyes y contratos copiados, cero escrituras a
+`params`/`faults` fuera de modos, 54 tests originales intactos + 19 nuevos.
+Corregido en la revisión:
+- **`[hidden]` no ocultaba**: `.ctl { display: grid }` le ganaba al
+  atributo. Regla global `[hidden] { display: none !important }` en
+  `styles.css`.
+- **`hoverPart` en cada `pointermove`**, con re-sincronización de paneles:
+  ahora sólo se emite al cambiar de pieza, y el hover no dispara `syncAll`.
+- **`placePart`**: el contrato decía `{ type }` (choca con `intent.type`);
+  el código ya usaba `partType`. Se corrigió el doc y el plan (el error era
+  del plan).
+- **⟲ borraría la falla escondida del diagnóstico**: el shell ahora llama
+  `mode.onReset()` si existe. A3 debe implementarlo (plan §7).
+- Pendiente conocido para A2/A3: el shell pasa `rng: null, save: null` al
+  modo, y `narration: 'hints'` todavía se trata como `'full'`.
+
 ## CERRADO 2026-09-23 — A1 sesión, intents, labMode, legacyRenderer
 
 - `src/game/{types,intents,session}.js`: tipos JSDoc, catálogo de intents y constructores puros, sesión desacoplada del shell con soporte para driver `raf` y `external`.

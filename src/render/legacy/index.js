@@ -14,6 +14,7 @@ import { intents } from '../../game/intents.js';
  */
 export function createLegacyRenderer({ container, module, emit, model, tooltip }) {
   let selectedPartId = null;
+  let hoveredPartId = null;
   let currentUi = { labels: true, tooltips: true };
 
   const svg = el('svg', {
@@ -46,7 +47,10 @@ export function createLegacyRenderer({ container, module, emit, model, tooltip }
   const onMove = (e) => {
     const p = e.target.closest?.('[data-part]');
     const partId = p?.dataset.part || null;
-    emit(intents.hoverPart(partId));
+    if (partId !== hoveredPartId) {
+      hoveredPartId = partId;
+      emit(intents.hoverPart(partId));
+    }
 
     if (!currentUi.tooltips || !partId) {
       if (tooltip) tooltip.hidden = true;
@@ -65,7 +69,10 @@ export function createLegacyRenderer({ container, module, emit, model, tooltip }
   };
 
   const onLeave = () => {
-    emit(intents.hoverPart(null));
+    if (hoveredPartId !== null) {
+      hoveredPartId = null;
+      emit(intents.hoverPart(null));
+    }
     if (tooltip) tooltip.hidden = true;
   };
 

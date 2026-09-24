@@ -184,7 +184,7 @@ Constantes + constructores (`intents.setParam(key, value)`) para que los typos f
 | `replacePart` | `{ partId }` | HUD | diagnosis |
 | `deliver` | `{}` | HUD ("Entregar auto") | diagnosis |
 | `markSuspect` | `{ partId, mark: 'suspect'\|'cleared'\|null }` | HUD / renderer | diagnosis (reservado; A3 lo acepta y guarda) |
-| `placePart` | `{ type, x, y }` | renderer (arrastre desde paleta) | assembly |
+| `placePart` | `{ partType, x, y }` (no `type`: chocaría con `intent.type`) | renderer (arrastre desde paleta) | assembly |
 | `movePart` | `{ partId, x, y }` | renderer | assembly |
 | `rotatePart` | `{ partId }` | renderer / tecla R | assembly |
 | `deletePart` | `{ partId }` | renderer / tecla Supr | assembly |
@@ -231,6 +231,7 @@ createXMode(ctx) → {
   handle(intent): ModeEvent[],
   update(simDt): ModeEvent[],
   hud(): HudModel,           // datos para el panel HUD (6.7)
+  onReset?(),                // opcional: lo llama el botón ⟲ en vez de session.reset(). Un modo con estado oculto en el modelo (la falla del diagnóstico) resetea y lo vuelve a aplicar
   get status(): 'playing'|'won'|'lost'|'free',
   destroy(),
 }

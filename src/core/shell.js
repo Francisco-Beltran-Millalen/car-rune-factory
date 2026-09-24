@@ -205,7 +205,9 @@ export function createShell(root, modules, nav) {
     }
 
     function resetAll() {
-      session.reset();
+      // Un modo con estado oculto en el modelo (la falla del diagnóstico) lo re-aplica en onReset.
+      if (typeof mode.onReset === 'function') mode.onReset();
+      else session.reset();
       presetNote.textContent = '';
       syncAll();
     }
@@ -228,7 +230,7 @@ export function createShell(root, modules, nav) {
           presetNote.textContent = ev.text;
         }
       }
-      syncAll();
+      if (intent.type !== INTENT_TYPES.hoverPart) syncAll();
     }
 
     function applyUi(ui) {
