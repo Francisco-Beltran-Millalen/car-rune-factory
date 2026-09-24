@@ -26,20 +26,26 @@ Orden: T0-a → T0-b → {T1, T2} → {T3, T4, T5} → T6.
 Detalle de archivos y criterios de aceptación de cada tarea: sección 12 de
 `plans/2026-09-22-plan-maestro.md`.
 
-## PRÓXIMO — definir la dirección de juego (sesión 2026-09-23)
+## PRÓXIMO — arquitectura de juego (plan revisado, esperando aprobación)
 
-El usuario fijó el norte: *mechanic simulator* con diagramas, sin personaje,
-todo con el mouse (ver `NORTE.md`). Propuesta de etapas en
-`plans/2026-09-22-hoja-de-ruta-juego.md`:
-- E1 nombrar piezas;
-- E2 diagnóstico;
-- E3 solver de redes + combustible portado;
-- E4 armar circuitos con Phaser;
-- E5+ resto de módulos.
+Plan: `plans/2026-09-23-arquitectura-juego.md` (revisión adversaria hecha,
+triaje en su sección 13). Reemplaza el orden de
+`plans/2026-09-22-hoja-de-ruta-juego.md`.
 
-**Queda en pausa** la Fase 2 original (T7–T10) hasta diseñar eso: la
-refrigeración y la lubricación deberían nacer sobre el solver. El plan trae
-preguntas abiertas.
+Tareas A0–A9:
+- **A0**: docs (leyes §19–§27, contratos "Juego").
+- **A1**: sesión, intents, labMode, legacyRenderer.
+- **A2**: quiz.
+- **A3**: diagnóstico.
+- **A4–A5**: solver, elementos, circuitos.
+- **A6**: combustible sobre el solver, validado contra el modelo actual.
+- **A7**: renderer SVG genérico.
+- **A8**: prueba con Phaser 4.2.
+- **A9**: armar circuitos.
+
+Con un solo agente: A0 → A1 → A2 → A3 → A4 → …
+
+**Siguiente paso:** el usuario aprueba el plan → A0.
 
 ## Fase 2 original (en pausa)
 
