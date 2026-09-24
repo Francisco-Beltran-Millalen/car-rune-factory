@@ -26,30 +26,39 @@ Orden: T0-a → T0-b → {T1, T2} → {T3, T4, T5} → T6.
 Detalle de archivos y criterios de aceptación de cada tarea: sección 12 de
 `plans/2026-09-22-plan-maestro.md`.
 
-## PRÓXIMO — implementar la arquitectura de juego (plan aprobado 2026-09-23)
+## EN CURSO — Arquitectura de juego (plan 2026-09-23)
 
-Plan: `plans/2026-09-23-arquitectura-juego.md` (dos revisiones adversarias,
-triaje en su sección 13). **Aprobado por el usuario para implementar.** Reemplaza el orden de
-`plans/2026-09-22-hoja-de-ruta-juego.md`.
+Plan: `plans/2026-09-23-arquitectura-juego.md`.
+Orden con un solo agente: A0 (✅) → A1 → A2 → A3 → A4 → …
 
-Tareas A0–A9:
-- **A0**: docs (leyes §19–§27, contratos "Juego").
-- **A1**: sesión, intents, labMode, legacyRenderer.
-- **A2**: quiz.
-- **A3**: diagnóstico.
-- **A4–A5**: solver, elementos, circuitos.
-- **A6**: combustible sobre el solver, validado contra el modelo actual.
-- **A7**: renderer SVG genérico.
-- **A8**: prueba con Phaser 4.2.
-- **A9**: armar circuitos.
-- **A10**: plan del vehículo con sistemas entrelazados y casos al estilo
-  Carmen Sandiego (sección 14).
-- **A11+**: los demás sistemas sobre el solver.
+| # | Tarea | Depende de | Estado |
+|---|---|---|---|
+| A0 | Docs: leyes §17, §19–§30 en ARCHITECTURE, contratos de juego 6.1–6.8 | — | ✅ |
+| A1 | Sesión + intents + labMode + shell nuevo + legacyRenderer + paneles DOM + router | A0 | ⏳ en curso |
+| A2 | Quiz (E1) + HUD + guardado + campaña + etiquetas de nombre separadas | A1 | ⏳ |
+| A3 | Diagnóstico (E2) + faultCatalog combustible + herramientas + visibilidad | A2 | ⏳ |
+| A4 | Solver nodal + linalg | A0 | ⏳ |
+| A5 | Elementos + circuito (compile/validate) + controladores base | A4 | ⏳ |
+| A6 | Combustible sobre el solver | A5, A3 | ⏳ |
+| A7 | Renderer SVG genérico | A6 | ⏳ |
+| A8 | Prueba con Phaser 4.2 | A7 | ⏳ |
+| A9 | Armar circuitos (E4) | A8 | ⏳ |
+| A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
 
-Con un solo agente: A0 → A1 → A2 → A3 → A4 → …
+**Siguiente paso:** A1 (sesión, intents, labMode, legacyRenderer).
 
-**Siguiente paso:** A0 (docs), luego A1. Cada tarea cierra con su bloque
-CERRADO aquí, `npm test` + `npm run build` en verde, y un commit.
+## CERRADO 2026-09-23 — A0 docs de arquitectura de juego
+
+- `docs/ARCHITECTURE.md`: enmienda a §17 (Phaser en A8) y leyes §19–§30
+  (capas, intents, modo puro, renderer y VisualState, catálogo por tipo,
+  solver, controladores, ids §26, guardado v1, dueño único de señales, stubs
+  ideales, no mezclar fluidos). 134 líneas (≤ 200).
+- `docs/CONTRATOS.md`: sección "Contratos de juego" agregada con contratos
+  6.1–6.8 (Session, Intents, ModeUi/Mode, Renderer, VisualState, faultCatalog,
+  HUD, Etapas y Save v1).
+- `docs/NORTE.md` y `docs/SISTEMAS.md` verificados con respecto al plan
+  `plans/2026-09-23-arquitectura-juego.md`.
+
 
 ## Fase 2 original (en pausa)
 

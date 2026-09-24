@@ -139,3 +139,195 @@ Cada lectura muestra el valor numérico y una sparkline (SVG polyline del histor
 ### 5.3 Tokens CSS (`:root`, con tema oscuro vía `prefers-color-scheme` y `[data-theme]`)
 `--bg --panel --fg --muted --line --accent --ok --warn --bad`
 Fluidos: `--fuel` (ámbar), `--air` (blanco/gris claro), `--coolant` (verde-azulado), `--coolant-hot` (rojo), `--oil` (marrón dorado), `--mixture` (azul claro), `--burn` (naranja), `--exhaust` (gris), `--electric` (amarillo), `--metal` (gris acero), `--vacuum` (violeta).
+
+## Contratos de juego
+
+### 6.1 Sesión — `src/game/session.js`
+
+Separa del shell la parte "simulación en marcha", para que modos y tests la usen sin DOM.
+
+```js
+/**
+ * @param {Object} o
+ * @param {() => Model} o.createModel
+ * @param {ReadoutSpec[]} o.readouts
+ * @param {'raf'|'external'} [o.driver]  'external': alguien llama session.tick(realDt)
+ * @param {(cb)=>number} [o.raf]  inyectable (tests)
+ * @returns {Session}
+ */
+createSession(o) → {
+  model,            // Model (CONTRATOS 4.2)
+  loop,             // createLoop existente; con driver 'external' nunca llama raf
+  recorder,         // createRecorder existente
+  tick(realDt),     // avanza loop + recorder; devuelve pasos
+  onFrame(cb),      // suscripción: cb(simDt) después de cada tick; devuelve unsubscribe
+  start(), stop(), reset(), destroy(),
+}
+```
+
+### 6.2 Intents — `src/game/intents.js`
+
+Constantes + constructores (`intents.setParam(key, value)`) para que los typos fallen en los tests.
+
+| type | payload | Emitido por | Lo usan |
+|---|---|---|---|
+| `setParam` | `{ key, value }` | panel de controles | lab, diagnosis (gratis), assembly (prueba) |
+| `setFault` | `{ key, value }` (`key` estilo §26) | panel de fallas | sólo lab |
+| `resetFaults` | `{}` | botón "Reparar todo" | lab |
+| `applyPreset` | `{ presetId }` | panel de casos | lab |
+| `action` | `{ name, args }` | botones (p. ej. `refill`) | lab, diagnosis |
+| `selectPart` | `{ partId }` | renderer (clic) | lab (ficha), quiz (respuesta), diagnosis (objetivo de herramienta) |
+| `hoverPart` | `{ partId \| null }` | renderer | lab (tooltip) |
+| `answer` | `{ choiceId }` | HUD | quiz (opción múltiple) |
+| `useTool` | `{ toolId, partId? }` | HUD / renderer | diagnosis |
+| `removeTool` | `{ toolId }` | HUD | diagnosis |
+| `replacePart` | `{ partId }` | HUD | diagnosis |
+| `deliver` | `{}` | HUD ("Entregar auto") | diagnosis |
+| `markSuspect` | `{ partId, mark: 'suspect'\|'cleared'\|null }` | HUD / renderer | diagnosis (reservado; A3 lo acepta y guarda) |
+| `placePart` | `{ type, x, y }` | renderer (arrastre desde paleta) | assembly |
+| `movePart` | `{ partId, x, y }` | renderer | assembly |
+| `rotatePart` | `{ partId }` | renderer / tecla R | assembly |
+| `deletePart` | `{ partId }` | renderer / tecla Supr | assembly |
+| `connect` | `{ from: 'part.port', to: 'part.port' }` | renderer | assembly |
+| `disconnect` | `{ linkId }` | renderer | assembly |
+| `runTest` | `{}` | HUD | assembly |
+| `nextStage` / `retry` / `quit` | `{}` | HUD | todos |
+
+La pausa, la velocidad y el reinicio del reloj **no** son intents: son control del tiempo de la sesión (timebar). En diagnóstico y armado el modo puede deshabilitar la velocidad 4× vía `ModeUi.timebar`.
+
+### 6.3 Modo — `src/game/modes/<id>.js`
+
+```js
+/**
+ * @typedef {Object} ModeContext
+ * @property {Session} session
+ * @property {ModuleDescriptor} module      // el sistema (fuel…)
+ * @property {Stage|null} stage             // null en lab
+ * @property {ReturnType<typeof createRng>} rng
+ * @property {SaveApi} save
+ *
+ * @typedef {Object} ModeUi                 // lo lee el shell/ui cada ~100 ms
+ * @property {string[]|'all'} controls      // keys de ControlSpec visibles
+ * @property {string[]|'all'|'none'} faults
+ * @property {string[]|'all'} readouts      // ids de ReadoutSpec visibles
+ * @property {'full'|'hints'|'off'} narration
+ * @property {boolean} labels               // etiquetas de texto del diagrama
+ * @property {boolean} tooltips
+ * @property {boolean} infoPanel
+ * @property {boolean} presets
+ * @property {{ maxScale:number }} timebar
+ * @property {{ draggable:boolean, connectable:boolean, palette:string[] }} edit
+ * @property {string[]} revealedFaults      // fallas cuyo indicio visual se muestra (§4.6)
+ *
+ * @typedef {Object} ModeEvent
+ * @property {'feedback'|'score'|'stageEnd'|'uiChanged'} type
+ * @property {'info'|'good'|'bad'} [level]
+ * @property {string} [text]
+ * @property {Object} [data]
+ */
+createXMode(ctx) → {
+  id,                        // 'lab' | 'quiz' | 'diagnosis' | 'assembly'
+  get ui(): ModeUi,
+  handle(intent): ModeEvent[],
+  update(simDt): ModeEvent[],
+  hud(): HudModel,           // datos para el panel HUD (6.7)
+  get status(): 'playing'|'won'|'lost'|'free',
+  destroy(),
+}
+```
+
+El descriptor de módulo (CONTRATOS 4.1) suma `defaultParams` y `defaultFaults` (los `DEFAULT_PARAMS`/`DEFAULT_FAULTS` que ya exporta `model.js`). `resetFaults` hace `Object.assign(model.faults, module.defaultFaults)` sin tocar params ni estado.
+
+`labMode` = comportamiento actual:
+- `ui` muestra todo, `narration: 'full'`, `labels: true`.
+- `setParam`/`setFault`/`applyPreset`/`action` se aplican tal cual. La lógica de presets de `shell.js:206-214` pasa al modo.
+- `status: 'free'`.
+
+### 6.4 Renderer — `src/render/<impl>/`
+
+```js
+/**
+ * @param {Object} o
+ * @param {HTMLElement} o.container          // .stage
+ * @param {CircuitDef|null} o.circuit        // null con legacyRenderer
+ * @param {ModuleDescriptor} o.module
+ * @param {(intent)=>void} o.emit            // único canal de salida (§20)
+ */
+createRenderer(o) → {
+  update(visual /* VisualState */, dt),
+  applyUi(ui /* ModeUi */),                  // etiquetas, tooltips, edición, fallas reveladas
+  highlight(partIds /* string[] */, style /* 'selected'|'correct'|'wrong'|'target' */),
+  resize(),
+  destroy(),
+}
+```
+
+- **`legacyRenderer`** (A1): envuelve `module.createView` existente. Traduce clics a `selectPart`. Con `labels:false`, `applyUi` oculta sólo los elementos con clase `part-label` (y apaga el tooltip). Es el único autorizado a leer el modelo (§22, excepción temporal).
+- **`svgRenderer`** (A7): genérico desde `CircuitDef` + drawers SVG.
+- **`phaserRenderer`** (A8/A9): igual contrato, drawers Phaser.
+
+### 6.5 VisualState — `src/presenter/`
+
+```js
+/**
+ * @typedef {Object} VisualState
+ * @property {Record<string, Record<string, number|string|boolean>>} parts  // partId → canales
+ * @property {Record<string, { flow:number, potential:number, air:number }>} links  // linkId → flujo con signo (L/h o A), presión/tensión media, fracción de aire
+ * @property {Record<string, string|number>} global   // p. ej. engineState, rpm
+ * @property {string[]} faultCues                     // indicios visibles ya filtrados por ModeUi.revealedFaults
+ */
+```
+
+### 6.6 Fallas: catálogo, visibilidad y reparación
+
+Cada módulo publica `faultCatalog` en su descriptor:
+
+```js
+{ id: 'filter.clog', modelKey: 'filterClog', part: 'filter', kind: 'severity',
+  healthy: 0, visibility: 'never',            // 'always' | 'inspect' | 'never'
+  repair: { action: 'replace', cost: 25, minutes: 15 },
+  symptoms: ['tironea al acelerar', 'pierde fuerza en subida'] }
+```
+
+- `faultCues` del presenter y el legacy sólo muestran indicios de fallas con `visibility:'always'` o incluidas en `ModeUi.revealedFaults`. En lab, `revealedFaults` = todas.
+
+### 6.7 HUD — `src/ui/hud.js`
+
+Panel DOM genérico que pinta un `HudModel`:
+
+```js
+{
+  title, brief,                              // enunciado de la etapa
+  stats: [{ label, value }],                 // puntaje, dinero, tiempo, racha
+  prompt?: { text, choices?: [{ id, label }] },   // quiz
+  tools?: [{ id, label, active, cost }],     // diagnosis
+  actions?: [{ intent, label, disabled }],   // p. ej. Entregar auto, Probar circuito
+  suspects?: [{ partId, label, mark: 'suspect'|'cleared'|null }],  // reservado (14.3; A3 lo acepta)
+  log: [{ level, text }],                    // últimos 6 feedbacks
+}
+```
+
+Emite intents al hacer clic (`answer`, `useTool`, `deliver`…).
+
+### 6.8 Etapas y guardado — `src/game/stages/`, `src/game/save.js`
+
+```js
+/** Stage */
+{ id: 'fuel-quiz-1', mode: 'quiz', module: 'fuel', title, brief, seed: 101,
+  unlockAfter: [],                   // ids de etapas previas
+  config: { … }                      // específico del modo
+}
+```
+
+- `src/game/campaign.js` exporta la lista ordenada.
+- La portada muestra "Laboratorio" (los módulos de siempre) y "Etapas" (bloqueadas/desbloqueadas).
+
+```js
+/** Save v1 (localStorage 'crf.save.v1') */
+{ version: 1,
+  stages: { [stageId]: { bestScore, stars /*0-3*/, completedAt /*ISO*/ } },
+  mastery: { [partType]: { seen, correct } } }
+```
+
+`createSave(storage = safeLocalStorage())` expone `get()`, `recordStage(id, result)`, `recordAnswer(partType, ok)` y `reset()`, con `storage` inyectable (Map en tests).
+
