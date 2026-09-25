@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { hash01, particleOffsets } from '../../src/core/particles.js';
-import { gaugeAngle } from '../../src/core/svg.js';
+import { hash01, particleOffsets } from '../../src/core/particles.ts';
+import { gaugeAngle } from '../../src/core/svg.ts';
 
 describe('particles (parte pura)', () => {
   it('hash01 es determinista y está en [0,1)', () => {

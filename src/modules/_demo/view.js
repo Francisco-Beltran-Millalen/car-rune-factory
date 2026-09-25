@@ -1,5 +1,5 @@
-import { el, group, pipe, label, gaugeSvg } from '../../core/svg.js';
-import { createFlow, PX_PER_LH } from '../../core/particles.js';
+import { el, group, pipe, label, gaugeSvg } from '../../core/svg.ts';
+import { createFlow, PX_PER_LH } from '../../core/particles.ts';
 
 export function createDemoView({ svg, model }) {
   const root = group(svg, { class: 'demo' });

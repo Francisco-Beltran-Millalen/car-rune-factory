@@ -38,7 +38,7 @@ cambian.
 |---|---|---|---|
 | TS0 | Herramientas: tsconfig, ESLint con leyes, knip, checker, `npm run check`, test de las leyes | — | ✅ |
 | TS1 | Core puro (`types, math, rng, loop, history`, `format` nuevo) | TS0 | ✅ |
-| TS2 | Core con DOM + paneles + router | TS1 | ⏳ |
+| TS2 | Core con DOM + paneles + router | TS1 | ✅ |
 | TS3 | Juego (`game/**`, `ui/hud`), intents como unión discriminada | TS2 | ⏳ |
 | TS4 | Módulos (`fuel`, `_demo`, registry) + comparación de estado idéntico | TS3 | ⏳ |
 | TS5 | Shell, legacy, main; `allowJs: false`; docs (§1, §7, §18, §31–§33) + checklist en Firefox | TS4 | ⏳ |
@@ -77,7 +77,35 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
 | A9 | Armar circuitos (E4) | A7 | ⏳ |
 | A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
 
-**Siguiente paso:** TS2 (core con DOM y UI: `dom, svg, particles, router` y `core/ui/*` a `.ts`). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+**Siguiente paso:** TS3 (juego: `game/**` y `ui/hud` a `.ts`, intents como unión discriminada). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+
+## CERRADO 2026-09-25 — TS2 core con DOM y UI
+
+- `src/core/{dom,svg,particles,router}.js` → `.ts`, `src/core/ui/*.js` → `.ts`, y
+  `tests/core/{particles,ui-pure}.test.js`, `tests/game/router.test.js` → `.ts`
+  (aserciones intactas; `_demo`, que sigue en JS hasta TS4, se ve por su forma de uso
+  con `unknown` + cast en el test).
+- `dom.ts`/`svg.ts` según el plan §8.5: `h`/`el` genéricos por `HTMLElement/SVGElementTagNameMap`,
+  `Attrs` como `unknown`, `Reflect.set`, e interfaces explícitas de `pipe`, `box`, `label`
+  y `gaugeSvg`. `router.ts` según §8.6 con `HashWindow`/`HashLocation` mínimas: el test
+  pasa su doble sin cast.
+- Paneles con `ControlSpec`/`FaultSpec`/`ReadoutSpec` de `types.ts`. `spec` se declara al
+  crear el item y `disabledWhen` se evalúa contra `AnyModel` (fallback con Proxy si no hay
+  `modelContext`), como pide el plan.
+- `emit` de los paneles: tipo genérico `I extends IntentLike` para que el shell TS5 infiera
+  `Intent` sin cast en el llamado; dentro hay un cast frontera porque `game/intents.js`
+  sigue en JS (D9: el modo valida).
+- Desviaciones/decisiones anotadas:
+  - `IntentLike` (`{ type: string }`) en `types.ts` hasta que TS3 traiga la unión real.
+  - `no-unnecessary-type-parameters` desactivada inline (con motivo) en los dos paneles, §33.
+  - `unbound-method` off sólo en tests (matchers de vitest sobre métodos de dobles).
+  - `append` de `dom.ts` recursivo (`.flat()` no tipaba el `Child` recursivo) y `setAttrs`
+    no stringifica objetos que no sean `dataset`/`style`; `infoPanel` usa `append` de dom
+    (acepta `null`) en vez de `container.append(...null)`.
+- `npm run check` verde: typecheck, lint 0 warnings, knip, 122 tests y build. `npm run dev`
+  arranca con el checker en 0 errores (la paridad visual del laboratorio la mira el usuario
+  en Firefox, §13).
+
 
 ## CERRADO 2026-09-25 — TS1 core puro
 

@@ -1,8 +1,8 @@
 // Vista SVG del sistema de combustible (docs/modules/fuel.md §7). Sólo lee model.state (§2, §9).
 
 import './fuel.css';
-import { el, group, pipe, label, gaugeSvg, roundedPathD } from '../../core/svg.js';
-import { createFlow } from '../../core/particles.js';
+import { el, group, pipe, label, gaugeSvg, roundedPathD } from '../../core/svg.ts';
+import { createFlow } from '../../core/particles.ts';
 import { clamp, wrap, expSmooth } from '../../core/math.ts';
 
 const PX_PER_LH = 4.6; // escala visual de este módulo (fuel.md §7)

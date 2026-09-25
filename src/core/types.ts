@@ -83,6 +83,11 @@ export interface PartInfo {
   failures: readonly string[];
 }
 
+/** Un intent es un objeto con `type`; el catálogo exacto vive en `game/intents.ts` (TS3). */
+export interface IntentLike {
+  readonly type: string;
+}
+
 export interface Narration {
   level: 'info' | 'warn' | 'bad';
   text: string;

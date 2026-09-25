@@ -1,38 +1,49 @@
 // Ficha de la pieza seleccionada + barra de narración "¿Qué está pasando?".
 
-import { h, clear } from '../dom.js';
+import { h, clear, append } from '../dom.ts';
+import type { Narration, PartInfo } from '../types.ts';
 
-/** @param {HTMLElement} container @param {Record<string, import('../types.ts').PartInfo>} parts */
-export function createInfoPanel(container, parts) {
-  function empty() {
+export interface InfoPanel {
+  show(partId: string): void;
+  clear(): void;
+}
+
+export function createInfoPanel(
+  container: HTMLElement,
+  parts: Readonly<Record<string, PartInfo>>,
+): InfoPanel {
+  function empty(): void {
     clear(container);
     container.append(h('p', { class: 'muted' }, 'Haz clic en una pieza del diagrama para ver qué es y cómo falla.'));
   }
   empty();
   return {
-    show(partId) {
+    show(partId): void {
       const p = parts[partId];
-      if (!p) return empty();
+      if (!p) {
+        empty();
+        return;
+      }
       clear(container);
-      container.append(
+      append(container, [
         h('h3', { class: 'part-name' }, p.name),
         p.what ? h('p', {}, h('strong', {}, '¿Qué es? '), p.what) : null,
         p.why ? h('p', {}, h('strong', {}, '¿Para qué sirve? '), p.why) : null,
         p.how ? h('p', {}, h('strong', {}, '¿Cómo funciona? '), p.how) : null,
-        p.failures?.length
+        p.failures.length
           ? h('div', {}, h('strong', {}, 'Fallas típicas'), h('ul', { class: 'failures' }, p.failures.map((f) => h('li', {}, f))))
           : null,
-      );
+      ]);
     },
     clear: empty,
   };
 }
 
-const ORDER = { bad: 0, warn: 1, info: 2 };
-const ICON = { bad: '⛔', warn: '⚠️', info: 'ℹ️' };
+const ORDER: Record<Narration['level'], number> = { bad: 0, warn: 1, info: 2 };
+const ICON: Record<Narration['level'], string> = { bad: '⛔', warn: '⚠️', info: 'ℹ️' };
 
 /** Ordena por severidad (estable) y se queda con `max`. Puro, testeable. */
-export function pickNarrations(list, max = 3) {
+export function pickNarrations(list: readonly Narration[], max = 3): Narration[] {
   return list
     .map((n, i) => ({ n, i }))
     .sort((a, b) => ORDER[a.n.level] - ORDER[b.n.level] || a.i - b.i)
@@ -40,13 +51,15 @@ export function pickNarrations(list, max = 3) {
     .map((x) => x.n);
 }
 
-/** @param {HTMLElement} container */
-export function createNarrationBar(container) {
+export interface NarrationBar {
+  set(list: readonly Narration[]): void;
+}
+
+export function createNarrationBar(container: HTMLElement): NarrationBar {
   let lastKey = '';
   return {
-    /** @param {import('../types.ts').Narration[]} list */
-    set(list) {
-      const top = pickNarrations(list || []);
+    set(list): void {
+      const top = pickNarrations(list);
       const key = top.map((n) => n.level + n.text).join('|');
       if (key === lastKey) return;
       lastKey = key;

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { parseHash, createRouter } from '../../src/core/router.js';
+import { parseHash, createRouter, type HashWindow } from '../../src/core/router.ts';
 
 describe('router (rutas nuevas A1)', () => {
   it('parseHash reconoce lab, stage, home y compatibilidad', () => {
@@ -23,13 +23,13 @@ describe('router (rutas nuevas A1)', () => {
   });
 
   describe('createRouter', () => {
-    let mockWin;
+    let mockWin: HashWindow;
 
     beforeEach(() => {
       mockWin = {
         location: {
           hash: '',
-          replace: vi.fn((newHash) => {
+          replace: vi.fn((newHash: string) => {
             mockWin.location.hash = newHash;
           }),
         },

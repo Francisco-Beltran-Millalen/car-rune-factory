@@ -1,7 +1,7 @@
 // Adaptador del módulo legacy a la interfaz Renderer (CONTRATOS.md §6.4).
 // Envuelve module.createView; única pieza autorizada a leer model (§22, temporal hasta A7).
 
-import { el, arrowMarkers } from '../../core/svg.js';
+import { el, arrowMarkers } from '../../core/svg.ts';
 import { intents } from '../../game/intents.js';
 
 // Estilos de resaltado del contrato 6.4: al aplicar uno se limpian todos.

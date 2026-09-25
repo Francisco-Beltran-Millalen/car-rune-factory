@@ -1,6 +1,6 @@
 import './styles.css';
 import { modules } from './modules/registry.js';
-import { createRouter } from './core/router.js';
+import { createRouter } from './core/router.ts';
 import { createShell } from './core/shell.js';
 
 const router = createRouter((route) => shell.route(route));

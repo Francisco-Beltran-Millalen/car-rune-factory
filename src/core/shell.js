@@ -1,11 +1,11 @@
 // Layout de la app + composición de sesión, modo, renderer y paneles (CONTRATOS.md §6).
 
-import { h, clear } from './dom.js';
-import { createControlsPanel } from './ui/controls.js';
-import { createFaultsPanel } from './ui/faults.js';
-import { createReadoutsPanel } from './ui/readouts.js';
-import { createInfoPanel, createNarrationBar } from './ui/infoPanel.js';
-import { createTimebar } from './ui/timebar.js';
+import { h, clear } from './dom.ts';
+import { createControlsPanel } from './ui/controls.ts';
+import { createFaultsPanel } from './ui/faults.ts';
+import { createReadoutsPanel } from './ui/readouts.ts';
+import { createInfoPanel, createNarrationBar } from './ui/infoPanel.ts';
+import { createTimebar } from './ui/timebar.ts';
 import { createSession } from '../game/session.js';
 import { createLabMode } from '../game/modes/lab.js';
 import { createQuizMode } from '../game/modes/quiz.js';
@@ -15,7 +15,7 @@ import { createLegacyRenderer } from '../render/legacy/index.js';
 import { intents, INTENT_TYPES } from '../game/intents.js';
 import { createHud } from '../ui/hud.js';
 import { createRng } from './rng.ts';
-import { parseHash } from './router.js';
+import { parseHash } from './router.ts';
 
 const NARRATE_EVERY = 0.25; // s reales
 const SYNC_EVERY = 0.1;

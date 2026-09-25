@@ -1,6 +1,6 @@
 // HUD de etapas (CONTRATOS.md §6.7): pinta un HudModel y emite intents (§20).
 
-import { h, clear } from '../core/dom.js';
+import { h, clear } from '../core/dom.ts';
 import { intents } from '../game/intents.js';
 
 /**

@@ -371,6 +371,8 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-non-null-assertion': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
+      // Los matchers de vitest referencian métodos de dobles (vi.fn).
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
 
