@@ -1,6 +1,8 @@
 // Etapa 2 del quiz de combustible (E1): los 3 tipos (find/name/purpose) y todas las piezas.
 
-export default {
+import type { Stage } from '../types.ts';
+
+const stage: Stage = {
   id: 'fuel-quiz-2',
   mode: 'quiz',
   module: 'fuel',
@@ -15,3 +17,5 @@ export default {
     sameConcept: [['injector1', 'injector2', 'injector3', 'injector4']],
   },
 };
+
+export default stage;

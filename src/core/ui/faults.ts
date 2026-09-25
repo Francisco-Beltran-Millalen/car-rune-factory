@@ -1,6 +1,6 @@
 // Panel de fallas generado desde FaultSpec[] (§8). Emite intents (§20).
 
-import { intents } from '../../game/intents.js';
+import { intents } from '../../game/intents.ts';
 import { h } from '../dom.ts';
 import type { FaultSpec, IntentLike, ParamRecord, ParamValue } from '../types.ts';
 import { segmented } from './controls.ts';

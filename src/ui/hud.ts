@@ -1,23 +1,24 @@
 // HUD de etapas (CONTRATOS.md §6.7): pinta un HudModel y emite intents (§20).
 
-import { h, clear } from '../core/dom.ts';
-import { intents } from '../game/intents.js';
+import { clear, h } from '../core/dom.ts';
+import { intents, type Intent } from '../game/intents.ts';
+import type { HudModel } from '../game/types.ts';
 
-/**
- * @param {HTMLElement} container
- * @param {(intent: import('../game/types.js').Intent) => void} emit
- */
-export function createHud(container, emit) {
+export interface Hud {
+  update(model: HudModel | null): void;
+}
+
+export function createHud(container: HTMLElement, emit: (intent: Intent) => void): Hud {
   let lastKey = '';
 
-  function render(model) {
+  function render(model: HudModel | null): void {
     clear(container);
     if (!model) return;
 
     if (model.title) container.append(h('h3', { class: 'hud-title' }, model.title));
     if (model.brief) container.append(h('p', { class: 'hud-brief' }, model.brief));
 
-    if (model.stats?.length) {
+    if (model.stats.length) {
       container.append(
         h(
           'div',
@@ -29,15 +30,26 @@ export function createHud(container, emit) {
       );
     }
 
-    if (model.prompt) {
-      const block = h('div', { class: 'hud-prompt' }, h('p', { class: 'hud-prompt-text' }, model.prompt.text));
-      if (model.prompt.choices?.length) {
+    const prompt = model.prompt;
+    if (prompt) {
+      const block = h('div', { class: 'hud-prompt' }, h('p', { class: 'hud-prompt-text' }, prompt.text));
+      if (prompt.choices?.length) {
         block.append(
           h(
             'div',
             { class: 'hud-choices' },
-            model.prompt.choices.map((c) =>
-              h('button', { type: 'button', class: 'btn hud-choice', onclick: () => emit(intents.answer(c.id)) }, c.label),
+            prompt.choices.map((c) =>
+              h(
+                'button',
+                {
+                  type: 'button',
+                  class: 'btn hud-choice',
+                  onclick: () => {
+                    emit(intents.answer(c.id));
+                  },
+                },
+                c.label,
+              ),
             ),
           ),
         );
@@ -56,7 +68,9 @@ export function createHud(container, emit) {
               {
                 type: 'button',
                 class: `btn hud-tool${t.active ? ' active' : ''}`,
-                onclick: () => emit(t.active ? intents.removeTool(t.id) : intents.useTool(t.id)),
+                onclick: () => {
+                  emit(t.active ? intents.removeTool(t.id) : intents.useTool(t.id));
+                },
               },
               `${t.label}${t.cost ? ` (${t.cost} min)` : ''}`,
             ),
@@ -70,7 +84,20 @@ export function createHud(container, emit) {
         h(
           'div',
           { class: 'hud-actions' },
-          model.actions.map((a) => h('button', { type: 'button', class: 'btn', disabled: a.disabled, onclick: () => emit(a.intent) }, a.label)),
+          model.actions.map((a) =>
+            h(
+              'button',
+              {
+                type: 'button',
+                class: 'btn',
+                disabled: a.disabled,
+                onclick: () => {
+                  emit(a.intent);
+                },
+              },
+              a.label,
+            ),
+          ),
         ),
       );
     }
@@ -85,8 +112,10 @@ export function createHud(container, emit) {
               'button',
               {
                 type: 'button',
-                class: `btn hud-suspect mark-${s.mark || 'none'}`,
-                onclick: () => emit(intents.markSuspect(s.partId, s.mark === 'suspect' ? 'cleared' : s.mark === 'cleared' ? null : 'suspect')),
+                class: `btn hud-suspect mark-${s.mark ?? 'none'}`,
+                onclick: () => {
+                  emit(intents.markSuspect(s.partId, s.mark === 'suspect' ? 'cleared' : s.mark === 'cleared' ? null : 'suspect'));
+                },
               },
               s.label,
             ),
@@ -95,7 +124,7 @@ export function createHud(container, emit) {
       );
     }
 
-    if (model.log?.length) {
+    if (model.log.length) {
       container.append(
         h(
           'div',
@@ -107,7 +136,7 @@ export function createHud(container, emit) {
   }
 
   return {
-    update(model) {
+    update(model): void {
       const key = model ? JSON.stringify(model) : '';
       if (key === lastKey) return;
       lastKey = key;

@@ -1,6 +1,8 @@
 // Etapa 1 del quiz de combustible (E1): sólo "haz clic en", 8 piezas principales.
 
-export default {
+import type { Stage } from '../types.ts';
+
+const stage: Stage = {
   id: 'fuel-quiz-1',
   mode: 'quiz',
   module: 'fuel',
@@ -15,3 +17,5 @@ export default {
     sameConcept: [['injector1', 'injector2', 'injector3', 'injector4']],
   },
 };
+
+export default stage;

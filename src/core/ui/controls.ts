@@ -1,6 +1,6 @@
 // Panel de controles generado desde ControlSpec[] (§8). Emite intents (§20).
 
-import { intents } from '../../game/intents.js';
+import { intents } from '../../game/intents.ts';
 import { h } from '../dom.ts';
 import { fmt } from '../format.ts';
 import type {
@@ -80,7 +80,7 @@ function slider(
     max: spec.max ?? 1,
     step: spec.step ?? 0.01,
     oninput: () => {
-      emit(intents.setParam(spec.key, Number(input.value)));
+      emit(intents.setParam(spec.key ?? '', Number(input.value)));
       show();
     },
   });
@@ -108,7 +108,7 @@ function toggle(
   const input = h('input', {
     type: 'checkbox',
     onchange: () => {
-      emit(intents.setParam(spec.key, input.checked));
+      emit(intents.setParam(spec.key ?? '', input.checked));
     },
   });
   const node = h('label', { class: 'ctl ctl-toggle' }, input, h('span', { class: 'ctl-label' }, spec.label));
@@ -130,7 +130,7 @@ function select(
     spec.options ?? [],
     () => getValue(spec.key ?? ''),
     (v) => {
-      emit(intents.setParam(spec.key, v));
+      emit(intents.setParam(spec.key ?? '', v));
       seg.sync();
     },
   );
@@ -155,7 +155,7 @@ function button(
       type: 'button',
       class: 'btn',
       onclick: () => {
-        emit(intents.action(spec.action));
+        emit(intents.action(spec.action ?? ''));
       },
     },
     spec.label,

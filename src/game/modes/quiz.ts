@@ -1,21 +1,67 @@
 // Modo quiz E1: nombrar piezas (docs/plans/2026-09-23-arquitectura-juego.md §6).
 // Puro (§21): sin DOM; el azar sale del rng con semilla (§3, D10).
 
-import { createRng } from '../../core/rng.ts';
-import { INTENT_TYPES, intents } from '../intents.js';
-import { nextStageOf } from '../campaign.js';
+import type { PartInfo } from '../../core/types.ts';
+import { createRng, type Rng } from '../../core/rng.ts';
+import { nextStageOf } from '../campaign.ts';
+import { INTENT_TYPES, intents } from '../intents.ts';
+import type {
+  GameMode,
+  HighlightStyle,
+  HudLogLine,
+  HudModel,
+  ModeContext,
+  ModeEvent,
+  ModeUi,
+  QuizQuestionType,
+  QuizStageConfig,
+} from '../types.ts';
 
 export const FEEDBACK_SECONDS = 1.0;
 export const STARS_THRESHOLDS = [0.9, 0.7, 0.5];
 
 const STOPWORDS = new Set(['del', 'de', 'la', 'el', 'los', 'las', 'y', 'con', 'sin', 'al', 'en']);
 
+export interface Concept {
+  key: string;
+  ids: string[];
+}
+
+export interface QuizChoice {
+  id: string;
+  label: string;
+}
+
+export interface FindQuestion {
+  type: 'find';
+  partId: string;
+  validIds: string[];
+  prompt: string;
+}
+
+export interface ChoiceQuestion {
+  type: 'name' | 'purpose';
+  partId: string;
+  choices: QuizChoice[];
+  prompt: string;
+}
+
+export type QuizQuestion = FindQuestion | ChoiceQuestion;
+
+export interface QuizMode extends GameMode {
+  hud(): HudModel;
+}
+
 /** Fisher-Yates con el rng del juego, para que todo sea reproducible. */
-function shuffle(rng, arr) {
+function shuffle<T>(rng: Rng, arr: readonly T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = rng.int(0, i);
-    [a[i], a[j]] = [a[j], a[i]];
+    const ai = a[i];
+    const aj = a[j];
+    if (ai === undefined || aj === undefined) continue;
+    a[i] = aj;
+    a[j] = ai;
   }
   return a;
 }
@@ -23,11 +69,14 @@ function shuffle(rng, arr) {
 /**
  * Agrupa piezas que son el mismo concepto (los 4 inyectores): nunca son
  * distractores entre sí y para `find` vale cualquiera (§6).
- * @returns {Array<{ key: string, ids: string[] }>}
  */
-export function groupConcepts(parts, ids, sameConcept = []) {
-  const groups = [];
-  const byKey = new Map();
+export function groupConcepts(
+  parts: Readonly<Record<string, PartInfo>>,
+  ids: readonly string[],
+  sameConcept: readonly (readonly string[])[] = [],
+): Concept[] {
+  const groups: Concept[] = [];
+  const byKey = new Map<string, Concept>();
   for (const id of ids) {
     if (!parts[id]) continue;
     const group = sameConcept.find((g) => g.includes(id));
@@ -43,33 +92,45 @@ export function groupConcepts(parts, ids, sameConcept = []) {
 }
 
 /** Nombre del concepto: para un grupo, el prefijo común ("Inyector 1..4" → "Inyector"). */
-export function conceptLabel(ids, parts) {
-  if (ids.length === 1) return parts[ids[0]].name;
-  const roots = ids.map((id) => parts[id].name.replace(/\s*\d+$/, '').trim());
-  return roots.every((r) => r === roots[0]) ? roots[0] : parts[ids[0]].name;
+export function conceptLabel(
+  ids: readonly string[],
+  parts: Readonly<Record<string, PartInfo>>,
+): string {
+  const first = ids[0];
+  if (!first) return '';
+  const firstName = parts[first]?.name ?? first;
+  if (ids.length === 1) return firstName;
+  const roots = ids.map((id) => (parts[id]?.name ?? id).replace(/\s*\d+$/, '').trim());
+  return roots.every((r) => r === roots[0]) ? (roots[0] ?? firstName) : firstName;
 }
 
 /** ¿El `why` de la pieza contiene alguna palabra de su propio nombre? */
-export function revealsName(parts, id) {
-  const why = (parts[id].why || '').toLowerCase();
-  const tokens = (parts[id].name || '')
+export function revealsName(
+  parts: Readonly<Record<string, PartInfo>>,
+  id: string,
+): boolean {
+  const p = parts[id];
+  if (!p) return false;
+  const why = (p.why || '').toLowerCase();
+  const tokens = (p.name || '')
     .toLowerCase()
     .split(/[^\p{L}\d]+/u)
     .filter((t) => t.length >= 4 && !STOPWORDS.has(t));
   return tokens.some((t) => why.includes(t));
 }
 
-function partName(parts, id) {
-  return parts[id]?.name || id;
+function partName(parts: Readonly<Record<string, PartInfo>>, id: string): string {
+  return parts[id]?.name ?? id;
 }
 
 /**
  * Genera las preguntas de una partida con el rng dado (§6, D10).
- * @param {ReturnType<typeof createRng>} rng
- * @param {Record<string, import('../../core/types.ts').PartInfo>} parts
- * @param {{questions?:number, types?:string[], parts?:string[]|'all', sameConcept?:string[][]}} config
  */
-export function generateQuestions(rng, parts, config = {}) {
+export function generateQuestions(
+  rng: Rng,
+  parts: Readonly<Record<string, PartInfo>>,
+  config: QuizStageConfig = {},
+): QuizQuestion[] {
   const {
     questions = 10,
     types = ['find', 'name', 'purpose'],
@@ -80,13 +141,13 @@ export function generateQuestions(rng, parts, config = {}) {
   const concepts = shuffle(rng, groupConcepts(parts, ids, sameConcept));
   // Los distractores salen de todo el módulo, no sólo de la selección de la etapa.
   const allConcepts = groupConcepts(parts, Object.keys(parts), sameConcept);
-  const used = new Set();
-  const out = [];
+  const used = new Set<string>();
+  const out: QuizQuestion[] = [];
 
-  const safe = (c) => c.ids.some((id) => !revealsName(parts, id));
+  const safe = (c: Concept): boolean => c.ids.some((id) => !revealsName(parts, id));
 
   for (let i = 0; i < questions; i++) {
-    const type = types[i % types.length];
+    const type = types[i % types.length] ?? 'purpose';
     const pool = type === 'purpose' ? concepts.filter(safe) : concepts;
     const concept = pool.find((c) => !used.has(c.key));
     if (!concept) break;
@@ -96,7 +157,13 @@ export function generateQuestions(rng, parts, config = {}) {
   return out;
 }
 
-function makeQuestion(rng, parts, allConcepts, concept, type) {
+function makeQuestion(
+  rng: Rng,
+  parts: Readonly<Record<string, PartInfo>>,
+  allConcepts: readonly Concept[],
+  concept: Concept,
+  type: QuizQuestionType,
+): QuizQuestion {
   if (type === 'find') {
     return {
       type,
@@ -106,9 +173,13 @@ function makeQuestion(rng, parts, allConcepts, concept, type) {
     };
   }
 
-  const candidates = type === 'purpose' ? concept.ids.filter((id) => !revealsName(parts, id)) : concept.ids;
+  const candidates =
+    type === 'purpose' ? concept.ids.filter((id) => !revealsName(parts, id)) : concept.ids;
   const partId = rng.pick(candidates.length ? candidates : concept.ids);
-  const distractors = shuffle(rng, allConcepts.filter((c) => c.key !== concept.key))
+  const distractors: QuizChoice[] = shuffle(
+    rng,
+    allConcepts.filter((c) => c.key !== concept.key),
+  )
     .slice(0, 3)
     .map((c) => {
       const id = rng.pick(c.ids);
@@ -119,51 +190,47 @@ function makeQuestion(rng, parts, allConcepts, concept, type) {
   if (type === 'name') {
     return { type, partId, choices, prompt: '¿Cómo se llama la pieza resaltada?' };
   }
-  return { type: 'purpose', partId, choices, prompt: parts[partId].why };
+  return { type: 'purpose', partId, choices, prompt: parts[partId]?.why ?? '' };
 }
 
 /** Estrellas por porcentaje de aciertos: ≥90 % → 3, ≥70 % → 2, ≥50 % → 1. */
-export function starsFor(correct, total) {
+export function starsFor(correct: number, total: number): number {
   if (!total) return 0;
   const ratio = correct / total;
-  if (ratio >= STARS_THRESHOLDS[0]) return 3;
-  if (ratio >= STARS_THRESHOLDS[1]) return 2;
-  if (ratio >= STARS_THRESHOLDS[2]) return 1;
+  if (ratio >= (STARS_THRESHOLDS[0] ?? 1)) return 3;
+  if (ratio >= (STARS_THRESHOLDS[1] ?? 1)) return 2;
+  if (ratio >= (STARS_THRESHOLDS[2] ?? 1)) return 1;
   return 0;
 }
 
-/**
- * @param {import('../types.js').ModeContext} ctx
- * @returns {import('../types.js').GameMode}
- */
-export function createQuizMode(ctx) {
+export function createQuizMode(ctx: ModeContext): QuizMode {
   const { session, module, stage, save } = ctx;
   const model = session.model;
-  const parts = module.parts || {};
-  const config = {
+  const parts = module.parts ?? {};
+  const config: QuizStageConfig = {
     questions: 10,
     types: ['find', 'name', 'purpose'],
     parts: 'all',
-    ...(stage?.config || {}),
+    ...stage?.config,
   };
-  const rng = ctx.rng || createRng(stage?.seed ?? 1);
+  const rng = ctx.rng ?? createRng(stage?.seed ?? 1);
   const questions = generateQuestions(rng, parts, config);
   const total = questions.length;
 
   let index = 0;
-  let phase = total ? 'question' : 'done';
+  let phase: 'question' | 'feedback' | 'done' = total ? 'question' : 'done';
   let correct = 0;
   let score = 0;
   let streak = 0;
   let bestStreak = 0;
   let timer = 0;
   let announced = false;
-  const log = [];
+  const log: HudLogLine[] = [];
 
   // El diagrama se ve vivo durante el quiz (§6).
-  if (model.params && 'ignitionKey' in model.params) model.params.ignitionKey = 'run';
+  if ('ignitionKey' in model.params) model.params['ignitionKey'] = 'run';
 
-  const ui = {
+  const ui: ModeUi = {
     controls: [],
     faults: 'none',
     readouts: [],
@@ -177,21 +244,24 @@ export function createQuizMode(ctx) {
     revealedFaults: [],
   };
 
-  const question = () => questions[index] || null;
+  const question = (): QuizQuestion | null => questions[index] ?? null;
 
-  function addLog(level, text) {
+  function addLog(level: HudLogLine['level'], text: string): void {
     log.push({ level, text });
     if (log.length > 6) log.shift();
   }
 
-  const highlight = (partIds, style) => ({ type: 'highlight', data: { partIds, style } });
+  const highlight = (
+    partIds: readonly string[],
+    style: HighlightStyle,
+  ): ModeEvent => ({ type: 'highlight', data: { partIds, style } });
 
   /** Cierra la pregunta actual: puntaje, feedback y racha. */
-  function settle(ok, clickedId, q) {
+  function settle(ok: boolean, clickedId: string | null, q: QuizQuestion): ModeEvent[] {
     const target = q.partId;
     timer = FEEDBACK_SECONDS;
     phase = 'feedback';
-    const shown = clickedId || target;
+    const shown = clickedId ?? target;
     if (ok) {
       correct++;
       streak++;
@@ -202,18 +272,20 @@ export function createQuizMode(ctx) {
       streak = 0;
       addLog('bad', `Era: ${partName(parts, target)}. Tocaste: ${partName(parts, shown)}.`);
     }
-    save?.recordAnswer?.(shown, ok);
+    const last = log[log.length - 1];
+    if (!last) throw new Error('invariante: settle siempre agrega un log');
+    save?.recordAnswer(shown, ok);
     return [
       highlight([shown], ok ? 'correct' : 'wrong'),
-      { type: 'feedback', level: ok ? 'good' : 'bad', text: log[log.length - 1].text },
+      { type: 'feedback', level: ok ? 'good' : 'bad', text: last.text },
       { type: 'score', data: { score, streak } },
     ];
   }
 
-  function finish() {
+  function finish(): ModeEvent[] {
     phase = 'done';
     const stars = starsFor(correct, total);
-    save?.recordStage?.(stage?.id ?? 'quiz', { score, stars });
+    save?.recordStage(stage?.id ?? 'quiz', { score, stars });
     addLog(stars >= 2 ? 'good' : 'info', `Terminaste: ${correct}/${total} aciertos, ${score} puntos, ${stars} estrellas.`);
     return [highlight([], 'selected'), { type: 'stageEnd', data: { score, stars, correct, total } }];
   }
@@ -222,13 +294,13 @@ export function createQuizMode(ctx) {
 
   return {
     id: 'quiz',
-    get ui() {
+    get ui(): ModeUi {
       return ui;
     },
-    get status() {
+    get status(): 'playing' | 'won' {
       return phase === 'done' ? 'won' : 'playing';
     },
-    handle(intent) {
+    handle(intent): ModeEvent[] {
       if (!intent || phase !== 'question') return [];
       const q = question();
       if (!q) return [];
@@ -241,7 +313,7 @@ export function createQuizMode(ctx) {
       }
       return [];
     },
-    update(simDt) {
+    update(simDt): ModeEvent[] {
       const q = question();
       if (phase === 'question') {
         // El HUD no puede resaltar solo: el modo avisa una única vez por pregunta.
@@ -260,14 +332,15 @@ export function createQuizMode(ctx) {
       phase = 'question';
       const next = question();
       announced = next?.type === 'name';
-      return [highlight(next?.type === 'name' ? [next.partId] : [], 'target')];
+      if (next?.type === 'name') return [highlight([next.partId], 'target')];
+      return [highlight([], 'target')];
     },
-    hud() {
+    hud(): HudModel {
       const q = question();
       const stars = starsFor(correct, total);
-      const base = {
-        title: stage?.title || 'Quiz',
-        brief: stage?.brief || '',
+      const base: HudModel = {
+        title: stage?.title ?? 'Quiz',
+        brief: stage?.brief ?? '',
         stats: [
           { label: 'Pregunta', value: `${Math.min(index + 1, total)}/${total}` },
           { label: 'Aciertos', value: correct },
@@ -294,12 +367,15 @@ export function createQuizMode(ctx) {
       if (q.type === 'find') return { ...base, prompt: { text: q.prompt } };
       return {
         ...base,
-        prompt: { text: q.type === 'name' ? q.prompt : `¿Qué pieza cumple esta función? “${q.prompt}”`, choices: q.choices },
+        prompt: {
+          text: q.type === 'name' ? q.prompt : `¿Qué pieza cumple esta función? “${q.prompt}”`,
+          choices: q.choices,
+        },
       };
     },
-    onReset() {
+    onReset(): void {
       session.reset();
-      if (model.params && 'ignitionKey' in model.params) model.params.ignitionKey = 'run';
+      if ('ignitionKey' in model.params) model.params['ignitionKey'] = 'run';
       index = 0;
       phase = total ? 'question' : 'done';
       correct = 0;
@@ -310,7 +386,7 @@ export function createQuizMode(ctx) {
       announced = false;
       log.length = 0;
     },
-    destroy() {
+    destroy(): void {
       log.length = 0;
     },
   };

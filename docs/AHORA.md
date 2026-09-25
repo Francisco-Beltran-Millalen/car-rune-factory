@@ -39,7 +39,7 @@ cambian.
 | TS0 | Herramientas: tsconfig, ESLint con leyes, knip, checker, `npm run check`, test de las leyes | — | ✅ |
 | TS1 | Core puro (`types, math, rng, loop, history`, `format` nuevo) | TS0 | ✅ |
 | TS2 | Core con DOM + paneles + router | TS1 | ✅ |
-| TS3 | Juego (`game/**`, `ui/hud`), intents como unión discriminada | TS2 | ⏳ |
+| TS3 | Juego (`game/**`, `ui/hud`), intents como unión discriminada | TS2 | ✅ |
 | TS4 | Módulos (`fuel`, `_demo`, registry) + comparación de estado idéntico | TS3 | ⏳ |
 | TS5 | Shell, legacy, main; `allowJs: false`; docs (§1, §7, §18, §31–§33) + checklist en Firefox | TS4 | ⏳ |
 
@@ -77,7 +77,31 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
 | A9 | Armar circuitos (E4) | A7 | ⏳ |
 | A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
 
-**Siguiente paso:** TS3 (juego: `game/**` y `ui/hud` a `.ts`, intents como unión discriminada). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+**Siguiente paso:** TS4 (módulos `_demo` y `fuel` + registry a `.ts`, comparación de estado idéntico). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+
+## CERRADO 2026-09-25 — TS3 juego con tipos
+
+- `src/game/{types,intents,session,save,campaign}.js`, `stages/*`, `modes/{lab,quiz}.js`
+  y `src/ui/hud.js` → `.ts`; tests `tests/game/{intents,session,save,lab,quiz}.test.js`
+  → `.ts` (aserciones intactas).
+- `Intent` es unión discriminada por `type` con `IntentPayloads` (§8.3); `INTENT_TYPES`
+  con `as const satisfies`; constructores tipados. Test nuevo: un `answer` sin `choiceId`
+  no compila (`@ts-expect-error`).
+- `ModeEvent` también unión (`feedback | score | stageEnd | uiChanged | highlight`),
+  `Stage`/`QuizStageConfig`, `SaveData`/`SaveApi` exactos, `SessionOptions`/`Session`,
+  `HudModel`, `LabMode`/`QuizMode` (con `activePreset`/`hud()` no nulos).
+- `ModeContext.module` es un `ModeModule` mínimo (lo que los modos usan de verdad), así
+  los mocks de test no llevan casts; el descriptor completo lo cumple.
+- `labMode.handle` lista los 23 intents con `switch` exhaustivo y deja un `default`
+  para intents desconocidos en runtime (D9). En `quiz` los `possibly undefined` se
+  resolvieron con guards (`if (!last) throw new Error('invariante: …')`) y no con `!`.
+- `parseSave` parsea a `unknown` y valida con guards; se conserva el saneo tal cual.
+- Desviaciones anotadas: `NoPayload = undefined` como marcador de intent sin payload
+  (los tipos vacíos están bloqueados por lint), `Session.recorder` sin genérico
+  (sólo se usa `series`), y `content.js`/`view.js` siguen en JS hasta TS4 (el test los
+  ve por contrato).
+- `npm run check` verde: typecheck, lint 0 warnings, knip, **123 tests** (+1) y build.
+
 
 ## CERRADO 2026-09-25 — TS2 core con DOM y UI
 

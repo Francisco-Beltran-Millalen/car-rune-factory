@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createSave, createMemoryStorage, SAVE_KEY, SAVE_VERSION } from '../../src/game/save.js';
+import { createSave, createMemoryStorage, SAVE_KEY, SAVE_VERSION } from '../../src/game/save.ts';
 
 describe('save v1 (CONTRATOS.md §6.8, ley §27)', () => {
   it('sin storage arranca con valores por defecto', () => {
@@ -13,7 +13,10 @@ describe('save v1 (CONTRATOS.md §6.8, ley §27)', () => {
     const rec = save.recordStage('fuel-quiz-1', { score: 80, stars: 2, completedAt: '2026-09-24T00:00:00.000Z' });
 
     expect(rec).toEqual({ bestScore: 80, stars: 2, completedAt: '2026-09-24T00:00:00.000Z' });
-    const stored = JSON.parse(storage.getItem(SAVE_KEY));
+    const stored = JSON.parse(storage.getItem(SAVE_KEY)!) as {
+      version: number;
+      stages: Record<string, unknown>;
+    };
     expect(stored.version).toBe(SAVE_VERSION);
     expect(stored.stages['fuel-quiz-1']).toEqual(rec);
   });
@@ -34,7 +37,7 @@ describe('save v1 (CONTRATOS.md §6.8, ley §27)', () => {
     save.recordAnswer('filter', false);
     save.recordAnswer('filter', true);
 
-    expect(save.get().mastery.filter).toEqual({ seen: 3, correct: 2 });
+    expect(save.get().mastery['filter']).toEqual({ seen: 3, correct: 2 });
   });
 
   it('el progreso persiste entre instancias con el mismo storage', () => {
@@ -42,7 +45,7 @@ describe('save v1 (CONTRATOS.md §6.8, ley §27)', () => {
     createSave(storage).recordStage('fuel-quiz-1', { score: 70, stars: 2, completedAt: 'x' });
 
     const save2 = createSave(storage);
-    expect(save2.get().stages['fuel-quiz-1'].bestScore).toBe(70);
+    expect(save2.get().stages['fuel-quiz-1']!.bestScore).toBe(70);
   });
 
   it('storage corrupto (JSON inválido) → defaults, sin lanzar', () => {
@@ -86,15 +89,18 @@ describe('save v1 (CONTRATOS.md §6.8, ley §27)', () => {
     const save = createSave(storage);
     expect(save.get().stages).toEqual({});
     save.recordStage('fuel-quiz-1', { score: 10, stars: 1 });
-    expect(save.get().stages['fuel-quiz-1'].bestScore).toBe(10);
+    expect(save.get().stages['fuel-quiz-1']!.bestScore).toBe(10);
   });
 
   it('acepta un Map como storage (inyectable en tests)', () => {
-    const map = new Map();
+    const map = new Map<string, string>();
     const save = createSave(map);
     save.recordAnswer('pump', true);
 
-    expect(JSON.parse(map.get(SAVE_KEY)).mastery.pump).toEqual({ seen: 1, correct: 1 });
+    const stored = JSON.parse(map.get(SAVE_KEY)!) as {
+      mastery: Record<string, { seen: number; correct: number }>;
+    };
+    expect(stored.mastery['pump']).toEqual({ seen: 1, correct: 1 });
   });
 
   it('reset limpia el progreso y el storage', () => {

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createLabMode } from '../../src/game/modes/lab.js';
-import { createSession } from '../../src/game/session.js';
-import { intents } from '../../src/game/intents.js';
+import type { Intent } from '../../src/game/intents.ts';
+import { intents } from '../../src/game/intents.ts';
+import { createLabMode } from '../../src/game/modes/lab.ts';
+import { createSession } from '../../src/game/session.ts';
 
 function createMockModule() {
   const DEFAULT_PARAMS = { rpm: 800, throttle: 0 };
@@ -111,13 +112,15 @@ describe('labMode', () => {
 
     const events = mode.handle(intents.applyPreset('case-clogged'));
     expect(events.length).toBe(1);
-    expect(events[0].type).toBe('feedback');
-    expect(events[0].text).toBe('Nota sobre el filtro tapado');
+    const ev = events[0];
+    if (ev?.type !== 'feedback') throw new Error('invariante: el preset devuelve feedback');
+    expect(ev.type).toBe('feedback');
+    expect(ev.text).toBe('Nota sobre el filtro tapado');
 
     expect(session.model.params.rpm).toBe(2500);
     expect(session.model.faults.filterClog).toBe(0.9);
     expect(session.model.actions.refill).toHaveBeenCalledWith(100);
-    expect(mode.activePreset.id).toBe('case-clogged');
+    expect(mode.activePreset!.id).toBe('case-clogged');
   });
 
   it('handle action invoca la acción del modelo', () => {
@@ -135,7 +138,8 @@ describe('labMode', () => {
     const mode = createLabMode({ session, module: mod, stage: null });
 
     expect(mode.handle(null)).toEqual([]);
-    expect(mode.handle({ type: 'unknown' })).toEqual([]);
+    const unknownIntent = { type: 'unknown' } as unknown as Intent;
+    expect(mode.handle(unknownIntent)).toEqual([]);
     expect(mode.update(0.01)).toEqual([]);
   });
 
@@ -159,7 +163,7 @@ describe('labMode', () => {
     const mode = createLabMode({ session, module: mod, stage: null });
 
     mode.handle(intents.applyPreset('case-clogged'));
-    mode.onReset();
+    mode.onReset!();
     expect(mode.activePreset).toBe(null);
     expect(session.model.params.rpm).toBe(800);
     expect(session.model.faults.filterClog).toBe(0);

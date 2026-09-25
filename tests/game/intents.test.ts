@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { intents, INTENT_TYPES } from '../../src/game/intents.js';
+import { intents, INTENT_TYPES, type Intent } from '../../src/game/intents.ts';
 
 describe('intents', () => {
   it('define todas las constantes de tipos esperadas', () => {
@@ -33,5 +33,11 @@ describe('intents', () => {
     expect(intents.replacePart('filter')).toEqual({ type: 'replacePart', partId: 'filter' });
     expect(intents.deliver()).toEqual({ type: 'deliver' });
     expect(intents.markSuspect('filter', 'suspect')).toEqual({ type: 'markSuspect', partId: 'filter', mark: 'suspect' });
+  });
+
+  it('un intent mal formado no compila (§20)', () => {
+    // @ts-expect-error -- `answer` exige choiceId: la unión discriminada lo pide
+    const bad: Intent = { type: 'answer' };
+    expect(bad.type).toBe('answer');
   });
 });

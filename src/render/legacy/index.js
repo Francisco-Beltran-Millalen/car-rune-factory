@@ -2,7 +2,7 @@
 // Envuelve module.createView; única pieza autorizada a leer model (§22, temporal hasta A7).
 
 import { el, arrowMarkers } from '../../core/svg.ts';
-import { intents } from '../../game/intents.js';
+import { intents } from '../../game/intents.ts';
 
 // Estilos de resaltado del contrato 6.4: al aplicar uno se limpian todos.
 const HIGHLIGHT_STYLES = ['selected', 'correct', 'wrong', 'target'];
@@ -11,7 +11,7 @@ const HIGHLIGHT_STYLES = ['selected', 'correct', 'wrong', 'target'];
  * @param {Object} opts
  * @param {HTMLElement} opts.container
  * @param {import('../../core/types.ts').ModuleDescriptor} opts.module
- * @param {(intent: import('../../game/types.js').Intent) => void} opts.emit
+ * @param {(intent: import('../../game/types.ts').Intent) => void} opts.emit
  * @param {import('../../core/types.ts').Model} opts.model
  * @param {HTMLElement} [opts.tooltip]
  */
