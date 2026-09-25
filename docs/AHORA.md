@@ -29,8 +29,8 @@ Detalle de archivos y criterios de aceptación de cada tarea: sección 12 de
 ## EN CURSO — TypeScript estricto (plan 2026-09-24) — va ANTES de A3
 
 Plan: `plans/2026-09-24-typescript-estricto.md` (leerlo entero: versiones,
-tsconfig, reglas de lint por ley, diseño de tipos y fases). Rama
-`chore/typescript`, un commit por fase, cada una cierra con `npm run check`
+tsconfig, reglas de lint por ley, diseño de tipos y fases). Todo en
+`main` (sin ramas), un commit por fase, cada una cierra con `npm run check`
 (existe desde TS0). Portar ≠ refactorizar: la física y el comportamiento no
 cambian.
 

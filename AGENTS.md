@@ -23,3 +23,7 @@ Reglas para cualquier agente/asistente que trabaje en este repo.
    pide en `docs/core-requests.md`, no se parcha desde un módulo.
 7. **Al cerrar una tarea**, agrega un bloque `CERRADO AAAA-MM-DD — …` en
    `docs/AHORA.md` con lo verificado (tests + qué se miró en el navegador).
+8. **Todo se commitea directo en `main`.** No se crean ramas ni worktrees
+   salvo que el usuario lo pida: hay una sola persona trabajando y el
+   proyecto está empezando. Incluye las pruebas desechables (se borran
+   después en un commit propio).

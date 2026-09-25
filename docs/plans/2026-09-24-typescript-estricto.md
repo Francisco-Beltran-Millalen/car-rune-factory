@@ -16,7 +16,7 @@ typescript primero"). Va **antes de A3** y no cambia el orden de A3–A10.
 3. Un único comando de cierre, `npm run check`, que se exige en todas las
    tareas desde ahora.
 4. Se trabaja en 6 fases (TS0–TS5). Cada una termina con `npm run check` en
-   verde y un commit. Rama: `chore/typescript`.
+   verde y un commit, directo en `main` (sin ramas).
 
 Lee antes: `docs/ARCHITECTURE.md`, `docs/CONTRATOS.md`, `src/core/types.js`
 y `src/game/types.js` (hoy los tipos son JSDoc y nadie los verifica).
@@ -580,7 +580,7 @@ export const DEFAULT_PARAMS: Readonly<FuelParams> = { … };
 
 ## 9. Fases
 
-Orden: TS0 → TS1 → TS2 → TS3 → TS4 → TS5. Todas en `chore/typescript`, un
+Orden: TS0 → TS1 → TS2 → TS3 → TS4 → TS5. Todas en `main`, un
 commit por fase (`chore(ts): TS<n> — …`). **Criterio común de cierre:**
 `npm run check` en verde, los 109 tests (o los que haya) pasan sin tocar sus
 aserciones, y `git diff --stat` no muestra archivos fuera de la lista de la
