@@ -112,6 +112,10 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
 4. F12 sin errores. Con el dev corriendo, meter a mano un error de tipos en un
    `.ts` → aparece el overlay del checker; sacarlo → desaparece.
 
+**Verificado por el usuario en Firefox (2026-09-25): funciona sin errores.**
+Informe completo de la migración (qué se hizo y qué errores aparecieron):
+`docs/informes/2026-09-25-migracion-typescript.md`.
+
 ## CERRADO 2026-09-25 — TS4 módulos
 
 - `src/modules/{registry,_demo/*,fuel/*}.js` → `.ts` y `tests/fuel/{model,content}.test.js`

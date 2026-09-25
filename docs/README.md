@@ -18,7 +18,8 @@
 - `core-requests.md` — pedidos de los módulos al core, pendientes.
 
 **Registro histórico:** `plans/` — cada plan tal como se aprobó, con fecha.
-No se edita después de aprobado.
+No se edita después de aprobado. `informes/` — informes de ejecución de un
+hito o migración (qué se hizo y qué errores aparecieron); tampoco se editan.
 
 Si algo en los docs vivos se contradice con un plan, manda lo vivo. Si dos
 docs vivos se contradicen, es un bug de docs: se arregla en el mismo cambio.
