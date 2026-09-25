@@ -104,6 +104,29 @@ createFlow({ path /* SVGPathElement */, layer /* SVGGElement */, spacing = 14, r
 - Ruta `#/lab/<id>` (y `#/<id>` redirige ahí), `#/stage/<id>`, `#/` portada. `createRouter` está en `core/router.ts` y el shell en `core/shell.ts`.
 - `shell.mount(target)` recibe una unión discriminada: `{ kind: 'lab'; module } | { kind: 'stage'; module; stage; attempt }`. Crea el SVG, el modelo, la vista, el loop y los paneles, y `shell.unmount()` destruye todo sin dejar listeners.
 
+### 4.9 Solver nodal — `src/sim/solver/`
+Los tipos exactos son los de `src/sim/solver/types.ts` y la spec viva
+(contrato de elemento, unidades, convergencia y benchmark) está en
+`docs/modules/solver.md`.
+
+```ts
+createSolver({ nodeCount, elements, ground?, gmin?, maxIterations?, maxDelta?, tolerance? }): Solver
+// elements[i] = { def: ElementDef, nodes: number[] }  (nodes lo asigna el circuito, A5)
+// ground[node]: potencial fijo (Dirichlet); NaN = nodo libre
+solver.step(dt) → { ok, iterations }
+solver.potential(node) / solver.reaction(node)   // reaction = flujo que sale del nodo fijo
+solver.setFixed(node, value) / solver.free(node)
+solver.stats → { failures, iterations }
+solveDense(A, b, n): boolean                     // linalg: false si es singular
+```
+
+El elemento (`ElementDef`, §24) declara `ports`, `params`, `control`, `state`,
+`capacitance?` (Ĉ por puerto, ya en flujo/(potencial·s)), `init?`,
+`eval(pot, out, dt)` (flujo que sale del elemento hacia cada puerto y
+`jac[p*k+q] = ∂flow[p]/∂pot[q]`), `commit(pot, dt, reaction)`, `probes?`,
+`faults?` (ids §26 `<instancia>.<faultKey>`) y `fixed?(out)` para los nodos
+Dirichlet que fija el propio elemento (p. ej. `pressureSource`).
+
 ## Shell de la UI
 
 ### 5.1 Layout (escritorio ≥ 1024 px)

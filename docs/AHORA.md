@@ -44,8 +44,8 @@ Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
 |---|---|---|---|
 | A0–A2 | Docs, sesión/intents/modos, quiz E1, HUD, guardado | — | ✅ |
 | TS0–TS5 | TypeScript estricto | — | ✅ |
-| A4 | Solver nodal + linalg (plan 2026-09-23 §8.1, fila A4) | — | ⏳ **siguiente** |
-| A5 | Elementos + circuito (compile/validate) + controladores base (§8.2–§8.4) | A4 | ⏳ |
+| A4 | Solver nodal + linalg (plan 2026-09-23 §8.1, fila A4) | — | ✅ |
+| A5 | Elementos + circuito (compile/validate) + controladores base (§8.2–§8.4) | A4 | ⏳ **siguiente** |
 | A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ⏳ |
 | A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ⏳ |
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ⏳ |
@@ -68,9 +68,43 @@ Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
 | D-motor | Decisión del usuario; afecta al juego, el laboratorio sigue en SVG | A8 | ⏸ |
 | A9 | Armar circuitos E4 (plan propio) | D-motor | ⏸ |
 
-**Siguiente paso: A4.** Su ficha está en `plans/2026-09-25-simulacion-antes-que-juego.md`
+**Siguiente paso: A5.** Su ficha está en `plans/2026-09-25-simulacion-antes-que-juego.md`
 §6: dice qué leer, qué ignorar, qué archivos tocar y cómo se acepta. **Cada tarea
 del bloque S tiene su ficha ahí; léanla antes que cualquier otro plan.**
+
+## CERRADO 2026-09-25 — A4 Solver nodal + linalg
+
+- `src/sim/solver/{types,linalg,nodal}.ts`: contrato del solver y de los
+  elementos (§24, P23 §8.2), `solveDense` (pivoteo parcial; `false` bajo
+  `1e-14`) y `createSolver` (Newton implícito, `gmin`, amortiguación ±1,
+  nodos fijos con `reaction`). Puros (§1) y sin azar.
+- Signo del balance nodal: el residuo es `F_i = −Σ flow[p] + Ĉ·(x−x_prev)/dt`
+  (flujos que **salen** del nodo) y el jacobiano lleva el mismo signo. El test
+  RC (63 % en τ) fue el que destapó el problema al implementarlo al revés.
+- Decisiones de tipos que la ficha dejaba a A4 (anotadas también en
+  `solver.md`/`CONTRATOS.md` §4.9):
+  - `ElementDef.fixed?(out)`: el propio elemento declara su nodo Dirichlet
+    (lo pide `pressureSource` en §8.2); `ground` + `setFixed/free` siguen
+    siendo el mecanismo general.
+  - `commit(pot, dt, reaction)`: tercer argumento con la reacción del nodo de
+    cada puerto, porque el `tank` de §8.2 integra el nivel con
+    `−reaction`.
+  - `reaction(node)` = flujo neto que sale del nodo fijo; incluye el término
+    capacitivo si el nodo lo tiene.
+- Tests `tests/sim/linalg.test.ts` y `tests/sim/nodal.test.ts` (+18: divisor,
+  fuente dinámica, reacciones, RC, RL, dos restrictores en serie contra la
+  fórmula, nodo flotante con gmin, `setFixed/free`, paso que no converge
+  revierte, eval con NaN no contamina, benchmark).
+- **Benchmark** (20 nodos, 18 incógnitas, 1000 pasos de 1 ms): 18–22 ms por
+  1000 pasos (~0,02 ms/paso, 44 000–55 000 pasos/s) en i7-7700HQ / Node 26;
+  con la suite completa en paralelo, 28 ms. Muy por encima del presupuesto de
+  4000 pasos/s (4×). Anotado en `docs/modules/solver.md` §5; sin umbral en el
+  test.
+- Docs: `docs/modules/solver.md` (nuevo) y sección 4.9 "Solver nodal" en
+  `CONTRATOS.md`. `gmin` cumple lo que pedía P25: la singularidad de linalg se
+  prueba aparte y el nodo flotante no produce NaN.
+- `npm run check` verde: typecheck, lint 0 warnings, knip, **141 tests** y
+  build. **Sin checklist de Firefox** (A4 no es visual, lo dice su ficha).
 
 ## CERRADO 2026-09-25 — limpieza post-TS y revisión del plan de A3
 
