@@ -18,6 +18,14 @@ juego. El mapa de qué sistema toca a cuál está en `SISTEMAS.md`.
 Se llega por etapas: primero el laboratorio de cada sistema, luego jueguitos
 cortos (nombrar piezas, diagnosticar dentro de un sistema, armar circuitos) y
 al final **casos entre sistemas** sobre un auto completo.
+
+**Prioridad (decisión del usuario, 2026-09-25):** primero el **laboratorio**
+de todos los sistemas y del vehículo, donde no se oculta nada. Vale por sí
+solo, como herramienta para aprender mecánica, aunque el juego no llegara a
+enganchar. La jugabilidad nueva (diagnóstico, armado, casos) se construye
+después, sobre una simulación ya confiable. Orden en
+`plans/2026-09-25-simulacion-antes-que-juego.md`.
+
 (≤200 líneas; visión. Táctico en `AHORA.md`, reglas en `ARCHITECTURE.md`,
 catálogo en `SISTEMAS.md`.)
 
@@ -26,9 +34,10 @@ el candidato para cuando llegue "armar circuitos" (ver `HORIZONTE_JUEGO.md`).
 
 ## Pilares
 
-0. **Diagnosticar es el juego** — todo lo demás (simular, ver el flujo,
-   romper cosas) existe para que encontrar la falla sea un razonamiento
-   honesto con pistas reales, no adivinar.
+0. **Diagnosticar es el juego** — en el juego, simular, ver el flujo y
+   romper cosas sirven para que encontrar la falla sea un razonamiento
+   honesto con pistas reales, no adivinar. En el laboratorio, esas mismas
+   cosas son el fin: entender cómo funciona el auto.
 
 1. **Aislar un sistema** — una simulación = un sistema del auto, con sólo las
    piezas necesarias para entenderlo. Ej.: estanque → bomba → filtro → riel →

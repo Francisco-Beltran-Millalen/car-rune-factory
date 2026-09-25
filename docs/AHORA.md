@@ -24,37 +24,70 @@ es una tarea chica (plan §12, camino 1) y se agrega a la tabla de abajo
 Las listas de archivos de los planes 2026-09-23 y 2026-09-24 dicen `.js`:
 léanse como `.ts`.
 
-## EN CURSO — Arquitectura de juego (plan 2026-09-23)
+## EN CURSO — Simulación antes que juego (plan 2026-09-25)
 
-Plan: `plans/2026-09-23-arquitectura-juego.md`, con el orden de A7–A9
-enmendado por `plans/2026-09-24-motor-y-juice.md` (leerlo antes de A3).
-Orden: TS0–TS5 → A3 (prototipo SVG) → **G1** (checkpoint de juego del
-usuario) → A8 (prueba de juice, en paralelo con A4–A6) → **D-motor**
-(decisión del usuario) → A7 → A9. A4 → A5 → A6 no dependen del motor.
-A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
+**Leer primero `plans/2026-09-25-simulacion-antes-que-juego.md`.** Decisión del
+usuario (2026-09-25): el laboratorio (se ve todo) va primero y vale por sí
+solo como herramienta para aprender mecánica; el juego (se oculta el estado y
+se diagnostica con herramientas) va después, cuando el usuario diga que la
+simulación está bien. El **qué** de cada tarea sigue en
+`plans/2026-09-23-arquitectura-juego.md` (§8, §9, §14); ese plan de hoy fija el
+**orden** y los cambios (A6 crea `fuel/faults.ts`, A7 se desbloquea en SVG,
+A6b y A15 son nuevas, A10 incluye el laboratorio del vehículo).
+
+Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
+`npm run check` verde, un CERRADO aquí y un commit.
+
+**Bloque S — simulación y laboratorio**
 
 | # | Tarea | Depende de | Estado |
 |---|---|---|---|
-| A0 | Docs: leyes §17, §19–§30 en ARCHITECTURE, contratos de juego 6.1–6.8 | — | ✅ |
-| A1 | Sesión + intents + labMode + shell nuevo + legacyRenderer + paneles DOM + router | A0 | ✅ |
-| A2 | Quiz (E1) + HUD + guardado + campaña + etiquetas de nombre separadas | A1 | ✅ (checklist manual abajo) |
-| A3 | Diagnóstico (E2) + faultCatalog combustible + herramientas + visibilidad + `cue` en eventos — **con la enmienda `plans/2026-09-25-a3-revision.md`** | A2, TS5 | ⏳ |
-| G1 | Checkpoint de juego: el usuario juega E2 en Firefox y responde las 5 preguntas (plan motor-y-juice §3) | A3 | ⏳ |
-| A4 | Solver nodal + linalg | A0 | ⏳ |
-| A5 | Elementos + circuito (compile/validate) + controladores base | A4 | ⏳ |
-| A6 | Combustible sobre el solver | A5, A3 | ⏳ |
-| A8 | Prueba de juice: candidato (Phaser) vs. SVG, 10 preguntas → `docs/decisiones/0001-motor.md` | G1 | ⏳ |
-| D-motor | Decisión del usuario sobre el motor (plan motor-y-juice §5) | A8 | ⏳ |
-| A7 | Presenter + renderer del motor elegido | A6, D-motor | ⏳ |
-| A9 | Armar circuitos (E4) | A7 | ⏳ |
-| A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
+| A0–A2 | Docs, sesión/intents/modos, quiz E1, HUD, guardado | — | ✅ |
+| TS0–TS5 | TypeScript estricto | — | ✅ |
+| A4 | Solver nodal + linalg (plan 2026-09-23 §8.1, fila A4) | — | ⏳ **siguiente** |
+| A5 | Elementos + circuito (compile/validate) + controladores base (§8.2–§8.4) | A4 | ⏳ |
+| A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ⏳ |
+| A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ⏳ |
+| A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ⏳ |
+| A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) | A7 | ⏳ |
+| A11 | Ciclo de 4 tiempos: spec → plan → código (plan 2026-09-25 §3.5) | A10 | ⏳ |
+| A12 | Encendido | A10 | ⏳ |
+| A13 | Refrigeración | A10 | ⏳ |
+| A14 | Lubricación | A10 | ⏳ |
+| A15 | Laboratorio del vehículo (sistemas relacionados) | A11–A14 | ⏳ |
 
-**Siguiente paso:** A3. Leer, en este orden: `plans/2026-09-23-arquitectura-juego.md`
-§4.6, §7 y §9 (fila A3); `plans/2026-09-24-motor-y-juice.md` §3 y §6; y
-**`plans/2026-09-25-a3-revision.md`, que manda donde choquen** (vista de taller
-con `ModeUi.instruments`, pools con valores medidos y un reclamo por falla,
-`revealedFaults` con ids §26, narración `'hints'`, reparaciones y cues). Después:
-G1 (checkpoint de juego del usuario).
+**Puerta:** el bloque G empieza sólo cuando el usuario lo escriba aquí.
+
+**Bloque G — juego** (en espera)
+
+| # | Tarea | Depende de | Estado |
+|---|---|---|---|
+| A3 | Diagnóstico E2 con la enmienda `plans/2026-09-25-a3-revision.md` (volver a medir su tabla) | puerta | ⏸ |
+| G1 | Checkpoint de juego del usuario (plan motor-y-juice §3) | A3 | ⏸ |
+| A8 | Prueba de juice → `docs/decisiones/0001-motor.md` (motor-y-juice §4) | G1 | ⏸ |
+| D-motor | Decisión del usuario; afecta al juego, el laboratorio sigue en SVG | A8 | ⏸ |
+| A9 | Armar circuitos E4 (plan propio) | D-motor | ⏸ |
+
+**Siguiente paso: A4.** Leer `plans/2026-09-23-arquitectura-juego.md` §2 (D4, D9),
+§8.1 y la fila A4 de §9; las rutas `.js` del plan se leen como `.ts`
+(`src/sim/solver/{linalg,nodal}.ts`, `tests/sim/*.test.ts`). El lint ya tiene
+reglas para `src/sim/**` (§19: puro, sin DOM). Aceptación: tests analíticos
+(divisor de tensión, RC al 63 % en τ, RL, dos restrictores en serie contra la
+fórmula cerrada, nodo flotante sin NaN por `gmin`, matriz singular detectada) y
+un benchmark que **imprime** ms por 1000 pasos, anotado en
+`docs/modules/solver.md`. Sin cambios visuales: no hay checklist de Firefox.
+
+Aclaraciones para A4 (no están explícitas en el plan):
+- A4 no crea `src/sim/elements/` (eso es A5). Los elementos que usan los tests
+  analíticos (resistencia, capacitor, inductancia, restrictor, fuente fija) se
+  definen **dentro de los tests** con el contrato de §8.2 (`eval`/`commit`,
+  `flow` y `jac` locales, `capacitance`). Así el contrato queda probado antes de
+  A5. Si alguno sirve tal cual para A5, A5 lo mueve a `src/sim/elements/`.
+- "Matriz singular detectada" se prueba en `linalg` (`solveDense` → `false`).
+  En `nodal`, `gmin` en la diagonal evita la singularidad por nodos flotantes; el
+  test de nodo flotante comprueba que no hay `NaN`.
+- Los tipos del contrato de elemento y del solver van en `src/sim/solver/types.ts`
+  (§18), y se documentan en `CONTRATOS.md` como sección nueva "Solver".
 
 ## CERRADO 2026-09-25 — limpieza post-TS y revisión del plan de A3
 
@@ -252,14 +285,6 @@ Corregido en la revisión:
 - `docs/NORTE.md` y `docs/SISTEMAS.md` verificados con respecto al plan
   `plans/2026-09-23-arquitectura-juego.md`.
 
-
-## Fase 2 original (en pausa)
-
-T7 ciclo de 4 tiempos, T8 encendido, T9 refrigeración, T10 lubricación.
-Antes de programar, cada agente amplía su `docs/modules/<id>.md` al nivel de
-detalle de `fuel.md` (tablas de params, fallas, física, estado y tests) y lo
-guarda como plan en `docs/plans/`. **Nuevo**: las coordenadas de la vista
-van en un `layout.js` del módulo (ver `HORIZONTE_JUEGO.md`, "Seguro barato").
 
 ## Checklist detallada del combustible (opcional, usuario, Firefox)
 
