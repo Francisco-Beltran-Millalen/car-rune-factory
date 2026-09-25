@@ -11,9 +11,9 @@ Código que viole estas leyes no se implementa ni mergea.
   sin `Date`, sin `Math.random`, sin `requestAnimationFrame`. Se testea en
   Node.
 - **§2** Único escritor. `state` lo escriben sólo `model.step` y
-  `model.actions`. `params`/`faults` los escriben sólo los controles de la UI
-  (y los tests). La vista, las lecturas y la narración sólo leen.
-- **§3** Determinismo: la aleatoriedad sale sólo de `core/rng.js` con
+  `model.actions`. `params`/`faults` los escribe sólo el modo activo, a
+  partir de intents (§20), y los tests. La vista, las lecturas y la narración sólo leen.
+- **§3** Determinismo: la aleatoriedad sale sólo de `core/rng.ts` con
   semilla. La misma secuencia de entradas da el mismo estado.
 - **§4** Paso fijo: la física avanza con `fixedDt = 1 ms`, sin importar el
   framerate. `timeScale` sólo cambia cuántos pasos se dan por frame.
@@ -52,7 +52,7 @@ Código que viole estas leyes no se implementa ni mergea.
 - **§17** Sin dependencias de runtime, **salvo Phaser** una vez aprobado
   en A8. Phaser vive sólo en `src/render/phaser/` y se carga con `import()`
   dinámico: el laboratorio SVG no lo descarga. Nada de `innerHTML` con datos
-  dinámicos: se usan los helpers de `core/dom.js` y `core/svg.js`.
+  dinámicos: se usan los helpers de `core/dom.ts` y `core/svg.ts`.
 - **§18** Textos de la UI y comentarios en español; identificadores en
   inglés. Factories (`createX()`) en vez de clases (salvo las escenas de
   Phaser de `src/render/phaser/`); tipos en TypeScript (`core/types.ts`,
@@ -116,7 +116,7 @@ Código que viole estas leyes no se implementa ni mergea.
 ## Pipeline
 
 ```
-controles/fallas (UI) ──escriben──▶ model.params / model.faults
+controles/fallas/HUD ──intents──▶ modo ──escribe──▶ model.params / model.faults
                                            │
 loop (rAF) ── acc += realDt·timeScale ── model.step(1 ms) × N   (§4)
                                            │
@@ -126,9 +126,10 @@ loop (rAF) ── acc += realDt·timeScale ── model.step(1 ms) × N   (§4)
                (SVG, partículas)    (números, sparklines)   ("¿Qué está pasando?")
 ```
 
-`shell.mount(descriptor)` arma todo (SVG, modelo, vista, loop, paneles) y
-`shell.unmount()` lo destruye sin dejar listeners. El router por hash
-(`#/<id>`) elige el descriptor desde `modules/registry.js`.
+`shell.mount({ kind: 'lab' | 'stage', … })` arma todo (sesión, modo,
+renderer, paneles, HUD) y `shell.unmount()` lo destruye sin dejar
+listeners. El router por hash (`#/lab/<id>`, `#/stage/<id>`) elige el
+descriptor desde `modules/registry.ts` y la etapa desde `game/campaign.ts`.
 
 ## Rationale
 

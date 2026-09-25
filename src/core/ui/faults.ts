@@ -1,12 +1,12 @@
 // Panel de fallas generado desde FaultSpec[] (§8). Emite intents (§20).
 
-import { intents } from '../../game/intents.ts';
+import { intents, type Intent } from '../../game/intents.ts';
 import { h } from '../dom.ts';
-import type { FaultSpec, IntentLike, ParamRecord, ParamValue } from '../types.ts';
+import type { FaultSpec, ParamRecord, ParamValue } from '../types.ts';
 import { segmented } from './controls.ts';
 
 type GetValue = (key: string) => ParamValue | undefined;
-type Emit = (intent: IntentLike) => void;
+type Emit = (intent: Intent) => void;
 
 interface FaultItemDraft {
   body: HTMLElement[];
@@ -106,18 +106,13 @@ const BUILDERS: Partial<Record<FaultSpec['kind'], Builder>> = {
   enum: enumFault,
 };
 
-// I fija el tipo real de emit para el shell TS5 (Intent no es asignable a IntentLike).
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- varianza de emit en TS5
-export function createFaultsPanel<I extends IntentLike = IntentLike>(
+export function createFaultsPanel(
   container: HTMLElement,
   specs: readonly FaultSpec[],
   getValue: GetValue,
-  emit: (intent: I) => void = () => {},
+  emit: Emit = () => {},
   defaultFaults: Readonly<ParamRecord> = {},
 ): FaultsPanel {
-  // Frontera: los constructores de intents (game/intents.ts, TS3) devuelven tipos
-  // anchos; el panel los emite tal cual y el modo los valida (D9).
-  const emitIntent = emit as Emit;
   const healthy: Record<string, ParamValue | undefined> = { ...defaultFaults };
 
   // Si healthy no tiene claves para algún spec, inicializarlo con el valor actual
@@ -131,7 +126,7 @@ export function createFaultsPanel<I extends IntentLike = IntentLike>(
   for (const spec of specs) {
     const build = BUILDERS[spec.kind];
     if (!build) continue;
-    const item = build(spec, getValue, emitIntent);
+    const item = build(spec, getValue, emit);
     const labelEl = h('span', { class: 'ctl-label' }, spec.label);
     const node =
       spec.kind === 'toggle'
@@ -153,7 +148,7 @@ export function createFaultsPanel<I extends IntentLike = IntentLike>(
       type: 'button',
       class: 'btn btn-small',
       onclick: () => {
-        emitIntent(intents.resetFaults());
+        emit(intents.resetFaults());
       },
     },
     'Reparar todo',

@@ -1,19 +1,18 @@
 // Panel de controles generado desde ControlSpec[] (§8). Emite intents (§20).
 
-import { intents } from '../../game/intents.ts';
+import { intents, type Intent } from '../../game/intents.ts';
 import { h } from '../dom.ts';
 import { fmt } from '../format.ts';
 import type {
   AnyModel,
   ControlOption,
   ControlSpec,
-  IntentLike,
   ParamRecord,
   ParamValue,
 } from '../types.ts';
 
 type GetValue = (key: string) => ParamValue | undefined;
-type Emit = (intent: IntentLike) => void;
+type Emit = (intent: Intent) => void;
 
 interface ControlItemDraft {
   node: HTMLElement;
@@ -172,24 +171,19 @@ const BUILDERS: Partial<Record<ControlSpec['type'], Builder>> = {
   button,
 };
 
-// I fija el tipo real de emit para el shell TS5 (Intent no es asignable a IntentLike).
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- varianza de emit en TS5
-export function createControlsPanel<I extends IntentLike = IntentLike>(
+export function createControlsPanel(
   container: HTMLElement,
   specs: readonly ControlSpec[],
   getValue: GetValue,
-  emit: (intent: I) => void = () => {},
+  emit: Emit = () => {},
   modelContext?: AnyModel,
 ): ControlsPanel {
-  // Frontera: los constructores de intents (game/intents.ts, TS3) devuelven tipos
-  // anchos; el panel los emite tal cual y el modo los valida (D9).
-  const emitIntent = emit as Emit;
   const items: ControlItem[] = [];
   const groups = new Map<string, HTMLFieldSetElement>();
   for (const spec of specs) {
     const build = BUILDERS[spec.type];
     if (!build) continue;
-    const item: ControlItem = { ...build(spec, getValue, emitIntent), spec };
+    const item: ControlItem = { ...build(spec, getValue, emit), spec };
     const gname = spec.group ?? '';
     let fs = groups.get(gname);
     if (!fs) {

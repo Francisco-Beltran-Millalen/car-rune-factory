@@ -4,53 +4,25 @@ Trabajo vivo entre sesiones (≤500 líneas). Lo cerrado se recorta y queda en
 git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 `plans/2026-09-22-plan-maestro.md`.
 
-## EN CURSO — Fase 1: sistema de combustible
+## CERRADO 2026-09-22 — Fase 1: sistema de combustible
 
-Cada tarea la hace un agente distinto, dueño de sus archivos (§12). Las
-tareas en paralelo trabajan en worktrees aislados y se integran con merge.
-Cada una cierra con `npm run check` en verde y un commit.
+T0–T6 (docs, scaffold, core, shell, modelo, vista, contenido e
+integración) cerradas; el usuario lo probó el 2026-09-22 ("me gustó
+mucho"). Detalle por tarea: sección 12 de `plans/2026-09-22-plan-maestro.md`.
+La checklist detallada del combustible (al final) queda para una pasada fina.
 
-| # | Tarea | Depende de | Estado |
-|---|---|---|---|
-| T0-a | Docs (este set) | — | ✅ |
-| T0-b | Scaffold (git, Vite, Vitest) | T0-a | ✅ |
-| T1 | Core de simulación (`types, rng, math, loop, history, particles, svg, dom`) | T0-b | ✅ |
-| T2 | Shell de la UI + módulo `_demo` | T0-b | ✅ |
-| T3 | Modelo de combustible + 11 tests | T1 | ✅ |
-| T4 | Vista de combustible | T1, T2 | ✅ (falta revisión visual del usuario) |
-| T5 | Contenido de combustible (fichas, narración, presets, descriptor) | T0-b | ✅ |
-| T6 | Integración + verificación visual del combustible | T3, T4, T5 | ✅ probado por el usuario el 2026-09-22 ("me gustó mucho"). La checklist de abajo queda para una pasada detallada |
+## CERRADO 2026-09-25 — TypeScript estricto (plan 2026-09-24)
 
-Orden: T0-a → T0-b → {T1, T2} → {T3, T4, T5} → T6.
+TS0–TS5 cerradas, un commit por fase (`d15899c` … `fc562c2`). Informe con qué
+se hizo y qué errores aparecieron: `informes/2026-09-25-migracion-typescript.md`;
+los CERRADO de TS0–TS4 están en git. Se usa **TS 6.0 + ESLint** (opción A).
+**TS 7 sigue pendiente:** al empezar cada tarea A, correr
+`npm view typescript-eslint peerDependencies`; si acepta TS 7, la migración
+es una tarea chica (plan §12, camino 1) y se agrega a la tabla de abajo
+(2026-09-25: pide `typescript <6.1.0`, todavía no).
 
-Detalle de archivos y criterios de aceptación de cada tarea: sección 12 de
-`plans/2026-09-22-plan-maestro.md`.
-
-## EN CURSO — TypeScript estricto (plan 2026-09-24) — va ANTES de A3
-
-Plan: `plans/2026-09-24-typescript-estricto.md` (leerlo entero: versiones,
-tsconfig, reglas de lint por ley, diseño de tipos y fases). Todo en
-`main` (sin ramas), un commit por fase, cada una cierra con `npm run check`
-(existe desde TS0). Portar ≠ refactorizar: la física y el comportamiento no
-cambian.
-
-| # | Tarea | Depende de | Estado |
-|---|---|---|---|
-| TS0 | Herramientas: tsconfig, ESLint con leyes, knip, checker, `npm run check`, test de las leyes | — | ✅ |
-| TS1 | Core puro (`types, math, rng, loop, history`, `format` nuevo) | TS0 | ✅ |
-| TS2 | Core con DOM + paneles + router | TS1 | ✅ |
-| TS3 | Juego (`game/**`, `ui/hud`), intents como unión discriminada | TS2 | ✅ |
-| TS4 | Módulos (`fuel`, `_demo`, registry) + comparación de estado idéntico | TS3 | ✅ |
-| TS5 | Shell, legacy, main; `allowJs: false`; docs (§1, §7, §18, §31–§33) + checklist en Firefox | TS4 | ✅ |
-
-Se usa **TS 6.0 + ESLint** (opción A, decidida el 2026-09-24; comparación en
-§2.1 del plan). **TS 7 queda pendiente:** al empezar cada tarea A, correr
-`npm view typescript-eslint peerDependencies`. Si acepta TS 7, la migración
-es una tarea chica (plan §12, camino 1): se agrega a la tabla.
-
-La migración terminó: `src/` y `tests/` son `.ts` y §18 ya rige sin
-transición. Las listas de archivos del plan 2026-09-23 dicen `.js`: léanse
-como `.ts`.
+Las listas de archivos de los planes 2026-09-23 y 2026-09-24 dicen `.js`:
+léanse como `.ts`.
 
 ## EN CURSO — Arquitectura de juego (plan 2026-09-23)
 
@@ -66,7 +38,7 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
 | A0 | Docs: leyes §17, §19–§30 en ARCHITECTURE, contratos de juego 6.1–6.8 | — | ✅ |
 | A1 | Sesión + intents + labMode + shell nuevo + legacyRenderer + paneles DOM + router | A0 | ✅ |
 | A2 | Quiz (E1) + HUD + guardado + campaña + etiquetas de nombre separadas | A1 | ✅ (checklist manual abajo) |
-| A3 | Diagnóstico (E2) + faultCatalog combustible + herramientas + visibilidad + `cue` en eventos | A2, TS5 | ⏳ |
+| A3 | Diagnóstico (E2) + faultCatalog combustible + herramientas + visibilidad + `cue` en eventos — **con la enmienda `plans/2026-09-25-a3-revision.md`** | A2, TS5 | ⏳ |
 | G1 | Checkpoint de juego: el usuario juega E2 en Firefox y responde las 5 preguntas (plan motor-y-juice §3) | A3 | ⏳ |
 | A4 | Solver nodal + linalg | A0 | ⏳ |
 | A5 | Elementos + circuito (compile/validate) + controladores base | A4 | ⏳ |
@@ -77,7 +49,32 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
 | A9 | Armar circuitos (E4) | A7 | ⏳ |
 | A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
 
-**Siguiente paso:** A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios + `cue` en eventos). Después: G1 (checkpoint de juego del usuario).
+**Siguiente paso:** A3. Leer, en este orden: `plans/2026-09-23-arquitectura-juego.md`
+§4.6, §7 y §9 (fila A3); `plans/2026-09-24-motor-y-juice.md` §3 y §6; y
+**`plans/2026-09-25-a3-revision.md`, que manda donde choquen** (vista de taller
+con `ModeUi.instruments`, pools con valores medidos y un reclamo por falla,
+`revealedFaults` con ids §26, narración `'hints'`, reparaciones y cues). Después:
+G1 (checkpoint de juego del usuario).
+
+## CERRADO 2026-09-25 — limpieza post-TS y revisión del plan de A3
+
+- Paneles (`core/ui/controls.ts`, `core/ui/faults.ts`): `emit` tipado como
+  `(intent: Intent) => void`. Se quitaron el genérico `I extends IntentLike`,
+  los 2 casts `emit as Emit` y los 2 `eslint-disable` que TS2 dejó "para TS5"
+  y que TS5 no limpió. `IntentLike` borrado de `core/types.ts` (sin uso).
+  Quedan **3** `as` frontera en `src/` (`dom.ts`, `shell.ts`, `controls.ts`).
+- `ARCHITECTURE.md`: §2 decía que `params`/`faults` los escriben "los
+  controles de la UI" (choca con §20: sólo el modo); rutas `.js` → `.ts` en
+  §3/§17; pipeline con intents → modo, y router `#/lab/<id>` / `#/stage/<id>`.
+- `AHORA.md`: Fase 1 y TypeScript pasan a CERRADO; se recortaron los CERRADO
+  de TS0–TS4 (en git y en el informe); se quitó "worktrees + merge" de la
+  Fase 1, que contradecía `AGENTS.md` regla 8.
+- Revisión de A3 contra el código, con simulación de cada falla:
+  `plans/2026-09-25-a3-revision.md`. Hallazgo principal: el diagrama muestra
+  manómetro, retorno, corriente y suciedad del filtro sin herramientas, así
+  que E2 se resolvería mirando la pantalla.
+- `npm run check` verde: typecheck, lint 0 warnings, knip, 123 tests y build.
+  Sin cambio de comportamiento: no hace falta revisar en Firefox.
 
 ## CERRADO 2026-09-25 — TS5 cierre de TypeScript
 
@@ -93,7 +90,7 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
   (tipos en TS) y leyes §31–§33 + rationale TypeScript + Vite; `CONTRATOS.md` con
   las firmas en TS y punteros al código; `NORTE.md`, `README.md` de docs y
   `AGENTS.md` (cierre con `npm run check`); rutas `.js` de los docs vivos a `.ts`.
-- Fronteras `as` (D8) que quedan en `src/` — **5** en total:
+- Fronteras `as` (D8) que quedaban en `src/` al cerrar TS5 — 5 (hoy 3, ver la limpieza de arriba):
   - `core/dom.ts`: `v as EventListener` (attrs `on*` del helper `h`).
   - `core/shell.ts`: `t as Theme` (valor de `localStorage`, validado con `THEMES`).
   - `core/ui/controls.ts`: `emit as Emit` (los constructores de intents vienen de
@@ -115,148 +112,6 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
 **Verificado por el usuario en Firefox (2026-09-25): funciona sin errores.**
 Informe completo de la migración (qué se hizo y qué errores aparecieron):
 `docs/informes/2026-09-25-migracion-typescript.md`.
-
-## CERRADO 2026-09-25 — TS4 módulos
-
-- `src/modules/{registry,_demo/*,fuel/*}.js` → `.ts` y `tests/fuel/{model,content}.test.js`
-  → `.ts` (aserciones intactas; sólo anotaciones, guards y rutas `.ts`).
-- Física intacta, **comprobada**: antes del port se guardó el `state` completo del
-  combustible a 10 s simulados en 3 escenarios (arranque normal, `filterClog: 0.8`,
-  `relay: 'dead'`, semilla 12345) en `/tmp/opencode/fuel-state-before.json`; después del
-  port la comparación con `toEqual` (igualdad exacta) dio **idéntica**.
-- Tipos del combustible en `fuel/model.ts` según 8.2: `IgnitionKey`, `EngineState`,
-  `RelayState`, `RegulatorState`, `FuelParams/Faults/State`, `FuelModel` y `FuelOverrides`;
-  `DEFAULT_*` con `Readonly`. `state` se crea completo (`initialState()`) y `reset()` muta
-  el mismo objeto; `time` es un getter sobre la variable interna (Model.time es readonly).
-- `fuel/index.ts` usa `defineModule<FuelModel>`; `specs.ts` tipa `ControlSpec<FuelModel>`,
-  `ReadoutSpec<FuelState>` y `Preset<FuelModel>`; `view.ts` con `ViewContext<FuelModel>`.
-  `_demo` también quedó tipado (control con `disabledWhen` sobre `DemoModel`).
-- Desviaciones/reglas nuevas:
-  - `consistent-type-definitions` off para `src/modules/*/model.{js,ts}` con motivo: el
-    plan §8.1 exige `type` (alias) para que `params/faults/state` sean asignables a
-    `Record<string, …>`.
-  - Se quitaron `void wireEcu`/`void valve` (variables sólo para descartar): ahora la
-    llamada se hace sin asignar.
-- `knip.json` pasa a `src|tests/**/*.{js,ts}` y el ignore de `_demo` a `.ts`.
-- `npm run check` verde: typecheck, lint 0 warnings, knip, 123 tests y build.
-
-
-## CERRADO 2026-09-25 — TS3 juego con tipos
-
-- `src/game/{types,intents,session,save,campaign}.js`, `stages/*`, `modes/{lab,quiz}.js`
-  y `src/ui/hud.js` → `.ts`; tests `tests/game/{intents,session,save,lab,quiz}.test.js`
-  → `.ts` (aserciones intactas).
-- `Intent` es unión discriminada por `type` con `IntentPayloads` (§8.3); `INTENT_TYPES`
-  con `as const satisfies`; constructores tipados. Test nuevo: un `answer` sin `choiceId`
-  no compila (`@ts-expect-error`).
-- `ModeEvent` también unión (`feedback | score | stageEnd | uiChanged | highlight`),
-  `Stage`/`QuizStageConfig`, `SaveData`/`SaveApi` exactos, `SessionOptions`/`Session`,
-  `HudModel`, `LabMode`/`QuizMode` (con `activePreset`/`hud()` no nulos).
-- `ModeContext.module` es un `ModeModule` mínimo (lo que los modos usan de verdad), así
-  los mocks de test no llevan casts; el descriptor completo lo cumple.
-- `labMode.handle` lista los 23 intents con `switch` exhaustivo y deja un `default`
-  para intents desconocidos en runtime (D9). En `quiz` los `possibly undefined` se
-  resolvieron con guards (`if (!last) throw new Error('invariante: …')`) y no con `!`.
-- `parseSave` parsea a `unknown` y valida con guards; se conserva el saneo tal cual.
-- Desviaciones anotadas: `NoPayload = undefined` como marcador de intent sin payload
-  (los tipos vacíos están bloqueados por lint), `Session.recorder` sin genérico
-  (sólo se usa `series`), y `content.js`/`view.js` siguen en JS hasta TS4 (el test los
-  ve por contrato).
-- `npm run check` verde: typecheck, lint 0 warnings, knip, **123 tests** (+1) y build.
-
-
-## CERRADO 2026-09-25 — TS2 core con DOM y UI
-
-- `src/core/{dom,svg,particles,router}.js` → `.ts`, `src/core/ui/*.js` → `.ts`, y
-  `tests/core/{particles,ui-pure}.test.js`, `tests/game/router.test.js` → `.ts`
-  (aserciones intactas; `_demo`, que sigue en JS hasta TS4, se ve por su forma de uso
-  con `unknown` + cast en el test).
-- `dom.ts`/`svg.ts` según el plan §8.5: `h`/`el` genéricos por `HTMLElement/SVGElementTagNameMap`,
-  `Attrs` como `unknown`, `Reflect.set`, e interfaces explícitas de `pipe`, `box`, `label`
-  y `gaugeSvg`. `router.ts` según §8.6 con `HashWindow`/`HashLocation` mínimas: el test
-  pasa su doble sin cast.
-- Paneles con `ControlSpec`/`FaultSpec`/`ReadoutSpec` de `types.ts`. `spec` se declara al
-  crear el item y `disabledWhen` se evalúa contra `AnyModel` (fallback con Proxy si no hay
-  `modelContext`), como pide el plan.
-- `emit` de los paneles: tipo genérico `I extends IntentLike` para que el shell TS5 infiera
-  `Intent` sin cast en el llamado; dentro hay un cast frontera porque `game/intents.js`
-  sigue en JS (D9: el modo valida).
-- Desviaciones/decisiones anotadas:
-  - `IntentLike` (`{ type: string }`) en `types.ts` hasta que TS3 traiga la unión real.
-  - `no-unnecessary-type-parameters` desactivada inline (con motivo) en los dos paneles, §33.
-  - `unbound-method` off sólo en tests (matchers de vitest sobre métodos de dobles).
-  - `append` de `dom.ts` recursivo (`.flat()` no tipaba el `Child` recursivo) y `setAttrs`
-    no stringifica objetos que no sean `dataset`/`style`; `infoPanel` usa `append` de dom
-    (acepta `null`) en vez de `container.append(...null)`.
-- `npm run check` verde: typecheck, lint 0 warnings, knip, 122 tests y build. `npm run dev`
-  arranca con el checker en 0 errores (la paridad visual del laboratorio la mira el usuario
-  en Firefox, §13).
-
-
-## CERRADO 2026-09-25 — TS1 core puro
-
-- `src/core/{types,math,rng,loop,history,format}.js` → `.ts` y `tests/core/{math,rng,loop,history}.test.js`
-  → `.ts` (aserciones intactas; sólo anotaciones y extensiones). `format.ts` ya existía desde el
-  arreglo de TS0.
-- `types.ts` según el plan §8.1: `Model<P,F,S>`, `ReadoutSpec`, `ModuleDescriptor`, `ViewContext`,
-  `View`, `ControlSpec`, `FaultSpec`, `PartInfo`, `Narration`, `Preset` y `defineModule`
-  (identidad, `@public` para TS4). Callbacks que reciben tipos del módulo con sintaxis de método
-  (nota de varianza).
-- `rng.ts` exporta `Rng`; `loop.ts` exporta `Loop`, `LoopOptions` y `SteppableModel` (lo mínimo
-  que el loop usa del modelo: sólo `step`); `history.ts` exporta `Recorder`, `RingBuffer` y
-  `HistoryReadout`. Los tipos mínimos evitan casts y `!` innecesarios en los tests, que no
-  construyen modelos completos.
-- Imports y JSDoc de los `.js` que faltan pasan a `.ts` (`allowImportingTsExtensions`, D4);
-  `game/types.js` sigue en JS hasta TS3.
-- Adaptaciones de tipo, sin cambio de física:
-  - `TIME_SCALES` se arma con `TIME_SCALE_MIN/MAX` nombrados: `noUncheckedIndexedAccess` no puede
-    probar `TIME_SCALES[TIME_SCALES.length - 1]`.
-  - `rng.pick` lanza `invariante: …` con arreglo vacío (antes devolvía `undefined`); los llamadores
-    lo usan con arreglos no vacíos.
-  - Se quitó el `Number(...)` redundante del recorder y el `!!` de `setPaused`
-    (`no-unnecessary-type-conversion`); el guard `|| 0` de NaN queda.
-- `npm run check` verde: typecheck, lint 0 warnings, knip, 122 tests y build.
-
-
-## CERRADO 2026-09-25 — TS0 herramientas (plan 2026-09-24-typescript-estricto)
-
-- `tsconfig.json` (sección 3 del plan, con `allowJs: true`/`checkJs: false` hasta TS5),
-  `eslint.config.js` flat con las leyes por archivo (§1, §3, §7, §11, §17, §18, §19,
-  §20, §21, §22) y bloque de transición para el JS, `knip.json`, `vite.config.ts` con
-  `vite-plugin-checker` y scripts nuevos (`typecheck`, `lint`, `knip`, `check`).
-- Versiones instaladas (verificadas con `npm view`): `typescript@6.0.3` (`latest` es 7.0.2,
-  pero `typescript-eslint@8.70.1` pide `<6.1.0`; D1), `eslint@10.11.0`, `@eslint/js@10.0.1`,
-  `typescript-eslint@8.70.1`, `@eslint-community/eslint-plugin-eslint-comments@4.8.1`,
-  `globals@17.12.0`, `@types/node@26.6.2`, `knip@6.38.0`, `vite-plugin-checker@0.14.5`.
-- `tests/tooling/lint-laws.test.ts`: 12 casos con rutas virtuales que prueban que cada
-  regla de ley dispara y que las excepciones no (`new Date` en `save.ts`, `import type`,
-  Phaser y `class` en `render/phaser/`).
-- Desviaciones del plan, anotadas:
-  - `no-restricted-imports` de ESLint 10 (la de typescript-eslint está deprecada desde
-    8.64) con `regex` + `allowTypeImports`, que es lo que pide la tabla 5.2.
-  - `@typescript-eslint/no-empty-function` apagado sólo para los stubs no-op del
-    contrato (`emit = () => {}`, `highlight() {}`, `sync() {}`, `resize() {}`): el
-    preset strictTypeChecked lo marca y el patrón factory los declara vacíos.
-  - El checker lintea `./src/**/*.{js,ts}` mientras quede JS; en TS5 basta `.ts`.
-  - `process.env['VITEST']` (corchetes) por `noPropertyAccessFromIndexSignature`.
-  - knip: `src/modules/_demo/{index,view}.js` ignorados (ejemplo que este AHORA
-    conserva y knip ve muerto; TS4 decidirá), y `@public` en `PX_PER_LH` y `box`
-    porque son contratos de `CONTRATOS.md` 4.6/4.7 sin uso todavía.
-- Violaciones reales que encontró el lint, en commit aparte (`683ca90`): `narrate.js`
-  importaba `fmt` de `core/dom.js` (§1) → `fmt` pasa a `core/format.js`; inicializadores
-  pisados en `shell.route()`; parámetro sin usar en `labMode.update`.
-- `npm run check` verde: typecheck, lint sin warnings, knip, **122 tests** (+12 de leyes)
-  y build. En `npm run dev` el checker reporta 1 error de tipos al agregar a mano
-  `src/checker-probe.ts` y vuelve a 0 al borrarlo (se revirtió; el overlay lo mira el
-  usuario).
-
-**Revisar en Firefox** (cuando el usuario quiera, §13):
-1. `npm run dev` → portada con "Etapas" y "Laboratorio", lab del combustible y quiz 1/2
-   se ven y se usan igual que antes (TS0 no tocó comportamiento).
-2. F12 sin errores de consola.
-3. Con el dev server corriendo, agregar a mano un error de tipos en un `.ts` de `src/`
-   → aparece el overlay de `vite-plugin-checker`; borrarlo → desaparece.
-
 
 ## CERRADO 2026-09-24 — A2 Quiz E1, HUD, guardado y campaña
 
