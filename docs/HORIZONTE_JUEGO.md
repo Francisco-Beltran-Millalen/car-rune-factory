@@ -25,21 +25,21 @@ etapa posterior, **armar el sistema él mismo**.
 
 1. **Mover piezas (sólo visual).** La topología no cambia (bomba → filtro →
    riel…); cambian las posiciones. Requisito: las coordenadas son **datos**
-   (`layout.js`: pieza → posición + puertos de conexión) y las tuberías se
+   (`layout.ts`: pieza → posición + puertos de conexión) y las tuberías se
    trazan entre puertos. Se puede hacer con el SVG actual (arrastrar), sin
    engine.
 2. **Armar el circuito (cambia la física).** El jugador conecta las piezas y
    puede equivocarse (filtro al revés, sin retorno, bomba sin relé). Requiere
    un **solver de redes**: nodos con presión y conexiones con caudal (como un
    simulador de circuitos eléctricos), en vez de las ecuaciones fijas en serie
-   de `fuel/model.js`. Es un cambio del **modelo**, no del renderer.
+   de `fuel/model.ts`. Es un cambio del **modelo**, no del renderer.
 
 ## Seguro barato para ya
 
 - Mantener §1 (modelo ⟂ vista): la física no sabe cómo se dibuja. Así el
   renderer se puede cambiar sin tocar los tests de física.
-- En los módulos nuevos, separar las coordenadas en un `layout.js` del
-  módulo en vez de dejarlas repartidas por `view.js`. (Pasar `fuel` a ese
+- En los módulos nuevos, separar las coordenadas en un `layout.ts` del
+  módulo en vez de dejarlas repartidas por `view.ts`. (Pasar `fuel` a ese
   esquema cuando se retome).
 
 ## Engines candidatos (no decidido)

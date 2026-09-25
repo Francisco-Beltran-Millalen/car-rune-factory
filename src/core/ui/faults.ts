@@ -5,7 +5,7 @@ import { h } from '../dom.ts';
 import type { FaultSpec, IntentLike, ParamRecord, ParamValue } from '../types.ts';
 import { segmented } from './controls.ts';
 
-type GetValue = (key: string) => ParamValue;
+type GetValue = (key: string) => ParamValue | undefined;
 type Emit = (intent: IntentLike) => void;
 
 interface FaultItemDraft {
@@ -118,7 +118,7 @@ export function createFaultsPanel<I extends IntentLike = IntentLike>(
   // Frontera: los constructores de intents (game/intents.ts, TS3) devuelven tipos
   // anchos; el panel los emite tal cual y el modo los valida (D9).
   const emitIntent = emit as Emit;
-  const healthy: ParamRecord = { ...defaultFaults };
+  const healthy: Record<string, ParamValue | undefined> = { ...defaultFaults };
 
   // Si healthy no tiene claves para algún spec, inicializarlo con el valor actual
   for (const spec of specs) {

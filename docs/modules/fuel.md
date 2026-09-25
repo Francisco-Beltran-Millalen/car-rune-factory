@@ -101,7 +101,7 @@ Presión de riel (manómetro 0–8, verde 2.3–3.8 relativo al vacío; mostrar 
 - Motor apagado y la presión cae rápido → warn: "La presión residual no se mantiene: hay una fuga (inyector o línea)."
 - `mixtureRatio > 1.35` → warn: "Mezcla rica: entra más combustible del que la ECU calculó."
 
-## 9. Tests de física (`tests/fuel/model.test.js`) — criterios de aceptación
+## 9. Tests de física (`tests/fuel/model.test.ts`) — criterios de aceptación
 Helper: `run(model, seconds)` avanza con `dt = 0.001`.
 1. Cebado: `ignitionKey='on'` → a los 1.5 s `pRail ∈ [2.8, 3.3]`. A los 4 s el relé está abierto y la presión se mantiene > 2.5 (presión residual).
 2. Ralentí sano (`run`, 800 rpm, throttle 0): `pRail − pMan ∈ [2.95, 3.15]` y `pRail ∈ [2.3, 2.5]`.

@@ -6,59 +6,43 @@ Las leyes que estos contratos implementan están en `ARCHITECTURE.md` (§n).
 
 ## Contratos del core
 
-### 4.1 Descriptor de módulo — `src/modules/<id>/index.js`
-```js
-/** @type {import('../../core/types.js').ModuleDescriptor} */
-export default {
-  id: 'fuel',                          // coincide con la carpeta y la ruta #/fuel
+### 4.1 Descriptor de módulo — `src/modules/<id>/index.ts`
+```ts
+import { defineModule } from '../../core/types.ts';
+
+export default defineModule<FuelModel>({
+  id: 'fuel',                          // coincide con la carpeta y la ruta #/lab/fuel
   title: 'Sistema de combustible',
   summary: 'Cómo llega la bencina desde el estanque a los inyectores.',
   order: 1,
   viewBox: [0, 0, 1200, 700],          // sistema de coordenadas del SVG del escenario
-  createModel,                          // () => Model
-  createView,                           // (ctx: ViewContext) => View
-  controls,                             // ControlSpec[]
+  createModel,                          // () => M
+  createView,                           // (ctx: ViewContext<M>) => View
+  defaultParams,                        // los DEFAULT_PARAMS del modelo
+  defaultFaults,                        // los DEFAULT_FAULTS del modelo
+  controls,                             // ControlSpec<M>[]
   faults,                               // FaultSpec[]
-  readouts,                             // ReadoutSpec[]
+  readouts,                             // ReadoutSpec<M['state']>[]
   parts,                                // Record<partId, PartInfo>
-  narrate,                              // (model) => Narration[]
-  presets,                              // Preset[] (opcional): escenarios guiados
-};
+  narrate,                              // (model: M) => Narration[]
+  presets,                              // Preset<M>[] (opcional)
+});
 ```
+El tipo exacto es `ModuleDescriptor<M>` en `src/core/types.ts`; el registry lo borra a
+`ModuleDescriptor` (una sola vez, vía `defineModule`).
 
-### 4.2 Modelo
-```js
-/**
- * @typedef {Object} Model
- * @property {Object} params    // lo que controla el usuario; lo escriben los controles
- * @property {Object} faults    // fallas: boolean | number 0..1 | string enum
- * @property {Object} state     // observable, solo lectura fuera del modelo
- * @property {(dt:number)=>void} step   // avanza dt segundos de tiempo simulado; estable con dt ≤ 0.002
- * @property {()=>void} reset            // vuelve a los DEFAULT_* y al estado inicial
- * @property {Record<string, ()=>void>} actions // acciones puntuales (p. ej. refill, crankOnce)
- * @property {number} time               // tiempo simulado acumulado (s)
- */
-```
-- Cada `model.js` exporta `DEFAULT_PARAMS`, `DEFAULT_FAULTS` y `createXModel(overrides = {})`.
+### 4.2 Modelo — `src/modules/<id>/model.ts`
+El tipo es `Model<P, F, S>` de `src/core/types.ts` (`params`, `faults`, `state` de sólo
+lectura afuera, `actions`, `time`, `step(dt)`, `reset()`).
+- Cada `model.ts` exporta `DEFAULT_PARAMS`, `DEFAULT_FAULTS` y `createXModel(overrides = {})`.
 - `reset()` restaura **en el mismo objeto** (`Object.assign(params, DEFAULT_PARAMS)`): la UI guarda referencias a `params`/`faults`/`state` y no se re-cablea.
 - `step` debe tolerar cualquier combinación de params/faults sin producir `NaN` ni `Infinity`. Se limita todo con `clamp`.
 
 ### 4.3 Vista — `createView(ctx)`
-```js
-/**
- * @typedef {Object} ViewContext
- * @property {SVGSVGElement} svg          // ya creado por el shell con el viewBox del módulo
- * @property {Model} model
- * @property {(partId:string)=>void} selectPart   // la vista la llama cuando se hace clic en una pieza
- *
- * @typedef {Object} View
- * @property {(realDt:number)=>void} update // se llama en cada frame; lee model.state; realDt en s reales × timeScale
- * @property {(partId:string|null)=>void} highlight
- * @property {()=>void} destroy
- */
-```
+`ViewContext<M>` y `View` están en `src/core/types.ts` (`svg`, `model`, `selectPart`; y
+`update(dt)`, `highlight?(partId)`, `destroy()`).
 - Todo elemento clickeable lleva `data-part="<partId>"`. Los `partId` deben existir en `parts`.
-- La vista **no** cablea clics ni hover: el shell delega sobre `[data-part]`, abre la ficha, muestra el tooltip con el nombre y agrega la clase `.selected` a todos los elementos de esa pieza. `highlight` es opcional, para efectos extra.
+- La vista **no** cablea clics ni hover: el legacyRenderer delega sobre `[data-part]`, abre la ficha, muestra el tooltip con el nombre y agrega la clase `.selected` a todos los elementos de esa pieza. `highlight` es opcional, para efectos extra.
 - Clases CSS disponibles (`src/styles.css`): `.part-body`, `.pipe-wall`, `.pipe-fluid`, `.fluid-{fuel,coolant,oil,electric,vacuum}`, `.liquid`, `.p-*`, `.lbl`, `.lbl-small`, `.valve-bar`, `.gauge-*`.
 - La vista dibuja la geometría **una sola vez** en `createView`. En `update` solo cambia atributos (transform, fill, opacity, puntos de partículas).
 - Colores **solo vía variables CSS** (`var(--fuel)` etc.) para que funcione el tema oscuro.
@@ -83,28 +67,28 @@ export default {
 { id: 'pRail', label: 'Presión de riel', unit: 'bar', decimals: 2,
   get: (s) => s.pRail, gauge: { min: 0, max: 8, green: [2.3, 3.8] }, history: true }
 
-// PartInfo (content.js)
+// PartInfo (content.ts)
 { name: 'Bomba eléctrica', what: '¿Qué es?', why: '¿Para qué sirve?', how: '¿Cómo funciona?',
   failures: ['Síntoma → causa', ...] }
 
-// Narration (narrate.js): reglas evaluadas cada ~250 ms
+// Narration (narrate.ts): reglas evaluadas cada ~250 ms
 { level: 'info' | 'warn' | 'bad', text: 'La presión cae con carga: el filtro está restringiendo el paso.' }
 
 // Preset (opcional): escenario guiado
 { id: 'clogged', label: 'Caso: tironea en subida', params: {...}, faults: {...}, note: 'Observa el manómetro al acelerar.' }
 ```
 
-### 4.5 Bucle — `core/loop.js`
+### 4.5 Bucle — `core/loop.ts`
 ```js
 createLoop({ model, fixedDt = 0.001, maxStepsPerFrame = 4000, onFrame })
 // → { tick(realDt), start(), stop(), stepOnce(), setTimeScale(x), setPaused(b), get timeScale, get paused, get running, destroy() }
-// onFrame(simDt, steps). El historial: createRecorder(readouts) de core/history.js, .sample(model) en onFrame.
+// onFrame(simDt, steps). El historial: createRecorder(readouts) de core/history.ts, .sample(model) en onFrame.
 ```
 - En cada frame: `realDt = min(ahora - antes, 0.1)`. Luego `acc += realDt * timeScale`. Mientras `acc ≥ fixedDt` (y sin pasar `maxStepsPerFrame`) se llama `model.step(fixedDt)`. Al final, `onFrame(realDt * timeScale)`.
 - `timeScale` va de 0.01 a 4, con valores predefinidos: 0.01, 0.05, 0.25, 1, 2, 4. La cámara lenta es clave para ver los inyectores y el ciclo de 4 tiempos.
-- El registro de historial (`history.js`) toma muestras de las lecturas con `history: true` cada 50 ms de tiempo simulado. Guarda los últimos 400 puntos.
+- El registro de historial (`history.ts`) toma muestras de las lecturas con `history: true` cada 50 ms de tiempo simulado. Guarda los últimos 400 puntos.
 
-### 4.6 Partículas — `core/particles.js`
+### 4.6 Partículas — `core/particles.ts`
 ```js
 createFlow({ path /* SVGPathElement */, layer /* SVGGElement */, spacing = 14, radius = 3, className = 'p-fuel' })
 // → { setSpeed(pxPerSec /* puede ser negativo */), setStyle(className), setDensity(0..1), setAir(0..1), update(dt), destroy() }
@@ -113,12 +97,12 @@ createFlow({ path /* SVGPathElement */, layer /* SVGGElement */, spacing = 14, r
 - Convención visual: **velocidad ∝ caudal**, con escala `PX_PER_LH = 2.5` (100 L/h → 250 px/s). Cada módulo puede cambiar la escala.
 - `className` permite `p-fuel`, `p-air` (burbuja hueca), `p-coolant`, `p-oil`, `p-mixture`, `p-exhaust`, `p-electric`.
 
-### 4.7 Helpers SVG — `core/svg.js`
-`el(tag, attrs, parent)`, `group(parent, attrs)`, `pipe(parent, points, { width, className })` (devuelve `{ outer, inner, path }`, con esquinas redondeadas y un path central utilizable por `createFlow`), `box(parent, { x, y, w, h, r, label, part })`, `label(parent, x, y, text, opts)`, `arrowMarkers(svg)`, `gaugeSvg(parent, opts)` (manómetro con aguja: `{ setValue(v) }`).
+### 4.7 Helpers SVG — `core/svg.ts`
+`el(tag, attrs, parent)`, `group(parent, attrs)`, `pipe(parent, points, { width, className })` (devuelve `{ outer, inner, path }`, con esquinas redondeadas y un path central utilizable por `createFlow`), `box(parent, { x, y, w, h, r, label, part })`, `label(parent, x, y, text, opts)`, `arrowMarkers(svg)`, `gaugeSvg(parent, opts)` (manómetro con aguja: `{ setValue(v) }`). Las opciones de `pipe/box/label/gaugeSvg` son interfaces explícitas en el propio archivo.
 
 ### 4.8 Router / shell
-- Ruta `#/<id>`. Si está vacía, se muestra la portada con tarjetas de todos los módulos del `registry`.
-- `shell.mount(descriptor)`: crea el SVG, el modelo, la vista, el loop y los paneles. Cablea `selectPart` → `infoPanel.show(parts[id])` y `view.highlight(id)`. `shell.unmount()` destruye todo sin dejar listeners.
+- Ruta `#/lab/<id>` (y `#/<id>` redirige ahí), `#/stage/<id>`, `#/` portada. `createRouter` está en `core/router.ts` y el shell en `core/shell.ts`.
+- `shell.mount(target)` recibe una unión discriminada: `{ kind: 'lab'; module } | { kind: 'stage'; module; stage; attempt }`. Crea el SVG, el modelo, la vista, el loop y los paneles, y `shell.unmount()` destruye todo sin dejar listeners.
 
 ## Shell de la UI
 
@@ -143,47 +127,38 @@ Fluidos: `--fuel` (ámbar), `--air` (blanco/gris claro), `--coolant` (verde-azul
 
 ## Contratos de juego
 
-### 6.1 Sesión — `src/game/session.js`
+### 6.1 Sesión — `src/game/session.ts`
 
 Separa del shell la parte "simulación en marcha", para que modos y tests la usen sin DOM.
 
-```js
-/**
- * @param {Object} o
- * @param {() => Model} o.createModel
- * @param {ReadoutSpec[]} o.readouts
- * @param {'raf'|'external'} [o.driver]  'external': alguien llama session.tick(realDt)
- * @param {(cb)=>number} [o.raf]  inyectable (tests)
- * @returns {Session}
- */
-createSession(o) → {
-  model,            // Model (CONTRATOS 4.2)
-  loop,             // createLoop existente; con driver 'external' nunca llama raf
-  recorder,         // createRecorder existente
-  tick(realDt),     // avanza loop + recorder; devuelve pasos
-  onFrame(cb),      // suscripción: cb(simDt) después de cada tick; devuelve unsubscribe
-  start(), stop(), reset(), destroy(),
-}
+```ts
+createSession<M extends Model>(o: SessionOptions<M>): Session<M>
 ```
 
-### 6.2 Intents — `src/game/intents.js`
+`SessionOptions` y `Session` están en `src/game/types.ts`: `model`, `loop`, `recorder`,
+`tick(realDt)`, `onFrame(cb)`, `start()`, `stop()`, `reset()`, `destroy()`.
+`driver: 'external'` significa que alguien llama `session.tick(realDt)` (Phaser, tests).
 
-Constantes + constructores (`intents.setParam(key, value)`) para que los typos fallen en los tests.
+### 6.2 Intents — `src/game/intents.ts`
+
+Los tipos son una **unión discriminada** por `type` (`IntentPayloads` → `Intent` →
+`IntentOf<K>`); los constructores (`intents.setParam(key, value)`) están tipados para que
+los typos fallen en los tests.
 
 | type | payload | Emitido por | Lo usan |
 |---|---|---|---|
 | `setParam` | `{ key, value }` | panel de controles | lab, diagnosis (gratis), assembly (prueba) |
 | `setFault` | `{ key, value }` (`key` estilo §26) | panel de fallas | sólo lab |
-| `resetFaults` | `{}` | botón "Reparar todo" | lab |
+| `resetFaults` | — | botón "Reparar todo" | lab |
 | `applyPreset` | `{ presetId }` | panel de casos | lab |
 | `action` | `{ name, args }` | botones (p. ej. `refill`) | lab, diagnosis |
 | `selectPart` | `{ partId }` | renderer (clic) | lab (ficha), quiz (respuesta), diagnosis (objetivo de herramienta) |
 | `hoverPart` | `{ partId \| null }` | renderer | lab (tooltip) |
 | `answer` | `{ choiceId }` | HUD | quiz (opción múltiple) |
-| `useTool` | `{ toolId, partId? }` | HUD / renderer | diagnosis |
+| `useTool` | `{ toolId, partId }` | HUD / renderer | diagnosis |
 | `removeTool` | `{ toolId }` | HUD | diagnosis |
 | `replacePart` | `{ partId }` | HUD | diagnosis |
-| `deliver` | `{}` | HUD ("Entregar auto") | diagnosis |
+| `deliver` | — | HUD ("Entregar auto") | diagnosis |
 | `markSuspect` | `{ partId, mark: 'suspect'\|'cleared'\|null }` | HUD / renderer | diagnosis (reservado; A3 lo acepta y guarda) |
 | `placePart` | `{ partType, x, y }` (no `type`: chocaría con `intent.type`) | renderer (arrastre desde paleta) | assembly |
 | `movePart` | `{ partId, x, y }` | renderer | assembly |
@@ -191,78 +166,50 @@ Constantes + constructores (`intents.setParam(key, value)`) para que los typos f
 | `deletePart` | `{ partId }` | renderer / tecla Supr | assembly |
 | `connect` | `{ from: 'part.port', to: 'part.port' }` | renderer | assembly |
 | `disconnect` | `{ linkId }` | renderer | assembly |
-| `runTest` | `{}` | HUD | assembly |
-| `nextStage` / `retry` / `quit` | `{}` | HUD | todos |
+| `runTest` | — | HUD | assembly |
+| `nextStage` / `retry` / `quit` | — | HUD | todos |
 
 La pausa, la velocidad y el reinicio del reloj **no** son intents: son control del tiempo de la sesión (timebar). En diagnóstico y armado el modo puede deshabilitar la velocidad 4× vía `ModeUi.timebar`.
 
-### 6.3 Modo — `src/game/modes/<id>.js`
+### 6.3 Modo — `src/game/modes/<id>.ts`
 
-```js
-/**
- * @typedef {Object} ModeContext
- * @property {Session} session
- * @property {ModuleDescriptor} module      // el sistema (fuel…)
- * @property {Stage|null} stage             // null en lab
- * @property {ReturnType<typeof createRng>} rng
- * @property {SaveApi} save
- *
- * @typedef {Object} ModeUi                 // lo lee el shell/ui cada ~100 ms
- * @property {string[]|'all'} controls      // keys de ControlSpec visibles
- * @property {string[]|'all'|'none'} faults
- * @property {string[]|'all'} readouts      // ids de ReadoutSpec visibles
- * @property {'full'|'hints'|'off'} narration
- * @property {boolean} labels               // etiquetas de texto del diagrama
- * @property {boolean} tooltips
- * @property {boolean} infoPanel
- * @property {boolean} presets
- * @property {{ maxScale:number }} timebar
- * @property {{ draggable:boolean, connectable:boolean, palette:string[] }} edit
- * @property {string[]} revealedFaults      // fallas cuyo indicio visual se muestra (§4.6)
- *
- * @typedef {Object} ModeEvent
- * @property {'feedback'|'score'|'stageEnd'|'uiChanged'|'highlight'} type
- * @property {'info'|'good'|'bad'} [level]
- * @property {string} [text]
- * @property {{ partIds?: string[], style?: 'selected'|'correct'|'wrong'|'target' }} [data]
- */
-createXMode(ctx) → {
+`ModeContext`, `ModeUi`, `ModeEvent`, `GameMode` y `GameStatus` están en
+`src/game/types.ts`; `createXMode(ctx)` devuelve, como mínimo:
+
+```ts
+{
   id,                        // 'lab' | 'quiz' | 'diagnosis' | 'assembly'
   get ui(): ModeUi,
-  handle(intent): ModeEvent[],
-  update(simDt): ModeEvent[],
-  hud(): HudModel,           // datos para el panel HUD (6.7)
-  onReset?(),                // opcional: lo llama el botón ⟲ en vez de session.reset(). Un modo con estado oculto en el modelo (la falla del diagnóstico) resetea y lo vuelve a aplicar
+  handle(intent: Intent | null): ModeEvent[],
+  update(simDt: number): ModeEvent[],
+  hud(): HudModel | null,    // datos para el panel HUD (6.7)
+  onReset?(),                // opcional: lo llama el botón ⟲ en vez de session.reset()
   get status(): 'playing'|'won'|'lost'|'free',
   destroy(),
 }
 ```
 
-El descriptor de módulo (CONTRATOS 4.1) suma `defaultParams` y `defaultFaults` (los `DEFAULT_PARAMS`/`DEFAULT_FAULTS` que ya exporta `model.js`). `resetFaults` hace `Object.assign(model.faults, module.defaultFaults)` sin tocar params ni estado.
+El descriptor de módulo (CONTRATOS 4.1) tiene `defaultParams` y `defaultFaults` (los `DEFAULT_PARAMS`/`DEFAULT_FAULTS` que exporta `model.ts`). `resetFaults` hace `Object.assign(model.faults, module.defaultFaults)` sin tocar params ni estado.
 
 `labMode` = comportamiento actual:
 - `ui` muestra todo, `narration: 'full'`, `labels: true`.
-- `setParam`/`setFault`/`applyPreset`/`action` se aplican tal cual. La lógica de presets de `shell.js:206-214` pasa al modo.
+- `setParam`/`setFault`/`applyPreset`/`action` se aplican tal cual, validando tipo y finitud (§6). La lógica de presets vive en el modo.
 - `status: 'free'`.
 
 ### 6.4 Renderer — `src/render/<impl>/`
 
-```js
-/**
- * @param {Object} o
- * @param {HTMLElement} o.container          // .stage
- * @param {CircuitDef|null} o.circuit        // null con legacyRenderer
- * @param {ModuleDescriptor} o.module
- * @param {(intent)=>void} o.emit            // único canal de salida (§20)
- */
-createRenderer(o) → {
-  update(visual /* VisualState */, dt),
-  applyUi(ui /* ModeUi */),                  // etiquetas, tooltips, edición, fallas reveladas
-  highlight(partIds /* string[] */, style /* 'selected'|'correct'|'wrong'|'target' */),
-  resize(),
-  destroy(),
-}
+```ts
+createRenderer(o: {
+  container: HTMLElement;        // .stage
+  circuit: CircuitDef | null;    // null con legacyRenderer
+  module: ModuleDescriptor;
+  emit: (intent: Intent) => void; // único canal de salida (§20)
+}): Renderer
 ```
+
+`Renderer` es la interfaz de `src/render/legacy/index.ts`:
+`update(visual, dt)`, `applyUi(ui: ModeUi)`, `highlight(partIds?, style?)`, `resize()`,
+`destroy()`.
 
 - **`legacyRenderer`** (A1): envuelve `module.createView` existente. Traduce clics a `selectPart`. Con `labels:false`, `applyUi` oculta sólo los elementos con clase `part-label` (y apaga el tooltip). Es el único autorizado a leer el modelo (§22, excepción temporal).
 - **`svgRenderer`** (A7): genérico desde `CircuitDef` + drawers SVG.
@@ -270,7 +217,7 @@ createRenderer(o) → {
 
 ### 6.5 VisualState — `src/presenter/`
 
-```js
+```ts
 /**
  * @typedef {Object} VisualState
  * @property {Record<string, Record<string, number|string|boolean>>} parts  // partId → canales
@@ -279,6 +226,8 @@ createRenderer(o) → {
  * @property {string[]} faultCues                     // indicios visibles ya filtrados por ModeUi.revealedFaults
  */
 ```
+
+Se definirá en TypeScript al portar el presenter (A7); por ahora es el contrato acordado.
 
 ### 6.6 Fallas: catálogo, visibilidad y reparación
 
@@ -293,11 +242,11 @@ Cada módulo publica `faultCatalog` en su descriptor:
 
 - `faultCues` del presenter y el legacy sólo muestran indicios de fallas con `visibility:'always'` o incluidas en `ModeUi.revealedFaults`. En lab, `revealedFaults` = todas.
 
-### 6.7 HUD — `src/ui/hud.js`
+### 6.7 HUD — `src/ui/hud.ts`
 
-Panel DOM genérico que pinta un `HudModel`:
+Panel DOM genérico que pinta un `HudModel` (el tipo está en `src/game/types.ts`):
 
-```js
+```ts
 {
   title, brief,                              // enunciado de la etapa
   stats: [{ label, value }],                 // puntaje, dinero, tiempo, racha
@@ -311,25 +260,26 @@ Panel DOM genérico que pinta un `HudModel`:
 
 Emite intents al hacer clic (`answer`, `useTool`, `deliver`…).
 
-### 6.8 Etapas y guardado — `src/game/stages/`, `src/game/save.js`
+### 6.8 Etapas y guardado — `src/game/stages/`, `src/game/save.ts`
 
-```js
-/** Stage */
+`Stage` (por ahora `QuizStage`) y `QuizStageConfig` están en `src/game/types.ts`:
+
+```ts
 { id: 'fuel-quiz-1', mode: 'quiz', module: 'fuel', title, brief, seed: 101,
   unlockAfter: [],                   // ids de etapas previas
-  config: { … }                      // específico del modo
+  config: { questions, types, parts, sameConcept? }   // específico del modo
 }
 ```
 
-- `src/game/campaign.js` exporta la lista ordenada.
+- `src/game/campaign.ts` exporta la lista ordenada.
 - La portada muestra "Laboratorio" (los módulos de siempre) y "Etapas" (bloqueadas/desbloqueadas).
 
-```js
+```ts
 /** Save v1 (localStorage 'crf.save.v1') */
 { version: 1,
   stages: { [stageId]: { bestScore, stars /*0-3*/, completedAt /*ISO*/ } },
   mastery: { [partType]: { seen, correct } } }
 ```
 
-`createSave(storage = safeLocalStorage())` expone `get()`, `recordStage(id, result)`, `recordAnswer(partType, ok)` y `reset()`, con `storage` inyectable (Map en tests).
+`createSave(storage = safeLocalStorage())` expone `get()`, `recordStage(id, result)`, `recordAnswer(partType, ok)` y `reset()`, con `storage` inyectable (Map en tests). El parseo valida `unknown` con guards (§27).
 

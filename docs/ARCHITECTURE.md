@@ -7,7 +7,7 @@ el **por qué**. Las interfaces exactas están en `CONTRATOS.md`.
 
 Código que viole estas leyes no se implementa ni mergea.
 
-- **§1** Modelo ⟂ vista ⟂ UI. El modelo (`model.js`) es JS puro: sin DOM,
+- **§1** Modelo ⟂ vista ⟂ UI. El modelo (`model.ts`) es TypeScript puro: sin DOM,
   sin `Date`, sin `Math.random`, sin `requestAnimationFrame`. Se testea en
   Node.
 - **§2** Único escritor. `state` lo escriben sólo `model.step` y
@@ -23,8 +23,8 @@ Código que viole estas leyes no se implementa ni mergea.
 - **§6** Robustez numérica: `step` nunca produce `NaN`/`Infinity` con
   ninguna combinación de params/faults. Se limita con `clamp`, y un test de
   fuzz con semilla lo fija.
-- **§7** Estados mutuamente excluyentes son un string enum
-  (`engineState: 'off' | 'cranking' | …`), nunca varios booleanos.
+- **§7** Estados mutuamente excluyentes son una unión de strings
+  (`engineState: 'off' | 'cranking' | …`), nunca varios booleanos ni `enum`.
 - **§8** UI declarativa: controles, fallas, lecturas, piezas y presets son
   **datos** en el descriptor del módulo. El core los renderiza; ningún
   módulo crea sus propios paneles.
@@ -54,8 +54,9 @@ Código que viole estas leyes no se implementa ni mergea.
   dinámico: el laboratorio SVG no lo descarga. Nada de `innerHTML` con datos
   dinámicos: se usan los helpers de `core/dom.js` y `core/svg.js`.
 - **§18** Textos de la UI y comentarios en español; identificadores en
-  inglés. Factories (`createX()`) en vez de clases; tipos con JSDoc en
-  `core/types.js`.
+  inglés. Factories (`createX()`) en vez de clases (salvo las escenas de
+  Phaser de `src/render/phaser/`); tipos en TypeScript (`core/types.ts`,
+  `game/types.ts` y los del módulo en su `model.ts`).
 - **§19** Capas: `content → sim → game → presenter → render/ui/shell`. Una
   capa no importa a las de su derecha. `sim`, `game` y `presenter` no tocan
   el DOM.
@@ -100,6 +101,17 @@ Código que viole estas leyes no se implementa ni mergea.
   los dos sean `hydraulic`. Los elementos genéricos (restrictor, volume…)
   toman el `fluid` de la instancia (`params.fluid`, por defecto el
   `CircuitDef.fluid`).
+- **§31** TypeScript estricto (`tsconfig.json` de la raíz). Sin `any`
+  explícito, sin `@ts-ignore`/`@ts-nocheck`. `as` (salvo `as const`) sólo en
+  fronteras (DOM, `JSON.parse` ya validado, `localStorage`) y con un
+  comentario que dice por qué es seguro. Lo que viene de afuera es `unknown`
+  y se valida con un guard.
+- **§32** Toda tarea cierra con `npm run check` en verde (tipos, lint sin
+  warnings, knip, tests y build).
+- **§33** Las leyes verificables se verifican con herramientas:
+  `eslint.config.js` las cita por § y `tests/tooling/lint-laws.test.ts` prueba
+  que disparan. `eslint-disable` sólo con motivo. `tsconfig.json`,
+  `eslint.config.js` y `knip.json` son core (§12).
 
 ## Pipeline
 
@@ -123,9 +135,11 @@ loop (rAF) ── acc += realDt·timeScale ── model.step(1 ms) × N   (§4)
 - **SVG y no Canvas/3D**: las piezas son elementos del DOM clickeables (§10),
   se estilan con CSS (tema oscuro gratis) y un diagrama plano se lee mejor
   que un modelo 3D para ver flujos internos.
-- **Vanilla + Vite**: la complejidad está en la física y el dibujo, no en el
-  estado de la UI. Un framework no aporta y agrega capas que cada agente
-  tendría que aprender.
+- **Vanilla + Vite, sin framework → TypeScript + Vite, sin framework**: la
+  complejidad está en la física y el dibujo, no en el estado de la UI. Se
+  pasó a TypeScript estricto (TS 6) para que los contratos se verifiquen antes
+  del solver, y a lint con las leyes citadas por § para que la migración no
+  fuera el único control (D1, D5 del plan 2026-09-24).
 - **Paso fijo de 1 ms**: el riel de combustible tiene una constante de
   tiempo de ~18 ms (ver `modules/fuel.md`). Con Euler explícito, `dt ≪ τ`
   da estabilidad sin integradores sofisticados. La cámara lenta no cambia la

@@ -12,7 +12,7 @@ import type {
   ParamValue,
 } from '../types.ts';
 
-type GetValue = (key: string) => ParamValue;
+type GetValue = (key: string) => ParamValue | undefined;
 type Emit = (intent: IntentLike) => void;
 
 interface ControlItemDraft {
@@ -35,7 +35,7 @@ export interface ControlsPanel {
 /** Grupo de botones excluyentes (para selects cortos, p. ej. la llave). */
 export function segmented(
   options: readonly ControlOption[],
-  getValue: () => ParamValue,
+  getValue: () => ParamValue | undefined,
   setValue: (v: ParamValue) => void,
 ): { node: HTMLDivElement; sync(): void } {
   const buttons = options.map((o) =>

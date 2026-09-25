@@ -4,7 +4,7 @@ import { h, clear, append } from '../dom.ts';
 import type { Narration, PartInfo } from '../types.ts';
 
 export interface InfoPanel {
-  show(partId: string): void;
+  show(partId: string | null): void;
   clear(): void;
 }
 
@@ -19,7 +19,7 @@ export function createInfoPanel(
   empty();
   return {
     show(partId): void {
-      const p = parts[partId];
+      const p = partId === null ? undefined : parts[partId];
       if (!p) {
         empty();
         return;

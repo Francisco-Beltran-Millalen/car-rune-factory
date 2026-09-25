@@ -22,10 +22,7 @@
     "noPropertyAccessFromIndexSignature": true,
     "useUnknownInCatchVariables": true,
     "noUnusedLocals": false,
-    "noUnusedParameters": false,
-
-    "allowJs": true,
-    "checkJs": false
+    "noUnusedParameters": false
   },
   "include": ["src", "tests", "vite.config.ts"]
 }

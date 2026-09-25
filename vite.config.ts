@@ -7,9 +7,8 @@ export default defineConfig(({ command }) => ({
       ? [
           checker({
             typescript: true,
-            // Mientras quede JS (TS0–TS4) también se lintea; desde TS5 basta .ts.
             eslint: {
-              lintCommand: 'eslint "./src/**/*.{js,ts}"',
+              lintCommand: 'eslint "./src/**/*.ts"',
               useFlatConfig: true,
             },
           }),
@@ -17,7 +16,7 @@ export default defineConfig(({ command }) => ({
       : [],
   test: {
     environment: 'node',
-    include: ['tests/**/*.test.{js,ts}'],
+    include: ['tests/**/*.test.ts'],
     passWithNoTests: true,
   },
 }));

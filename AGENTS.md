@@ -3,7 +3,7 @@
 Reglas para cualquier agente/asistente que trabaje en este repo.
 
 1. **Lee `docs/ARCHITECTURE.md` primero**, siempre, antes de tocar código —
-   es la autoridad viva del proyecto (leyes §1-§18 + pipeline). Después
+   es la autoridad viva del proyecto (leyes §1-§33 + pipeline). Después
    `docs/AHORA.md` (qué está en curso), `docs/CONTRATOS.md` (interfaces
    exactas) y el `docs/modules/<id>.md` de tu tarea.
 2. **No asumas qué hace el código por su nombre.** Lee la lógica real antes
@@ -21,7 +21,8 @@ Reglas para cualquier agente/asistente que trabaje en este repo.
    registro histórico; lo vivo son los docs de `docs/`.
 6. **Toca sólo los archivos de tu tarea** (§12). Lo que el core no te da se
    pide en `docs/core-requests.md`, no se parcha desde un módulo.
-7. **Al cerrar una tarea**, agrega un bloque `CERRADO AAAA-MM-DD — …` en
+7. **Al cerrar una tarea**: `npm run check` en verde (tipos, lint sin
+   warnings, knip, tests y build) y un bloque `CERRADO AAAA-MM-DD — …` en
    `docs/AHORA.md` con lo verificado (tests + qué se miró en el navegador).
 8. **Todo se commitea directo en `main`.** No se crean ramas ni worktrees
    salvo que el usuario lo pida: hay una sola persona trabajando y el

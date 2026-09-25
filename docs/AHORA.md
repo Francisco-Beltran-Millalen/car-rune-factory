@@ -8,7 +8,7 @@ git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 
 Cada tarea la hace un agente distinto, dueño de sus archivos (§12). Las
 tareas en paralelo trabajan en worktrees aislados y se integran con merge.
-Cada una cierra con `npm test` + `npm run build` en verde y un commit.
+Cada una cierra con `npm run check` en verde y un commit.
 
 | # | Tarea | Depende de | Estado |
 |---|---|---|---|
@@ -41,16 +41,16 @@ cambian.
 | TS2 | Core con DOM + paneles + router | TS1 | ✅ |
 | TS3 | Juego (`game/**`, `ui/hud`), intents como unión discriminada | TS2 | ✅ |
 | TS4 | Módulos (`fuel`, `_demo`, registry) + comparación de estado idéntico | TS3 | ✅ |
-| TS5 | Shell, legacy, main; `allowJs: false`; docs (§1, §7, §18, §31–§33) + checklist en Firefox | TS4 | ⏳ |
+| TS5 | Shell, legacy, main; `allowJs: false`; docs (§1, §7, §18, §31–§33) + checklist en Firefox | TS4 | ✅ |
 
 Se usa **TS 6.0 + ESLint** (opción A, decidida el 2026-09-24; comparación en
 §2.1 del plan). **TS 7 queda pendiente:** al empezar cada tarea A, correr
 `npm view typescript-eslint peerDependencies`. Si acepta TS 7, la migración
 es una tarea chica (plan §12, camino 1): se agrega a la tabla.
 
-Mientras dure esta sección, §18 ("tipos con JSDoc") está en transición:
-el código nuevo va en `.ts`. Las listas de archivos del plan 2026-09-23 dicen
-`.js`: después de TS5, léanse como `.ts`.
+La migración terminó: `src/` y `tests/` son `.ts` y §18 ya rige sin
+transición. Las listas de archivos del plan 2026-09-23 dicen `.js`: léanse
+como `.ts`.
 
 ## EN CURSO — Arquitectura de juego (plan 2026-09-23)
 
@@ -77,7 +77,40 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
 | A9 | Armar circuitos (E4) | A7 | ⏳ |
 | A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
 
-**Siguiente paso:** TS5 (shell, legacy y main; `allowJs: false`; docs y checklist de Firefox). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+**Siguiente paso:** A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios + `cue` en eventos). Después: G1 (checkpoint de juego del usuario).
+
+## CERRADO 2026-09-25 — TS5 cierre de TypeScript
+
+- `src/core/shell.js`, `src/render/legacy/index.js` y `src/main.js` → `.ts`;
+  `index.html` apunta a `/src/main.ts`. `shell.mount` recibe la unión discriminada
+  `{ kind: 'lab'; module } | { kind: 'stage'; module; stage; attempt }` (§8.6) y
+  `window.__sim` queda declarado con `declare global` (hook de depuración).
+- Configuración: `allowJs` fuera del `tsconfig.json`; `vite.config.ts` con sólo
+  `.test.ts` y el checker linteando `src/**/*.ts`; `knip.json` en `.ts`; el bloque
+  de transición de ESLint reducido a `eslint.config.js`.
+  `git ls-files 'src/**/*.js' 'tests/**/*.js'` → vacío.
+- Docs: `ARCHITECTURE.md` §1 (model.ts), §7 (unión de strings, sin enum), §18
+  (tipos en TS) y leyes §31–§33 + rationale TypeScript + Vite; `CONTRATOS.md` con
+  las firmas en TS y punteros al código; `NORTE.md`, `README.md` de docs y
+  `AGENTS.md` (cierre con `npm run check`); rutas `.js` de los docs vivos a `.ts`.
+- Fronteras `as` (D8) que quedan en `src/` — **5** en total:
+  - `core/dom.ts`: `v as EventListener` (attrs `on*` del helper `h`).
+  - `core/shell.ts`: `t as Theme` (valor de `localStorage`, validado con `THEMES`).
+  - `core/ui/controls.ts`: `emit as Emit` (los constructores de intents vienen de
+    JS en el llamado) y `partialModel as AnyModel` (fallback de `disabledWhen`).
+  - `core/ui/faults.ts`: `emit as Emit` (ídem).
+  - No cuentan los alias de import (`stages as campaignStages`) ni `as const`.
+- `npm run check` verde: typecheck, lint 0 warnings, knip, **123 tests** y build.
+
+**Checklist de cierre TS5 en Firefox** (para el usuario, con `npm run dev`):
+1. Portada con "Etapas" y "Laboratorio", igual que antes.
+2. Laboratorio del combustible: llave on → cebado de la bomba; arranque; sliders,
+   fallas y presets funcionan; lecturas y sparklines se mueven; narración; clic
+   en una pieza → ficha; tema oscuro legible.
+3. Etapas de quiz 1 y 2: preguntas, feedback, puntaje, estrellas, guardado
+   (recargar la página conserva el progreso), candado de la etapa 2.
+4. F12 sin errores. Con el dev corriendo, meter a mano un error de tipos en un
+   `.ts` → aparece el overlay del checker; sacarlo → desaparece.
 
 ## CERRADO 2026-09-25 — TS4 módulos
 
@@ -290,25 +323,6 @@ arnés no se agrupa con los inyectores).
 3. En la etapa 2 el arnés puede aparecer como pregunta u opción; si toca `purpose`, el texto
    no lo nombra.
 
-## Checklist de verificación manual de A1 (Firefox)
-
-`npm run dev` → abrir la URL de Vite:
-
-1. **Rutas y redirección**:
-   - Abrir `#/fuel` → la URL debe cambiar automáticamente a `#/lab/fuel` y cargar el sistema de combustible.
-   - Navegar a `#/` → se ve la portada con la tarjeta de combustible cuyo enlace apunta a `#/lab/fuel`.
-2. **Laboratorio idéntico**:
-   - El escenario SVG carga con el estanque, bomba, filtro, riel, 4 inyectores, retorno y manómetros.
-   - **Controles**: cambiar RPM, llave a "Contacto" (las partículas amarillas recorren cables, manómetro sube a ~3 bar), "Arranque" y "Marcha". Mover el acelerador.
-   - **Fallas**: mover slider de filtro a 90 %, verificar que el botón "Reparar todo" se habilita. Clic en "Reparar todo" → vuelve a 0 % y se deshabilita.
-   - **Presets**: clic en "Caso: tironea en subida" → aplica el preset, se ve la nota explicativa y la simulación responde.
-   - **Selección de pieza**: clic en el filtro o la bomba → se resalta con contorno azul (`.selected`), el panel "Pieza seleccionada" se abre mostrando su nombre y ficha. Clic fuera o en la misma pieza → se deselecciona.
-   - **Hover**: pasar el mouse sobre una pieza → aparece el tooltip con su nombre.
-   - **Timebar**: botón ⏸ o espacio pausa la simulación; ⏭ da un paso de 1 ms; botones de velocidad 0.05× a 4× aceleran/desaceleran; ⟲ reinicia todo a los valores iniciales.
-   - **Tema**: botón ◐ alterna entre auto/claro/oscuro y se ve correctamente.
-   - **Consola**: abrir F12, sin errores de consola. En la consola ejecutar `window.__sim.model.state` y verificar que el estado del modelo es accesible.
-   - **Verificación de invariante**: ejecutar `grep -rn "params.*=" src/` y comprobar que no hay escrituras directas a `model.params` fuera de `src/game/modes/` ni constructores.
-
 ## CERRADO 2026-09-24 — revisión: NaN, reset con overrides, ⟲ y preset
 
 Plan: `plans/2026-09-24-fix-revision-robustez.md`.
@@ -431,98 +445,4 @@ corregirlo en la siguiente sesión.
 10. Consola del navegador (F12) sin errores. Ir a la portada y volver no
     acelera la animación.
 
-## CERRADO 2026-09-22 — T4 vista de combustible
 
-- `fuel/view.js` + `fuel/fuel.css` (estilos propios del módulo) +
-  `fuel/index.js` (descriptor). `registry.js` ahora lista `fuel`. `_demo`
-  sale del registro pero se queda en el repo como ejemplo mínimo de módulo
-  (su test sigue).
-- Los pulsos de inyección se detectan por **cruce de ángulo del cigüeñal
-  entre frames**, no sólo por `injectors[i].open`: a 1× un pulso de 2,5 ms
-  cae entre dos frames y no se vería.
-- La opacidad por presión va en `style.opacity`: un atributo de
-  presentación pierde contra la regla CSS `.pipe-fluid`.
-- Test nuevo: todo `data-part` de la vista tiene ficha y toda pieza de la
-  spec se dibuja (54 tests).
-
-## CERRADO 2026-09-22 — T5 contenido de combustible
-
-- `fuel/content.js` (fichas de las 19 piezas), `fuel/narrate.js`
-  (`createNarrator()`, con memoria para detectar que cae la presión
-  residual), `fuel/specs.js` (controles, fallas, lecturas, 5 presets).
-  `tests/fuel/content.test.js`: 10 tests (claves válidas, narración por
-  escenario). 53 tests en total.
-- Cambio de física: umbral de mezcla pobre 0.75 → 0.8 (ver
-  `modules/fuel.md` §9b). Sin él, el preset "tironea" no fallaba nunca.
-- Los specs quedaron en `specs.js` en vez de dentro de `index.js`, para
-  que `index.js` sea sólo el ensamblado.
-
-## CERRADO 2026-09-22 — T3 modelo de combustible
-
-- `src/modules/fuel/model.js` + `tests/fuel/model.test.js`: los 11 criterios
-  de `modules/fuel.md` §9, más reset e inyección en orden 1-3-4-2 (13
-  tests). Pasaron sin tocar constantes.
-- Valores medidos y decisiones de implementación en `modules/fuel.md` §9b.
-  El preset "tironea" pasa de filtro 0.8 a 0.9.
-
-## CERRADO 2026-09-22 — T2 shell de la UI
-
-- `src/main.js`, `styles.css`, `core/{router,shell}.js`,
-  `core/ui/{controls,faults,readouts,infoPanel,timebar}.js`,
-  `modules/registry.js`, `modules/_demo/`. 30 tests (se suman los de la
-  lógica pura de la UI y `_demo`).
-- El shell delega los clics y el hover sobre `[data-part]`: la vista no
-  cablea eventos (documentado en `CONTRATOS.md` 4.3).
-- Tema claro/oscuro/auto con el botón ◐ (guardado en `localStorage`, con
-  try/catch). Espacio = pausa. `window.__sim.model.state` para depurar desde
-  la consola.
-- **Checklist de revisión manual** (quedó cubierta por la de T6; `_demo`
-  ya no está en el registro. Para verlo, agrégalo a `registry.js`):
-  1. La portada muestra la tarjeta "Demo: estanque". Al hacer clic se ve el
-     estanque con líquido, la válvula y el manómetro.
-  2. Partículas ámbar recorren la tubería de salida. El nivel baja y el
-     manómetro y las sparklines de "Mediciones" se mueven.
-  3. Slider de válvula a 0 → las partículas se detienen. "Llenado abierto" →
-     partículas en la tubería de entrada y se habilita "Caudal de llenado".
-  4. Fallas → "Salida tapada" 80 % → el caudal cae y el rótulo se pinta
-     rojo; "Reparar todo" lo restablece.
-  5. Clic en el estanque → ficha en "Pieza seleccionada" + contorno azul.
-     Hover → tooltip con el nombre.
-  6. Timebar: ⏸ (y la barra espaciadora) pausa; ⏭ avanza en pausa; 0,05× es
-     cámara lenta; ⟲ reinicia.
-  7. Barra inferior "¿Qué está pasando?" cambia con las fallas.
-  8. ◐ cambia de tema y todo se lee bien en oscuro. Con la ventana a
-     < 1024 px el panel pasa debajo.
-  9. Ir a la portada y volver no acelera la animación (no se duplican
-     loops). La consola no muestra errores.
-
-## CERRADO 2026-09-22 — T1 core de simulación
-
-- `src/core/{types,rng,math,loop,history,dom,svg,particles}.js`. 25 tests en
-  `tests/core/` (loop, history, rng, math, parte pura de particles/gauge).
-- `loop.tick(realDt)` es público: sirve para tests y para el paso a paso.
-  `stepOnce()` avanza 1 ms aunque esté en pausa. Tolerancia `EPS` en el
-  acumulador: sin ella 0.02 s daba 19 pasos y no 20.
-- `history.createRecorder(readouts)` muestrea cada 50 ms simulados; el shell
-  llama `recorder.sample(model)` en `onFrame`.
-- `particles.createFlow` suma `setAir(f)` (fracción de burbujas), que no
-  estaba en el contrato: la necesita el aire en la aspiración de
-  combustible. Precalcula la tabla de puntos del path (sin
-  `getPointAtLength` por frame).
-- `svg.pipe` devuelve `{ g, outer, inner, path }`: `outer` = pared
-  (`.pipe-wall`), `inner` = fluido (`.pipe-fluid .fluid-*`).
-- Las partes DOM (svg/particles/dom) se verifican en el navegador en T2/T4.
-
-## CERRADO 2026-09-22 — T0-b scaffold
-
-- `git init` (rama `main`). Node 26.8, **Vite 8.3**, **Vitest 5.0**.
-- `npm test` → `vitest run` sobre `tests/**/*.test.js` (`passWithNoTests`).
-  `npm run build` OK. `src/main.js` es un placeholder que T2 reemplaza.
-
-## CERRADO 2026-09-22 — plan maestro + docs
-
-- Plan aprobado y guardado en `plans/2026-09-22-plan-maestro.md`.
-- Docs vivos creados: `AGENTS.md`, `NORTE.md`, `ARCHITECTURE.md` (§1-§18),
-  `CONTRATOS.md`, `SISTEMAS.md`, `modules/*.md`.
-- Las constantes del modelo de combustible se revisaron a mano contra los
-  rangos de los tests (ver `modules/fuel.md` §4, "Comprobación a mano").

@@ -21,7 +21,7 @@ al final **casos entre sistemas** sobre un auto completo.
 (≤200 líneas; visión. Táctico en `AHORA.md`, reglas en `ARCHITECTURE.md`,
 catálogo en `SISTEMAS.md`.)
 
-Uso personal, en español. JavaScript puro + Vite, sin framework. Phaser es
+Uso personal, en español. TypeScript estricto + Vite, sin framework. Phaser es
 el candidato para cuando llegue "armar circuitos" (ver `HORIZONTE_JUEGO.md`).
 
 ## Pilares

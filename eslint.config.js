@@ -382,9 +382,9 @@ export default tseslint.config(
     },
   },
 
-  // 5.6 Transición: mientras quede JS (TS0–TS4) se apagan las reglas con tipos.
+  // 5.6 Sólo queda JS en la config de ESLint; el código es todo .ts.
   {
-    files: ['**/*.js'],
+    files: ['eslint.config.js'],
     ...tseslint.configs.disableTypeChecked,
   },
 );
