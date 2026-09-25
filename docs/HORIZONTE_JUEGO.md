@@ -8,6 +8,12 @@ hoy (ver `NORTE.md` y `AHORA.md`). Sirve para no cerrarnos puertas.
 > Hoja de ruta E1–E5 en `plans/2026-09-22-hoja-de-ruta-juego.md`. El
 > solver de redes (nivel 2 de abajo) va **antes** que los módulos 2 a 4.
 
+> **Actualización 2026-09-24:** el juice (SFX, VFX, tweens, UI práctica) se
+> considera central, y probablemente habrá motor. El motor **no está
+> elegido**: se decide después de jugar el diagnóstico (checkpoint G1) y de
+> una prueba de juice contra SVG. Por defecto, un motor web en TS. Ver
+> `plans/2026-09-24-motor-y-juice.md`.
+
 ## La idea
 
 Se aprende mejor jugando. Hoy cada simulación tiene un **layout fijo**: las
