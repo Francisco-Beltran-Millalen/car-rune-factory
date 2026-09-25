@@ -1,6 +1,7 @@
 // Barra de tiempo: pausa, paso a paso, velocidad y reinicio.
 
-import { h, fmt } from '../dom.js';
+import { h } from '../dom.js';
+import { fmt } from '../format.js';
 import { TIME_SCALES } from '../loop.js';
 
 const scaleLabel = (s) => `${fmt(s, s < 1 ? 2 : 0)}×`;

@@ -32,9 +32,3 @@ export function append(node, children) {
 export function clear(node) {
   while (node.firstChild) node.firstChild.remove();
 }
-
-/** Formatea un número con decimales fijos y separador decimal con coma. */
-export function fmt(v, decimals = 1) {
-  if (!Number.isFinite(v)) return '—';
-  return v.toFixed(decimals).replace('.', ',');
-}

@@ -1,6 +1,7 @@
 // Panel de controles generado desde ControlSpec[] (§8). Emite intents (§20).
 
-import { h, fmt } from '../dom.js';
+import { h } from '../dom.js';
+import { fmt } from '../format.js';
 import { intents } from '../../game/intents.js';
 
 /** Grupo de botones excluyentes (para selects cortos, p. ej. la llave). */

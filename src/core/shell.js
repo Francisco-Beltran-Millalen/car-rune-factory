@@ -407,8 +407,8 @@ export function createShell(root, modules, nav) {
         showHome();
         return;
       }
-      let kind = 'lab';
-      let id = null;
+      let kind;
+      let id;
       if (typeof target === 'string') {
         const parsed = parseHash(target.startsWith('#') ? target : `#/lab/${target}`);
         kind = parsed.kind;

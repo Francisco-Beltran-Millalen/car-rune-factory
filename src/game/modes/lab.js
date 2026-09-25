@@ -95,7 +95,7 @@ export function createLabMode(ctx) {
       activePreset = null;
       session.reset();
     },
-    update(simDt) {
+    update(_simDt) {
       return [];
     },
     hud() {

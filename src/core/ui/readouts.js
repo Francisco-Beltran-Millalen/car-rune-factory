@@ -1,6 +1,7 @@
 // Mediciones: valor numérico + sparkline del historial + manómetro opcional.
 
-import { h, fmt } from '../dom.js';
+import { h } from '../dom.js';
+import { fmt } from '../format.js';
 import { el, gaugeSvg } from '../svg.js';
 
 const SPARK_W = 120;

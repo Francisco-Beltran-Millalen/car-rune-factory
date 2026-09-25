@@ -1,6 +1,6 @@
 // Reglas de "¿Qué está pasando?" (docs/modules/fuel.md §8). Sólo leen el modelo (§2).
 
-import { fmt } from '../../core/dom.js';
+import { fmt } from '../../core/format.js';
 
 /** Memoria mínima para detectar que la presión residual cae (motor apagado). */
 function createPressureWatch() {
