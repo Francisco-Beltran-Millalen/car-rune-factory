@@ -3,7 +3,10 @@
 import { el } from './svg.js';
 import { wrap } from './math.js';
 
-/** Escala visual por defecto: 100 L/h → 250 px/s. */
+/**
+ * Escala visual por defecto: 100 L/h → 250 px/s.
+ * @public — convención de CONTRATOS.md 4.6; cada módulo puede cambiarla.
+ */
 export const PX_PER_LH = 2.5;
 
 /** Hash determinista de un índice a [0, 1): decide qué partículas se ocultan o son aire. */

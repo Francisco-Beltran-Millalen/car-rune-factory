@@ -36,7 +36,7 @@ cambian.
 
 | # | Tarea | Depende de | Estado |
 |---|---|---|---|
-| TS0 | Herramientas: tsconfig, ESLint con leyes, knip, checker, `npm run check`, test de las leyes | — | ⏳ |
+| TS0 | Herramientas: tsconfig, ESLint con leyes, knip, checker, `npm run check`, test de las leyes | — | ✅ |
 | TS1 | Core puro (`types, math, rng, loop, history`, `format` nuevo) | TS0 | ⏳ |
 | TS2 | Core con DOM + paneles + router | TS1 | ⏳ |
 | TS3 | Juego (`game/**`, `ui/hud`), intents como unión discriminada | TS2 | ⏳ |
@@ -77,7 +77,47 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
 | A9 | Armar circuitos (E4) | A7 | ⏳ |
 | A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
 
-**Siguiente paso:** TS0 (sección de arriba). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+**Siguiente paso:** TS1 (core puro a `.ts`: `types, math, rng, loop, history` + `format` nuevo). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+
+## CERRADO 2026-09-25 — TS0 herramientas (plan 2026-09-24-typescript-estricto)
+
+- `tsconfig.json` (sección 3 del plan, con `allowJs: true`/`checkJs: false` hasta TS5),
+  `eslint.config.js` flat con las leyes por archivo (§1, §3, §7, §11, §17, §18, §19,
+  §20, §21, §22) y bloque de transición para el JS, `knip.json`, `vite.config.ts` con
+  `vite-plugin-checker` y scripts nuevos (`typecheck`, `lint`, `knip`, `check`).
+- Versiones instaladas (verificadas con `npm view`): `typescript@6.0.3` (`latest` es 7.0.2,
+  pero `typescript-eslint@8.70.1` pide `<6.1.0`; D1), `eslint@10.11.0`, `@eslint/js@10.0.1`,
+  `typescript-eslint@8.70.1`, `@eslint-community/eslint-plugin-eslint-comments@4.8.1`,
+  `globals@17.12.0`, `@types/node@26.6.2`, `knip@6.38.0`, `vite-plugin-checker@0.14.5`.
+- `tests/tooling/lint-laws.test.ts`: 12 casos con rutas virtuales que prueban que cada
+  regla de ley dispara y que las excepciones no (`new Date` en `save.ts`, `import type`,
+  Phaser y `class` en `render/phaser/`).
+- Desviaciones del plan, anotadas:
+  - `no-restricted-imports` de ESLint 10 (la de typescript-eslint está deprecada desde
+    8.64) con `regex` + `allowTypeImports`, que es lo que pide la tabla 5.2.
+  - `@typescript-eslint/no-empty-function` apagado sólo para los stubs no-op del
+    contrato (`emit = () => {}`, `highlight() {}`, `sync() {}`, `resize() {}`): el
+    preset strictTypeChecked lo marca y el patrón factory los declara vacíos.
+  - El checker lintea `./src/**/*.{js,ts}` mientras quede JS; en TS5 basta `.ts`.
+  - `process.env['VITEST']` (corchetes) por `noPropertyAccessFromIndexSignature`.
+  - knip: `src/modules/_demo/{index,view}.js` ignorados (ejemplo que este AHORA
+    conserva y knip ve muerto; TS4 decidirá), y `@public` en `PX_PER_LH` y `box`
+    porque son contratos de `CONTRATOS.md` 4.6/4.7 sin uso todavía.
+- Violaciones reales que encontró el lint, en commit aparte (`683ca90`): `narrate.js`
+  importaba `fmt` de `core/dom.js` (§1) → `fmt` pasa a `core/format.js`; inicializadores
+  pisados en `shell.route()`; parámetro sin usar en `labMode.update`.
+- `npm run check` verde: typecheck, lint sin warnings, knip, **122 tests** (+12 de leyes)
+  y build. En `npm run dev` el checker reporta 1 error de tipos al agregar a mano
+  `src/checker-probe.ts` y vuelve a 0 al borrarlo (se revirtió; el overlay lo mira el
+  usuario).
+
+**Revisar en Firefox** (cuando el usuario quiera, §13):
+1. `npm run dev` → portada con "Etapas" y "Laboratorio", lab del combustible y quiz 1/2
+   se ven y se usan igual que antes (TS0 no tocó comportamiento).
+2. F12 sin errores de consola.
+3. Con el dev server corriendo, agregar a mano un error de tipos en un `.ts` de `src/`
+   → aparece el overlay de `vite-plugin-checker`; borrarlo → desaparece.
+
 
 ## CERRADO 2026-09-24 — A2 Quiz E1, HUD, guardado y campaña
 

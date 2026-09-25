@@ -55,7 +55,10 @@ export function pipe(parent, points, { width = 10, radius = 14, className = 'flu
   return { g, outer, inner, path: inner };
 }
 
-/** Caja rotulada (pieza genérica). */
+/**
+ * Caja rotulada (pieza genérica).
+ * @public — contrato 4.7 de CONTRATOS.md, para los drawers de A7.
+ */
 export function box(parent, { x, y, w, h, r = 8, label: text, part, className = 'part' }) {
   const g = group(parent, { class: className, part });
   const rect = el('rect', { x, y, width: w, height: h, rx: r, class: 'part-body' }, g);
