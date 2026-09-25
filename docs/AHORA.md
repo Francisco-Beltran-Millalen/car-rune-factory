@@ -96,6 +96,26 @@ Orden con un solo agente: A0 (✅) → A1 → A2 → A3 → A4 → …
 8. F12 sin errores; en la consola `window.__sim.mode.hud()` y `window.__sim.save.get()`
    responden. Repetir el quiz completo mejora el récord de la portada.
 
+## FIX 2026-09-24 — los cables de los inyectores son una pieza propia
+
+Lo notó el usuario jugando el quiz: el cable ECU→inyector llevaba `part: injectorN`
+(`view.js:76`), así que tooltip, ficha y clic del quiz decían "Inyector N". Ahora los 4 cables
+son `injectorWires` ("Arnés de los inyectores", `content.js`), con ficha y fallas propias; el
+inyector sigue siendo sólo su cuerpo. Como el arnés no tiene `.part-body`, en `fuel.css` se
+agregaron sus reglas de resaltado (`.signal-wire.selected/.target/.correct/.wrong`). En el
+quiz, clicar el cable ya no acierta una pregunta de inyector, y en la etapa 2 el arnés puede
+ser una pregunta más (`parts:'all'`). Docs: `modules/fuel.md` §1. Tests: 110 en verde (+1: el
+arnés no se agrupa con los inyectores).
+
+**Revisar en Firefox** (`#/lab/fuel` y `#/stage/fuel-quiz-2`):
+1. Hover sobre un cable ECU→inyector → tooltip "Arnés de los inyectores"; clic → su ficha
+   ("¿Qué es? / ¿Para qué sirve? / ¿Cómo funciona?"). El cuerpo del inyector sigue siendo
+   "Inyector N".
+2. En el quiz, pregunta de inyector: clic en el cable → incorrecto; clic en el cuerpo (o su
+   número) → correcto.
+3. En la etapa 2 el arnés puede aparecer como pregunta u opción; si toca `purpose`, el texto
+   no lo nombra.
+
 ## Checklist de verificación manual de A1 (Firefox)
 
 `npm run dev` → abrir la URL de Vite:

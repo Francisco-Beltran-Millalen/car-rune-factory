@@ -6,7 +6,7 @@ import { createFuelModel, DEFAULT_PARAMS, DEFAULT_FAULTS } from '../../src/modul
 
 const PART_IDS = [
   'battery', 'key', 'relay', 'tank', 'strainer', 'pump', 'checkValve', 'feedLine', 'filter', 'rail',
-  'injector1', 'injector2', 'injector3', 'injector4', 'manifold', 'regulator', 'vacuumHose', 'returnLine', 'ecu',
+  'injector1', 'injector2', 'injector3', 'injector4', 'injectorWires', 'manifold', 'regulator', 'vacuumHose', 'returnLine', 'ecu',
 ];
 const run = (m, s) => { for (let i = 0; i < s * 1000; i++) m.step(0.001); };
 function start(m) {

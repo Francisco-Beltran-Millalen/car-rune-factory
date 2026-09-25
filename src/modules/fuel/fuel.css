@@ -30,6 +30,26 @@
   stroke: var(--electric);
   stroke-width: 2.5;
 }
+/* El arnés es un trazo: necesita sus propias reglas de resaltado (no tiene .part-body). */
+.fuel .signal-wire.selected,
+.fuel .signal-wire.target,
+.fuel .signal-wire.correct,
+.fuel .signal-wire.wrong {
+  stroke-width: 3;
+}
+.fuel .signal-wire.selected,
+.fuel .signal-wire.target {
+  stroke: var(--accent);
+}
+.fuel .signal-wire.target {
+  stroke-dasharray: 5 3;
+}
+.fuel .signal-wire.correct {
+  stroke: var(--ok);
+}
+.fuel .signal-wire.wrong {
+  stroke: var(--bad);
+}
 .fuel .tank-body {
   fill: var(--panel);
 }

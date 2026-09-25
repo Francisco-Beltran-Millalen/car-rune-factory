@@ -71,9 +71,9 @@ export function createFuelView({ svg, model }) {
   label(ecu, 460, 67, 'ECU', { anchor: 'middle', className: 'lbl part-label' });
   const ecuText = label(ecu, 460, 88, '', { anchor: 'middle', className: 'lbl-small lbl-mono' });
 
-  // Señales ECU → inyectores
-  const injWires = INJ_X.map((x, i) =>
-    el('path', { d: roundedPathD([[520, 70], [x + 26, 70], [x + 26, 222], [x + 12, 222]], 6), class: 'signal-wire', part: `injector${i + 1}` }, pipesL),
+  // Señales ECU → inyectores (arnés: una pieza propia, distinta de cada inyector)
+  const injWires = INJ_X.map((x) =>
+    el('path', { d: roundedPathD([[520, 70], [x + 26, 70], [x + 26, 222], [x + 12, 222]], 6), class: 'signal-wire', part: 'injectorWires' }, pipesL),
   );
 
   // ---------- Estanque, bomba, colador ----------

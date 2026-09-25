@@ -50,7 +50,7 @@ function makeMode(stage) {
   return { mode, session, save };
 }
 
-const conceptKey = (id) => (/^injector/.test(id) ? 'injector' : id);
+const conceptKey = (id) => (/^injector\d+$/.test(id) ? 'injector' : id);
 
 describe('generación de preguntas del quiz (§6)', () => {
   const config = { questions: 9, types: ['find', 'name', 'purpose'], parts: 'all', sameConcept: INJ };
@@ -79,6 +79,22 @@ describe('generación de preguntas del quiz (§6)', () => {
     expect(q.prompt).toBe('Haz clic en: Inyector');
   });
 
+  it('el arnés de cables es una pieza propia, no un inyector más', () => {
+    const qs = generateQuestions(createRng(5), parts, {
+      questions: 30,
+      types: ['find'],
+      parts: 'all',
+      sameConcept: INJ,
+    });
+    const wires = qs.find((q) => q.partId === 'injectorWires');
+    expect(wires).toBeDefined();
+    expect(wires.validIds).toEqual(['injectorWires']);
+    expect(wires.prompt).toBe('Haz clic en: Arnés de los inyectores');
+    for (const q of qs) {
+      if (q.type === 'find' && q.prompt.includes('Inyector')) expect(q.validIds).not.toContain('injectorWires');
+    }
+  });
+
   it('distractores válidos: 4 nombres únicos, la correcta incluida y sin inyectores entre sí', () => {
     const qs = generateQuestions(createRng(9), parts, config).filter((q) => q.type !== 'find');
     expect(qs.length).toBeGreaterThan(0);
@@ -87,7 +103,7 @@ describe('generación de preguntas del quiz (§6)', () => {
       const ids = q.choices.map((c) => c.id);
       expect(new Set(ids).size).toBe(4);
       expect(ids).toContain(q.partId);
-      const injectors = ids.filter((id) => /^injector/.test(id));
+      const injectors = ids.filter((id) => /^injector\d+$/.test(id));
       expect(injectors.length).toBeLessThanOrEqual(1);
     }
   });

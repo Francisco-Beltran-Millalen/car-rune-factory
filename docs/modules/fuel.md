@@ -3,7 +3,7 @@
 > Extraído de `docs/plans/2026-09-22-plan-maestro.md`. Este archivo es el **vivo**: si cambia la spec, se cambia acá (y se anota en `AHORA.md`).
 
 ## 1. Piezas (`partId`)
-`battery`, `key`, `relay`, `tank`, `strainer` (colador de la bomba), `pump`, `checkValve`, `feedLine`, `filter`, `rail`, `injector1..injector4`, `manifold`, `regulator`, `vacuumHose`, `returnLine`, `ecu` (bloque simple que manda los pulsos a los inyectores).
+`battery`, `key`, `relay`, `tank`, `strainer` (colador de la bomba), `pump`, `checkValve`, `feedLine`, `filter`, `rail`, `injector1..injector4`, `injectorWires` (arnés de cables ECU→inyectores), `manifold`, `regulator`, `vacuumHose`, `returnLine`, `ecu` (bloque simple que manda los pulsos a los inyectores).
 
 ## 2. Parámetros (`DEFAULT_PARAMS`)
 | key | tipo/rango | default | significado |

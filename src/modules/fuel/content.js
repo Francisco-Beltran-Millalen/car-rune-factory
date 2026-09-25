@@ -103,6 +103,16 @@ export const parts = {
   injector2: injector(2),
   injector3: injector(3),
   injector4: injector(4),
+  injectorWires: {
+    name: 'Arnés de los inyectores',
+    what: 'El manojo de cables que lleva la señal de la ECU a cada inyector.',
+    why: 'Cada inyector necesita su pulso eléctrico en el momento justo; estos cables lo llevan desde el computador hasta la bobina de cada válvula.',
+    how: 'Un cable por inyector, con su conector. La ECU cierra el circuito a masa para abrir la válvula durante 2–12 ms. Si un cable se corta o hace falso contacto, ese cilindro deja de recibir combustible.',
+    failures: [
+      'Cable cortado → ese cilindro no inyecta: el motor tiembla y pierde fuerza',
+      'Conector sulfatado o flojo → fallas intermitentes, peor con humedad',
+    ],
+  },
   manifold: {
     name: 'Múltiple de admisión',
     what: 'Los conductos que llevan el aire desde la mariposa hasta cada cilindro.',
