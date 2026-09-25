@@ -35,7 +35,7 @@ Orden con un solo agente: A0 (✅) → A1 → A2 → A3 → A4 → …
 |---|---|---|---|
 | A0 | Docs: leyes §17, §19–§30 en ARCHITECTURE, contratos de juego 6.1–6.8 | — | ✅ |
 | A1 | Sesión + intents + labMode + shell nuevo + legacyRenderer + paneles DOM + router | A0 | ✅ |
-| A2 | Quiz (E1) + HUD + guardado + campaña + etiquetas de nombre separadas | A1 | ⏳ siguiente paso |
+| A2 | Quiz (E1) + HUD + guardado + campaña + etiquetas de nombre separadas | A1 | ✅ (checklist manual abajo) |
 | A3 | Diagnóstico (E2) + faultCatalog combustible + herramientas + visibilidad | A2 | ⏳ |
 | A4 | Solver nodal + linalg | A0 | ⏳ |
 | A5 | Elementos + circuito (compile/validate) + controladores base | A4 | ⏳ |
@@ -45,7 +45,56 @@ Orden con un solo agente: A0 (✅) → A1 → A2 → A3 → A4 → …
 | A9 | Armar circuitos (E4) | A8 | ⏳ |
 | A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
 
-**Siguiente paso:** A2 (Quiz E1 + HUD + guardado + campaña).
+**Siguiente paso:** A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+
+## CERRADO 2026-09-24 — A2 Quiz E1, HUD, guardado y campaña
+
+- `src/game/save.js`: `crf.save.v1` versionado, storage inyectable (localStorage/Map/memoria);
+  corrupto, con forma rara o que lanza → defaults y se juega sin persistir (§27). Sanea entradas.
+- `src/game/campaign.js` + `src/game/stages/fuel-quiz-1.js` (sólo `find`, 8 piezas) y
+  `fuel-quiz-2.js` (`find`/`name`/`purpose`, todas). Desbloqueo por `unlockAfter`.
+- `src/game/modes/quiz.js`: preguntas con semilla por etapa (D10); inyectores 1..4 como un solo
+  concepto; distractores de todo el módulo; `purpose` descarta los `why` que nombran la pieza.
+  Puntaje = aciertos×10 + 5 por acierto consecutivo extra (la fórmula no estaba fijada en el
+  plan); estrellas ≥90/≥70/≥50 %; `recordAnswer` por pieza y `recordStage` al cerrar; `onReset`
+  reinicia la partida y deja el motor en marcha. Etapa vacía cierra una vez y se registra.
+- `src/ui/hud.js`: pinta el HudModel 6.7 (stats, prompt + choices, tools, actions, suspects,
+  log) y emite `answer`/`useTool`/`removeTool`/`markSuspect` y las acciones del modo.
+- `src/core/shell.js`: portada con "Etapas" (candado, estrellas y mejor puntaje) + "Laboratorio";
+  ruta `#/stage/<id>` con desbloqueo; semilla `seed ^ intento` en cada reintento; retry/quit/
+  nextStage desde el HUD; aplica los eventos `highlight` del modo.
+- `fuel/view.js`: `part-label` en las 13 etiquetas de **nombre**; los valores (Apagado, 12,6 V,
+  rpm, litros, tag del motor, números de inyector) no lo llevan.
+- Contrato: `ModeEvent` suma `highlight` (`{partIds, style}`) en `CONTRATOS.md` §6.3. Lo pide el
+  plan §6 y el modo es puro (§21): el shell es quien llama al renderer.
+- Fuera de la lista de archivos de A2 (§12, anotado): `render/legacy/index.js` (limpia los 4
+  estilos de highlight antes de aplicar uno, y sólo hace toggle de deselección con `infoPanel`,
+  o sea en el lab) y `styles.css` (HUD, portada y `.correct/.wrong/.target`).
+- Tests: 109 en verde (+32: quiz con semilla, distractores, puntaje/racha, estrellas, save con
+  memoria/Map/corrupto/roto, campaña, etiquetas). `npm run build` en verde.
+- Diferido a A6/A7 (identidad por tipo §23): `recordAnswer` usa el `partId` como clave de
+  maestría (los inyectores suman por instancia).
+- Conocido: el feedback del quiz dura 1 s de tiempo **simulado**; a 0.05× se estira (contrato
+  `update(simDt)`).
+
+**Revisar en Firefox** (`npm run dev`):
+1. Portada: "Etapas" con la 1 jugable y la 2 con candado; "Laboratorio" con la tarjeta de
+   combustible. Abrir a mano `#/stage/fuel-quiz-1`.
+2. Etapa 1: no se leen nombres en el diagrama (nada de "Bomba", "Filtro", "Regulador"…); sí los
+   valores (12,6 V, litros, rpm, tag del motor). El motor se ve en marcha desde el arranque.
+3. Responder un `find`: acierto → pieza en verde y HUD "¡Correcto! · Aciertos/Puntos"; error →
+   la tocada en rojo y el texto dice cuál era. La pregunta avanza sola tras ~1 s.
+4. `name`: la pieza objetivo queda con contorno azul punteado y hay 4 botones de nombre.
+   `purpose`: el HUD muestra la función entre comillas y 4 nombres.
+5. Clic repetido en la misma pieza en un `find` debe responder igual (ya no hace falta el
+   segundo clic).
+6. Terminar: estrellas, "Reintentar", "Siguiente etapa" y "Volver al taller". Reintentar cambia
+   las preguntas; "Siguiente" abre la etapa 2; volver muestra la etapa 1 con estrellas y mejor
+   puntaje en la portada.
+7. ⟲ reinicia la partida (pregunta 1, 0 aciertos) y deja el motor andando. Pausa y velocidad
+   funcionan.
+8. F12 sin errores; en la consola `window.__sim.mode.hud()` y `window.__sim.save.get()`
+   responden. Repetir el quiz completo mejora el récord de la portada.
 
 ## Checklist de verificación manual de A1 (Firefox)
 

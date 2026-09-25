@@ -8,8 +8,13 @@ import { createInfoPanel, createNarrationBar } from './ui/infoPanel.js';
 import { createTimebar } from './ui/timebar.js';
 import { createSession } from '../game/session.js';
 import { createLabMode } from '../game/modes/lab.js';
+import { createQuizMode } from '../game/modes/quiz.js';
+import { createSave } from '../game/save.js';
+import { stages as campaignStages, getStage, isStageUnlocked, nextStageOf } from '../game/campaign.js';
 import { createLegacyRenderer } from '../render/legacy/index.js';
 import { intents, INTENT_TYPES } from '../game/intents.js';
+import { createHud } from '../ui/hud.js';
+import { createRng } from './rng.js';
 import { parseHash } from './router.js';
 
 const NARRATE_EVERY = 0.25; // s reales
@@ -21,6 +26,7 @@ const THEME_ICON = { auto: '◐', light: '☀', dark: '☾' };
 
 const MODES = {
   lab: createLabMode,
+  quiz: createQuizMode,
 };
 
 function loadTheme() {
@@ -53,6 +59,7 @@ function section(title, open = true) {
  * @param {{ go: (target: any) => void }} nav
  */
 export function createShell(root, modules, nav) {
+  const save = createSave();
   let theme = loadTheme();
   applyTheme(theme);
   const themeBtn = h('button', {
@@ -73,6 +80,7 @@ export function createShell(root, modules, nav) {
   const tooltip = h('div', { class: 'tooltip', hidden: true });
   const side = h('aside', { class: 'side' });
   const narration = h('div', { class: 'narration', 'aria-live': 'polite' });
+  const narrationBar = h('footer', { class: 'narration-bar' }, h('strong', {}, '¿Qué está pasando? '), narration);
   const title = h('h1', { class: 'title' }, h('a', { href: '#/' }, 'Taller del motor'));
   const modTitle = h('span', { class: 'mod-title' });
 
@@ -84,7 +92,7 @@ export function createShell(root, modules, nav) {
       navList,
       h('main', { class: 'main' }, stage, tooltip),
       side,
-      h('footer', { class: 'narration-bar' }, h('strong', {}, '¿Qué está pasando? '), narration),
+      narrationBar,
     ),
   );
 
@@ -93,9 +101,35 @@ export function createShell(root, modules, nav) {
   }
 
   let current = null;
+  let currentMount = null; // { module, stage } de lo montado, para reintentar
+  let attempt = 0;
 
   function setActiveNav(id) {
     for (const a of navList.children) a.classList.toggle('active', a.dataset.id === id);
+  }
+
+  /** Tarjeta de etapa: desbloqueada (enlace + estrellas) o bloqueada. */
+  function stageCard(st) {
+    const data = save.get();
+    const rec = data.stages?.[st.id];
+    if (!isStageUnlocked(st, data)) {
+      const need = (st.unlockAfter || []).map((id) => getStage(id)?.title || id).join(', ');
+      return h(
+        'div',
+        { class: 'card stage-card locked' },
+        h('h2', {}, `🔒 ${st.title}`),
+        h('p', {}, st.brief),
+        h('p', { class: 'muted' }, `Se abre al completar: ${need}`),
+      );
+    }
+    const stars = '★'.repeat(rec?.stars || 0) + '☆'.repeat(3 - (rec?.stars || 0));
+    return h(
+      'a',
+      { class: 'card stage-card', href: `#/stage/${st.id}` },
+      h('h2', {}, st.title),
+      h('p', {}, st.brief),
+      h('p', { class: 'muted stage-stars' }, rec ? `${stars} · mejor puntaje: ${rec.bestScore}` : 'Sin jugar todavía'),
+    );
   }
 
   function showHome() {
@@ -111,13 +145,16 @@ export function createShell(root, modules, nav) {
         'div',
         { class: 'home-view' },
         h('p', { class: 'lead' }, 'Elige un sistema del auto para verlo funcionar, tocarlo y romperlo.'),
+        h('h2', { class: 'home-h' }, 'Etapas'),
+        h('div', { class: 'cards' }, campaignStages.map(stageCard)),
+        h('h2', { class: 'home-h' }, 'Laboratorio'),
         h('div', { class: 'cards' }, cards),
       ),
     );
   }
 
   /**
-   * @param {import('./types.js').ModuleDescriptor|{ module: import('./types.js').ModuleDescriptor, stage: any }} target
+   * @param {import('./types.js').ModuleDescriptor|{ module: import('./types.js').ModuleDescriptor, stage: any, attempt?: number }} target
    */
   function mount(target) {
     unmount();
@@ -125,8 +162,10 @@ export function createShell(root, modules, nav) {
 
     const desc = target?.createModel ? target : target.module;
     const stageDef = target?.createModel ? null : target?.stage || null;
+    attempt = target?.attempt ?? 0;
+    currentMount = stageDef ? { module: desc, stage: stageDef } : null;
 
-    modTitle.textContent = desc.title;
+    modTitle.textContent = stageDef ? `${desc.title} — ${stageDef.title}` : desc.title;
     setActiveNav(desc.id);
 
     const session = createSession({
@@ -140,10 +179,11 @@ export function createShell(root, modules, nav) {
       session,
       module: desc,
       stage: stageDef,
-      rng: null,
-      save: null,
+      rng: stageDef ? createRng((stageDef.seed ?? 1) ^ attempt) : null,
+      save,
     });
 
+    const hudSec = stageDef ? section('Etapa') : null;
     const ctlSec = section('Controles');
     const presetSec = desc.presets?.length ? section('Casos para probar', false) : null;
     const faultSec = section('Fallas', false);
@@ -160,10 +200,13 @@ export function createShell(root, modules, nav) {
       tooltip,
     });
 
+    if (hudSec) side.append(hudSec.node);
     side.append(ctlSec.node);
     if (presetSec) side.append(presetSec.node);
     side.append(faultSec.node, roSec.node, infoSec.node);
 
+    const hud = hudSec ? createHud(hudSec.body, emit) : null;
+    let lastUiSnapshot = JSON.stringify(mode.ui);
     const controls = createControlsPanel(
       ctlSec.body,
       desc.controls || [],
@@ -209,28 +252,51 @@ export function createShell(root, modules, nav) {
       if (typeof mode.onReset === 'function') mode.onReset();
       else session.reset();
       presetNote.textContent = '';
+      renderer.highlight([]);
+      if (hud) hud.update(mode.hud());
       syncAll();
+    }
+
+    /** Aplica los eventos que devuelven handle()/update() del modo. */
+    function applyEvents(events) {
+      for (const ev of events || []) {
+        if (ev.type === 'highlight') {
+          renderer.highlight(ev.data?.partIds || [], ev.data?.style || 'selected');
+        } else if (ev.type === 'uiChanged') {
+          lastUiSnapshot = JSON.stringify(mode.ui);
+          applyUi(mode.ui);
+        }
+      }
     }
 
     function emit(intent) {
       const events = mode.handle(intent);
-      if (intent.type === INTENT_TYPES.applyPreset) {
-        if (presetNote) presetNote.textContent = mode.activePreset?.note || '';
+      if (intent.type === INTENT_TYPES.applyPreset && presetNote) {
+        presetNote.textContent = mode.activePreset?.note || '';
       }
-      if (intent.type === INTENT_TYPES.selectPart) {
+      if (intent.type === INTENT_TYPES.selectPart && mode.ui.infoPanel) {
         const partId = intent.partId;
-        if (mode.ui.infoPanel) {
-          info.show(partId);
-          if (partId) infoSec.node.open = true;
-        }
+        info.show(partId);
+        if (partId) infoSec.node.open = true;
         renderer.highlight(partId ? [partId] : [], 'selected');
       }
-      for (const ev of events) {
-        if (ev.type === 'feedback' && ev.text && presetNote) {
-          presetNote.textContent = ev.text;
-        }
-      }
+      applyEvents(events);
       if (intent.type !== INTENT_TYPES.hoverPart) syncAll();
+
+      if (intent.type === INTENT_TYPES.retry && currentMount) {
+        mount({ ...currentMount, attempt: attempt + 1 });
+        return;
+      }
+      if (intent.type === INTENT_TYPES.quit) {
+        nav.go(null);
+        return;
+      }
+      if (intent.type === INTENT_TYPES.nextStage && currentMount) {
+        const next = nextStageOf(currentMount.stage.id);
+        nav.go(next ? { kind: 'stage', id: next.id } : null);
+        return;
+      }
+      if (hud) hud.update(mode.hud());
     }
 
     function applyUi(ui) {
@@ -243,6 +309,7 @@ export function createShell(root, modules, nav) {
       readouts.setVisible(ui.readouts);
       if (presetSec) presetSec.node.hidden = !ui.presets;
       infoSec.node.hidden = !ui.infoPanel;
+      narrationBar.hidden = ui.narration === 'off';
       if (ui.timebar?.maxScale) timebar.setMaxScale(ui.timebar.maxScale);
     }
 
@@ -253,19 +320,20 @@ export function createShell(root, modules, nav) {
     let tSpark = 0;
     let tUiCheck = 0;
     let lastReal = performance.now();
-    let lastUiSnapshot = JSON.stringify(mode.ui);
 
     applyUi(mode.ui);
     syncAll();
     readouts.update(session.model.state);
     narr.set(desc.narrate ? desc.narrate(session.model) : []);
+    if (hud) hud.update(mode.hud());
+    applyEvents(mode.update(0)); // anuncio inicial del modo (p. ej. la pieza a nombrar)
 
     const unframe = session.onFrame((simDt) => {
       const now = performance.now();
       const real = (now - lastReal) / 1000;
       lastReal = now;
 
-      mode.update(simDt);
+      applyEvents(mode.update(simDt));
       renderer.update(null, simDt);
       readouts.update(session.model.state);
       timebar.setClock(session.model.time);
@@ -274,6 +342,7 @@ export function createShell(root, modules, nav) {
         tSync = 0;
         controls.sync();
         faults.sync();
+        if (hud) hud.update(mode.hud());
       }
       if ((tSpark += real) >= SPARK_EVERY) {
         tSpark = 0;
@@ -304,6 +373,7 @@ export function createShell(root, modules, nav) {
       model: session.model,
       mode,
       renderer,
+      save,
       destroy() {
         unframe();
         session.destroy();
@@ -325,7 +395,9 @@ export function createShell(root, modules, nav) {
     clear(stage);
     clear(side);
     clear(narration);
+    narrationBar.hidden = false;
     tooltip.hidden = true;
+    currentMount = null;
   }
 
   return {
@@ -360,7 +432,14 @@ export function createShell(root, modules, nav) {
           showHome();
         }
       } else if (kind === 'stage') {
-        showHome();
+        const stageDef = getStage(id);
+        const desc = stageDef ? modules.find((m) => m.id === stageDef.module) : null;
+        if (stageDef && desc && isStageUnlocked(stageDef, save.get())) {
+          mount({ module: desc, stage: stageDef, attempt: 0 });
+        } else {
+          nav.go(null);
+          showHome();
+        }
       }
     },
     unmount,

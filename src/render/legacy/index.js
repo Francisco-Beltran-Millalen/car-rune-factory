@@ -4,6 +4,9 @@
 import { el, arrowMarkers } from '../../core/svg.js';
 import { intents } from '../../game/intents.js';
 
+// Estilos de resaltado del contrato 6.4: al aplicar uno se limpian todos.
+const HIGHLIGHT_STYLES = ['selected', 'correct', 'wrong', 'target'];
+
 /**
  * @param {Object} opts
  * @param {HTMLElement} opts.container
@@ -38,8 +41,10 @@ export function createLegacyRenderer({ container, module, emit, model, tooltip }
 
   const onClick = (e) => {
     const p = e.target.closest?.('[data-part]');
-    const clickedId = p?.dataset.part;
-    const newId = clickedId && clickedId !== selectedPartId ? clickedId : null;
+    const clickedId = p?.dataset.part || null;
+    // El toggle (volver a clicar para deseleccionar) es del laboratorio; en el quiz
+    // cada clic sobre una pieza es una respuesta, aunque repita la anterior.
+    const newId = currentUi.infoPanel && clickedId && clickedId === selectedPartId ? null : clickedId;
     selectedPartId = newId;
     emit(intents.selectPart(newId));
   };
@@ -101,8 +106,10 @@ export function createLegacyRenderer({ container, module, emit, model, tooltip }
       }
     },
     highlight(partIds = [], style = 'selected') {
-      for (const n of svg.querySelectorAll(`.${style}`)) {
-        n.classList.remove(style);
+      for (const s of HIGHLIGHT_STYLES) {
+        for (const n of svg.querySelectorAll(`.${s}`)) {
+          n.classList.remove(s);
+        }
       }
       for (const id of partIds) {
         if (!id) continue;

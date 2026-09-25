@@ -50,10 +50,37 @@
 
 /**
  * @typedef {Object} ModeEvent
- * @property {'feedback'|'score'|'stageEnd'|'uiChanged'} type
+ * @property {'feedback'|'score'|'stageEnd'|'uiChanged'|'highlight'} type
  * @property {'info'|'good'|'bad'} [level]
  * @property {string} [text]
- * @property {Object} [data]
+ * @property {{ partIds?: string[], style?: 'selected'|'correct'|'wrong'|'target' }} [data]
+ */
+
+/**
+ * @typedef {Object} Stage
+ * @property {string} id
+ * @property {string} mode
+ * @property {string} module
+ * @property {string} title
+ * @property {string} brief
+ * @property {number} seed
+ * @property {string[]} [unlockAfter]
+ * @property {Object} [config]
+ */
+
+/**
+ * @typedef {Object} SaveData
+ * @property {number} version
+ * @property {Record<string, { bestScore: number, stars: number, completedAt: string }>} stages
+ * @property {Record<string, { seen: number, correct: number }>} mastery
+ */
+
+/**
+ * @typedef {Object} SaveApi
+ * @property {() => SaveData} get
+ * @property {(id: string, result: { score?: number, stars?: number, completedAt?: string }) => Object} recordStage
+ * @property {(partType: string, ok: boolean) => Object} recordAnswer
+ * @property {() => SaveData} reset
  */
 
 /**

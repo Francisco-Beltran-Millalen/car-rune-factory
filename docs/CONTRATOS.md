@@ -221,10 +221,10 @@ La pausa, la velocidad y el reinicio del reloj **no** son intents: son control d
  * @property {string[]} revealedFaults      // fallas cuyo indicio visual se muestra (§4.6)
  *
  * @typedef {Object} ModeEvent
- * @property {'feedback'|'score'|'stageEnd'|'uiChanged'} type
+ * @property {'feedback'|'score'|'stageEnd'|'uiChanged'|'highlight'} type
  * @property {'info'|'good'|'bad'} [level]
  * @property {string} [text]
- * @property {Object} [data]
+ * @property {{ partIds?: string[], style?: 'selected'|'correct'|'wrong'|'target' }} [data]
  */
 createXMode(ctx) → {
   id,                        // 'lab' | 'quiz' | 'diagnosis' | 'assembly'

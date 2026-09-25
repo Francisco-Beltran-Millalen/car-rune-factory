@@ -606,3 +606,106 @@ a {
 .gauge-hub {
   fill: var(--fg);
 }
+
+/* ---------- Etapas: portada y HUD (§6.7, §6.8) ---------- */
+.home-h {
+  font-size: 15px;
+  margin: 22px 0 8px;
+}
+.stage-card.locked {
+  opacity: 0.6;
+  border-style: dashed;
+}
+.stage-stars {
+  font-family: var(--mono);
+  letter-spacing: 0.08em;
+}
+.hud-title {
+  margin: 2px 0 4px;
+  font-size: 15px;
+}
+.hud-brief {
+  margin: 0 0 8px;
+  color: var(--muted);
+}
+.hud-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+}
+.hud-stat-label {
+  color: var(--muted);
+}
+.hud-prompt {
+  margin: 8px 0;
+}
+.hud-prompt-text {
+  margin: 0 0 8px;
+}
+.hud-choices {
+  display: grid;
+  gap: 6px;
+}
+.hud-choice {
+  text-align: left;
+}
+.hud-actions,
+.hud-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+.hud-tool.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--panel);
+}
+.hud-log {
+  margin-top: 8px;
+  display: grid;
+  gap: 2px;
+}
+.hud-log-line {
+  font-size: 13px;
+}
+.level-good {
+  color: var(--ok);
+}
+.level-bad {
+  color: var(--bad);
+}
+.level-info {
+  color: var(--muted);
+}
+
+/* Resaltados que aplica el renderer (CONTRATOS §6.4) */
+.correct .part-body,
+.part-body.correct,
+.correct .pipe-wall {
+  stroke: var(--ok);
+  stroke-width: 3;
+}
+.correct .pipe-wall {
+  stroke-width: 18;
+}
+.wrong .part-body,
+.part-body.wrong,
+.wrong .pipe-wall {
+  stroke: var(--bad);
+  stroke-width: 3;
+}
+.wrong .pipe-wall {
+  stroke-width: 18;
+}
+.target .part-body,
+.part-body.target,
+.target .pipe-wall {
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-dasharray: 8 4;
+}
+.target .pipe-wall {
+  stroke-width: 18;
+}

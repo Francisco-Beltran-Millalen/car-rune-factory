@@ -52,7 +52,7 @@ export function createFuelView({ svg, model }) {
   el('rect', { x: 55, y: 32, width: 12, height: 8, class: 'part-body' }, battery);
   el('rect', { x: 93, y: 32, width: 12, height: 8, class: 'part-body' }, battery);
   const battText = label(battery, 80, 76, '12,6 V', { anchor: 'middle', className: 'lbl lbl-mono' });
-  label(battery, 80, 118, 'Batería', { anchor: 'middle', className: 'lbl-small' });
+  label(battery, 80, 118, 'Batería', { anchor: 'middle', className: 'lbl-small part-label' });
 
   const key = group(partsL, { part: 'key' });
   el('rect', { x: 150, y: 40, width: 80, height: 60, rx: 30, class: 'part-body' }, key);
@@ -64,11 +64,11 @@ export function createFuelView({ svg, model }) {
   el('circle', { cx: 280, cy: 80, r: 3, class: 'contact' }, relay);
   el('circle', { cx: 320, cy: 80, r: 3, class: 'contact' }, relay);
   const relayArm = el('line', { x1: 280, y1: 80, x2: 320, y2: 80, class: 'relay-arm' }, relay);
-  label(relay, 300, 60, 'Relé', { anchor: 'middle', className: 'lbl-small' });
+  label(relay, 300, 60, 'Relé', { anchor: 'middle', className: 'lbl-small part-label' });
 
   const ecu = group(partsL, { part: 'ecu' });
   el('rect', { x: 400, y: 40, width: 120, height: 60, rx: 6, class: 'part-body ecu-body' }, ecu);
-  label(ecu, 460, 67, 'ECU', { anchor: 'middle', className: 'lbl' });
+  label(ecu, 460, 67, 'ECU', { anchor: 'middle', className: 'lbl part-label' });
   const ecuText = label(ecu, 460, 88, '', { anchor: 'middle', className: 'lbl-small lbl-mono' });
 
   // Señales ECU → inyectores
@@ -81,7 +81,7 @@ export function createFuelView({ svg, model }) {
   el('rect', { x: TANK.x, y: TANK.y, width: TANK.w, height: TANK.h, rx: 14, class: 'part-body tank-body' }, tank);
   const liquid = el('rect', { x: TANK.x + 6, y: TANK.y, width: TANK.w - 12, height: 0, rx: 8, class: 'liquid fluid-fuel' }, tank);
   const surface = el('path', { class: 'liquid-surface' }, tank);
-  label(tank, TANK.x + TANK.w - 12, TANK.y + 22, 'Estanque', { anchor: 'end', className: 'lbl' });
+  label(tank, TANK.x + TANK.w - 12, TANK.y + 22, 'Estanque', { anchor: 'end', className: 'lbl part-label' });
   const tankText = label(tank, TANK.x + TANK.w - 12, TANK.y + 42, '', { anchor: 'end', className: 'lbl-small lbl-mono' });
 
   const suction = pipe(pipesL, [[220, 632], [220, 455]], { width: 10, className: 'fluid-fuel' });
@@ -92,31 +92,31 @@ export function createFuelView({ svg, model }) {
   el('line', { x1: 207, y1: 560, x2: 233, y2: 560, class: 'rotor-vane' }, rotor);
   el('line', { x1: 220, y1: 547, x2: 220, y2: 573, class: 'rotor-vane' }, rotor);
   el('text', { x: 220, y: 510, 'text-anchor': 'middle', class: 'lbl-small', text: 'M' }, pump);
-  label(partsL, 252, 600, 'Bomba', { className: 'lbl-small' });
+  label(partsL, 252, 600, 'Bomba', { className: 'lbl-small part-label' });
 
   const strainer = group(partsL, { part: 'strainer' });
   el('rect', { x: 188, y: 616, width: 64, height: 22, rx: 4, class: 'part-body strainer-body' }, strainer);
-  label(partsL, 258, 632, 'Colador', { className: 'lbl-small' });
+  label(partsL, 258, 632, 'Colador', { className: 'lbl-small part-label' });
 
   const check = group(partsL, { part: 'checkValve' });
   el('circle', { cx: 220, cy: 466, r: 10, class: 'part-body' }, check);
   const checkBall = el('path', { d: 'M 213 470 L 227 470 L 220 460 Z', class: 'check-flap' }, check);
-  label(partsL, 234, 462, 'Check', { className: 'lbl-small' });
+  label(partsL, 234, 462, 'Check', { className: 'lbl-small part-label' });
 
   // ---------- Línea de alimentación, filtro, riel ----------
   const feedA = pipe(pipesL, [[220, 455], [220, 330], [520, 330]], { width: 10, part: 'feedLine' });
   const feedB = pipe(pipesL, [[600, 330], [650, 330], [650, RAIL_Y], [700, RAIL_Y]], { width: 10, part: 'feedLine' });
-  label(partsL, 300, 318, 'Alimentación →', { className: 'lbl-small' });
+  label(partsL, 300, 318, 'Alimentación →', { className: 'lbl-small part-label' });
 
   const filter = group(partsL, { part: 'filter' });
   el('rect', { x: 520, y: 308, width: 80, height: 44, rx: 12, class: 'part-body filter-body' }, filter);
   for (let x = 532; x < 596; x += 8) el('line', { x1: x, y1: 314, x2: x, y2: 346, class: 'filter-pleat' }, filter);
   const filterDirt = el('rect', { x: 522, y: 310, width: 0, height: 40, rx: 10, class: 'filter-dirt' }, filter);
   el('line', { x1: 540, y1: 364, x2: 584, y2: 364, class: 'flow-arrow', 'marker-end': 'url(#arrow)' }, filter);
-  label(filter, 560, 385, 'Filtro', { anchor: 'middle', className: 'lbl-small' });
+  label(filter, 560, 385, 'Filtro', { anchor: 'middle', className: 'lbl-small part-label' });
 
   const rail = pipe(pipesL, [[700, RAIL_Y], [1130, RAIL_Y]], { width: 16, part: 'rail' });
-  label(partsL, 710, RAIL_Y - 16, 'Riel', { className: 'lbl-small' });
+  label(partsL, 710, RAIL_Y - 16, 'Riel', { className: 'lbl-small part-label' });
   // Manómetro en T sobre el riel
   pipe(pipesL, [[675, RAIL_Y], [675, 158]], { width: 4, part: 'rail' });
   const gauge = gaugeSvg(partsL, { cx: 675, cy: 118, r: 40, min: 0, max: 8, green: [2.2, 3.8], unit: 'bar', ticks: 4, part: 'rail' });
@@ -124,7 +124,7 @@ export function createFuelView({ svg, model }) {
   // ---------- Inyectores y múltiple ----------
   const manifold = group(partsBehind, { part: 'manifold' });
   el('rect', { x: 690, y: 278, width: 440, height: 86, rx: 10, class: 'part-body manifold-body' }, manifold);
-  label(manifold, 700, 356, 'Múltiple de admisión', { className: 'lbl-small' });
+  label(manifold, 700, 356, 'Múltiple de admisión', { className: 'lbl-small part-label' });
   const engineTag = group(partsL, { class: 'engine-tag' });
   const engineTagBg = el('rect', { x: 960, y: 336, width: 160, height: 22, rx: 11, class: 'tag tag-off' }, engineTag);
   const engineTagText = label(engineTag, 1040, 351, '', { anchor: 'middle', className: 'tag-text' });
@@ -144,7 +144,7 @@ export function createFuelView({ svg, model }) {
   el('rect', { x: 1130, y: 150, width: 64, height: 92, rx: 12, class: 'part-body' }, regulator);
   const diaphragm = el('line', { x1: 1134, y1: 196, x2: 1190, y2: 196, class: 'diaphragm' }, regulator);
   const spring = el('polyline', { points: springPoints(1162, 200, 238), class: 'spring' }, regulator);
-  label(regulator, 1162, 142, 'Regulador', { anchor: 'middle', className: 'lbl-small' });
+  label(regulator, 1162, 142, 'Regulador', { anchor: 'middle', className: 'lbl-small part-label' });
 
   const vacuumOn = pipe(pipesL, [[1120, 300], [1162, 300], [1162, 244]], { width: 5, className: 'fluid-vacuum', part: 'vacuumHose' });
   const vacuumOff = group(pipesL, { part: 'vacuumHose' });
@@ -152,7 +152,7 @@ export function createFuelView({ svg, model }) {
   el('text', { x: 1182, y: 292, class: 'lbl-small warn-text', text: '¡suelta!' }, vacuumOff);
 
   const ret = pipe(pipesL, [[1194, 170], [1218, 170], [1218, 395], [340, 395], [340, 470]], { width: 8, part: 'returnLine' });
-  label(partsL, 760, 385, '← Retorno al estanque', { className: 'lbl-small' });
+  label(partsL, 760, 385, '← Retorno al estanque', { className: 'lbl-small part-label' });
 
   // ---------- Fugas ----------
   const leakLineDrops = [0, 1, 2].map(() => el('circle', { r: 3, class: 'drop', opacity: 0 }, fxL));
