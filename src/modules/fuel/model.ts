@@ -2,22 +2,82 @@
 // Puro (§1), determinista (§3), unidades: bar relativos, L/h, V, A, s (§5).
 
 import { clamp, expSmooth, wrap } from '../../core/math.ts';
-import { createRng } from '../../core/rng.ts';
+import { createRng, type Rng } from '../../core/rng.ts';
+import type { Model, ModelActions } from '../../core/types.ts';
 
-export const DEFAULT_PARAMS = {
-  ignitionKey: 'off', // 'off' | 'on' | 'start' | 'run'
+export type IgnitionKey = 'off' | 'on' | 'start' | 'run';
+export type EngineState = 'off' | 'cranking' | 'running' | 'misfire' | 'stalled';
+export type RelayState = 'ok' | 'intermittent' | 'dead';
+export type RegulatorState = 'ok' | 'stuckOpen' | 'stuckClosed';
+
+export type FuelParams = {
+  ignitionKey: IgnitionKey;
+  rpm: number;
+  throttle: number;
+  batteryV: number;
+  fastConsumption: boolean;
+};
+
+export type FuelFaults = {
+  strainerClog: number;
+  filterClog: number;
+  pumpWear: number;
+  relay: RelayState;
+  regulator: RegulatorState;
+  vacuumHoseOff: boolean;
+  injectorLeak: number;
+  lineLeak: number;
+};
+
+export type FuelState = {
+  engineState: EngineState;
+  relayOn: boolean;
+  primeTimer: number;
+  pumpV: number;
+  pumpCurrent: number;
+  qPump: number;
+  pPumpOut: number;
+  dpFilter: number;
+  pRail: number; // bar relativos
+  pMan: number;
+  pRef: number;
+  regOpen: number;
+  qReturn: number;
+  qInjTotal: number;
+  qInjAvg: number;
+  mixtureRatio: number;
+  injectors: readonly { open: boolean }[]; // orden 1..4
+  qLeakInj: number;
+  qLeakLine: number;
+  tankLevel: number;
+  pickupAir: number;
+  crankAngle: number;
+  rpmEff: number;
+};
+
+export type FuelModel = Model<FuelParams, FuelFaults, FuelState>;
+
+export interface FuelOverrides {
+  seed?: number;
+  tankLevel?: number;
+  params?: Partial<FuelParams>;
+  faults?: Partial<FuelFaults>;
+}
+
+export const DEFAULT_PARAMS: Readonly<FuelParams> = {
+  ignitionKey: 'off',
   rpm: 800,
   throttle: 0,
   batteryV: 12.6,
   fastConsumption: false,
 };
 
-export const DEFAULT_FAULTS = {
+export const DEFAULT_FAULTS: Readonly<FuelFaults> = {
   strainerClog: 0,
   filterClog: 0,
   pumpWear: 0,
-  relay: 'ok', // 'ok' | 'intermittent' | 'dead'
-  regulator: 'ok', // 'ok' | 'stuckOpen' | 'stuckClosed'
+  relay: 'ok',
+  regulator: 'ok',
   vacuumHoseOff: false,
   injectorLeak: 0,
   lineLeak: 0,
@@ -56,57 +116,81 @@ export const K = {
 const FIRING_OFFSETS = [0, 540, 180, 360]; // inyectores 1..4 con orden 1-3-4-2
 const KINJ = K.injFlow3bar / Math.sqrt(3);
 
-export function createFuelModel(overrides = {}) {
+function initialState(overrides: FuelOverrides): FuelState {
+  return {
+    engineState: 'off',
+    relayOn: false,
+    primeTimer: 0,
+    pumpV: 0,
+    pumpCurrent: 0,
+    qPump: 0,
+    pPumpOut: 0,
+    dpFilter: 0,
+    pRail: 0,
+    pMan: 0,
+    pRef: 0,
+    regOpen: 0,
+    qReturn: 0,
+    qInjTotal: 0,
+    qInjAvg: 0,
+    mixtureRatio: 0,
+    injectors: [{ open: false }, { open: false }, { open: false }, { open: false }],
+    qLeakInj: 0,
+    qLeakLine: 0,
+    tankLevel: overrides.tankLevel ?? 40,
+    pickupAir: 0,
+    crankAngle: 0,
+    rpmEff: 0,
+  };
+}
+
+export function createFuelModel(overrides: FuelOverrides = {}): FuelModel {
   // reset() vuelve a estos valores iniciales, overrides incluidos.
-  const initialParams = { ...DEFAULT_PARAMS, ...overrides.params };
-  const initialFaults = { ...DEFAULT_FAULTS, ...overrides.faults };
-  const params = { ...initialParams };
-  const faults = { ...initialFaults };
-  const state = {};
-  let rng;
-  let prevKey;
-  let goodMixTime;
-  let badMixTime;
-  let relayCut;
-  let injAvgExpected;
+  const initialParams: FuelParams = { ...DEFAULT_PARAMS, ...overrides.params };
+  const initialFaults: FuelFaults = { ...DEFAULT_FAULTS, ...overrides.faults };
+  const params: FuelParams = { ...initialParams };
+  const faults: FuelFaults = { ...initialFaults };
+  const state: FuelState = initialState(overrides);
+  let rng: Rng = createRng(overrides.seed ?? 12345);
+  let prevKey: IgnitionKey = 'off';
+  let goodMixTime = 0;
+  let badMixTime = 0;
+  let relayCut = 0;
+  let injAvgExpected = 0;
+  let simTime = 0;
 
-  const model = { params, faults, state, time: 0, step, reset, actions: {} };
+  const actions: ModelActions = {
+    refill: (): void => {
+      state.tankLevel = 45;
+    },
+    setTank: (liters: unknown): void => {
+      state.tankLevel = clamp(Number(liters) || 0, 0, K.tankCapacity);
+    },
+  };
 
-  function initState() {
+  const model: FuelModel = {
+    params,
+    faults,
+    state,
+    actions,
+    get time(): number {
+      return simTime;
+    },
+    step,
+    reset,
+  };
+
+  function initState(): void {
     rng = createRng(overrides.seed ?? 12345);
     prevKey = 'off';
     goodMixTime = 0;
     badMixTime = 0;
     relayCut = 0;
     injAvgExpected = 0;
-    Object.assign(state, {
-      engineState: 'off',
-      relayOn: false,
-      primeTimer: 0,
-      pumpV: 0,
-      pumpCurrent: 0,
-      qPump: 0,
-      pPumpOut: 0,
-      dpFilter: 0,
-      pRail: 0,
-      pMan: 0,
-      pRef: 0,
-      regOpen: 0,
-      qReturn: 0,
-      qInjTotal: 0,
-      qInjAvg: 0,
-      mixtureRatio: 0,
-      injectors: [{ open: false }, { open: false }, { open: false }, { open: false }],
-      qLeakInj: 0,
-      qLeakLine: 0,
-      tankLevel: overrides.tankLevel ?? 40,
-      pickupAir: 0,
-      crankAngle: 0,
-      rpmEff: 0,
-    });
+    Object.assign(state, initialState(overrides));
   }
 
-  function step(dt) {
+  function step(dt: number): void {
     const s = state;
     const key = params.ignitionKey;
 
@@ -190,8 +274,9 @@ export function createFuelModel(overrides = {}) {
     const qOpenExpected = KINJ * Math.sqrt(K.regSet);
     let nOpen = 0;
     for (let i = 0; i < 4; i++) {
-      const open = turning && wrap(s.crankAngle - FIRING_OFFSETS[i], 720) < pwDeg;
-      s.injectors[i].open = open;
+      const open = turning && wrap(s.crankAngle - (FIRING_OFFSETS[i] ?? 0), 720) < pwDeg;
+      const inj = s.injectors[i];
+      if (inj) inj.open = open;
       if (open) nOpen++;
     }
     s.qInjTotal = nOpen * qOpen;
@@ -226,18 +311,15 @@ export function createFuelModel(overrides = {}) {
     const burn = ((s.qInjTotal + s.qLeakInj + s.qLeakLine) / 3600) * dt * (params.fastConsumption ? 100 : 1);
     s.tankLevel = clamp(s.tankLevel - burn, 0, K.tankCapacity);
 
-    model.time += dt;
+    simTime += dt;
   }
 
-  function reset() {
+  function reset(): void {
     Object.assign(params, initialParams);
     Object.assign(faults, initialFaults);
-    model.time = 0;
+    simTime = 0;
     initState();
   }
-
-  model.actions.refill = () => (state.tankLevel = 45);
-  model.actions.setTank = (liters) => (state.tankLevel = clamp(Number(liters) || 0, 0, K.tankCapacity));
 
   initState();
   return model;

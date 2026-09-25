@@ -1,6 +1,9 @@
 // Controles, fallas, lecturas y presets declarativos (§8).
 
-export const controls = [
+import type { ControlSpec, FaultSpec, Preset, ReadoutSpec } from '../../core/types.ts';
+import type { FuelModel, FuelState } from './model.ts';
+
+export const controls: readonly ControlSpec<FuelModel>[] = [
   {
     type: 'select',
     key: 'ignitionKey',
@@ -20,7 +23,7 @@ export const controls = [
   { type: 'button', action: 'refill', label: 'Rellenar estanque', group: 'Estanque' },
 ];
 
-export const faults = [
+export const faults: readonly FaultSpec[] = [
   { key: 'filterClog', label: 'Filtro tapado', kind: 'severity', description: 'Más caída de presión en el filtro, crece con el caudal.' },
   { key: 'strainerClog', label: 'Colador tapado', kind: 'severity', description: 'La bomba se ahoga en la aspiración.' },
   { key: 'pumpWear', label: 'Bomba gastada', kind: 'severity', description: 'Menos caudal y menos presión máxima.' },
@@ -49,7 +52,7 @@ export const faults = [
   { key: 'lineLeak', label: 'Fuga en la línea', kind: 'severity' },
 ];
 
-export const readouts = [
+export const readouts: readonly ReadoutSpec<FuelState>[] = [
   { id: 'pRail', label: 'Presión de riel', unit: 'bar', decimals: 2, get: (s) => s.pRail, history: true, gauge: { min: 0, max: 8, green: [2.2, 3.8] } },
   { id: 'dpRail', label: 'Riel − múltiple', unit: 'bar', decimals: 2, get: (s) => s.pRail - s.pMan, history: true },
   { id: 'qPump', label: 'Caudal de la bomba', unit: 'L/h', decimals: 0, get: (s) => s.qPump, history: true },
@@ -62,7 +65,7 @@ export const readouts = [
   { id: 'tank', label: 'Nivel del estanque', unit: 'L', decimals: 1, get: (s) => s.tankLevel },
 ];
 
-export const presets = [
+export const presets: readonly Preset<FuelModel>[] = [
   {
     id: 'normal',
     label: 'Arranque normal',

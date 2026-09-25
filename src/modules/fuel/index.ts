@@ -1,11 +1,12 @@
 // Descriptor del módulo de combustible (CONTRATOS.md 4.1).
-import { createFuelModel, DEFAULT_PARAMS, DEFAULT_FAULTS } from './model.js';
-import { createFuelView } from './view.js';
-import { parts } from './content.js';
-import { createNarrator } from './narrate.js';
-import { controls, faults, readouts, presets } from './specs.js';
+import { defineModule } from '../../core/types.ts';
+import { parts } from './content.ts';
+import { createNarrator } from './narrate.ts';
+import { DEFAULT_FAULTS, DEFAULT_PARAMS, createFuelModel, type FuelModel } from './model.ts';
+import { controls, faults, presets, readouts } from './specs.ts';
+import { createFuelView } from './view.ts';
 
-export default {
+export default defineModule<FuelModel>({
   id: 'fuel',
   title: 'Sistema de combustible',
   summary: 'Cómo llega la bencina desde el estanque a los inyectores: bomba, filtro, riel, regulador y retorno.',
@@ -21,5 +22,4 @@ export default {
   parts,
   narrate: createNarrator(),
   presets,
-};
-
+});

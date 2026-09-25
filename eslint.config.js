@@ -242,6 +242,12 @@ export default tseslint.config(
     ],
     rules: { '@typescript-eslint/no-empty-function': 'off' },
   },
+  // Los params/faults/state de un módulo van con `type`, no `interface`:
+  // un alias de objeto sí es asignable a Record<string, …> (plan §8.1).
+  {
+    files: ['src/modules/*/model.{js,ts}'],
+    rules: { '@typescript-eslint/consistent-type-definitions': 'off' },
+  },
 
   // 5.4 DOM seguro, factories y enums (§17, §18, §7)
   {

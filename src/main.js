@@ -1,5 +1,5 @@
 import './styles.css';
-import { modules } from './modules/registry.js';
+import { modules } from './modules/registry.ts';
 import { createRouter } from './core/router.ts';
 import { createShell } from './core/shell.js';
 

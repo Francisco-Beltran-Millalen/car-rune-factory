@@ -1,35 +1,38 @@
 // Vista SVG del sistema de combustible (docs/modules/fuel.md §7). Sólo lee model.state (§2, §9).
 
 import './fuel.css';
+import { clamp, expSmooth, wrap } from '../../core/math.ts';
+import { createFlow, type Flow } from '../../core/particles.ts';
 import { el, group, pipe, label, gaugeSvg, roundedPathD } from '../../core/svg.ts';
-import { createFlow } from '../../core/particles.ts';
-import { clamp, wrap, expSmooth } from '../../core/math.ts';
+import type { View, ViewContext } from '../../core/types.ts';
+import type { EngineState, FuelModel, IgnitionKey } from './model.ts';
 
 const PX_PER_LH = 4.6; // escala visual de este módulo (fuel.md §7)
 const INJ_X = [760, 860, 960, 1060];
-const INJ_OFFSETS = [0, 540, 180, 360]; // igual que model.js: orden 1-3-4-2
-const KEY_LABEL = { off: 'Apagado', on: 'Contacto', start: 'Arranque', run: 'Marcha' };
-const KEY_ANGLE = { off: -45, on: 0, start: 45, run: 20 };
-const ENGINE_LABEL = { off: 'Motor detenido', cranking: 'Arrancando…', running: 'En marcha', misfire: 'Falla (mezcla)', stalled: 'Se detuvo' };
+const INJ_OFFSETS = [0, 540, 180, 360]; // igual que model.ts: orden 1-3-4-2
+const KEY_LABEL: Record<IgnitionKey, string> = { off: 'Apagado', on: 'Contacto', start: 'Arranque', run: 'Marcha' };
+const KEY_ANGLE: Record<IgnitionKey, number> = { off: -45, on: 0, start: 45, run: 20 };
+const ENGINE_LABEL: Record<EngineState, string> = { off: 'Motor detenido', cranking: 'Arrancando…', running: 'En marcha', misfire: 'Falla (mezcla)', stalled: 'Se detuvo' };
 
 const TANK = { x: 60, y: 430, w: 320, h: 230 };
 const RAIL_Y = 190;
 
 /** Opacidad del fluido en una tubería según su presión (bar). */
-const pressureOpacity = (p) => (0.18 + 0.62 * clamp(p / 4, 0, 1)).toFixed(2);
+const pressureOpacity = (p: number): string => (0.18 + 0.62 * clamp(p / 4, 0, 1)).toFixed(2);
 
 /** ¿El ángulo `offset` quedó entre prev y cur (avance `delta`)? */
-const crossed = (prev, delta, offset) => delta > 0 && wrap(offset - prev, 720) < delta;
+const crossed = (prev: number, delta: number, offset: number): boolean =>
+  delta > 0 && wrap(offset - prev, 720) < delta;
 
-function springPoints(x, yTop, yBottom, coils = 6, amp = 9) {
-  const pts = [[x, yTop]];
+function springPoints(x: number, yTop: number, yBottom: number, coils = 6, amp = 9): string {
+  const pts: [number, number][] = [[x, yTop]];
   const step = (yBottom - yTop) / (coils * 2);
   for (let i = 1; i < coils * 2; i++) pts.push([x + (i % 2 ? amp : -amp), yTop + i * step]);
   pts.push([x, yBottom]);
   return pts.map((p) => p.join(',')).join(' ');
 }
 
-export function createFuelView({ svg, model }) {
+export function createFuelView({ svg, model }: ViewContext<FuelModel>): View {
   const root = group(svg, { class: 'fuel' });
   const pipesL = group(root, { class: 'pipes' });
   const partsBehind = group(root);
@@ -45,7 +48,7 @@ export function createFuelView({ svg, model }) {
     className: 'fluid-electric',
     part: 'relay',
   });
-  const wireEcu = pipe(pipesL, [[340, 70], [400, 70]], { width: 2, className: 'fluid-signal', part: 'ecu' });
+  pipe(pipesL, [[340, 70], [400, 70]], { width: 2, className: 'fluid-signal', part: 'ecu' });
 
   const battery = group(partsL, { part: 'battery' });
   el('rect', { x: 40, y: 40, width: 80, height: 60, rx: 6, class: 'part-body' }, battery);
@@ -169,23 +172,22 @@ export function createFuelView({ svg, model }) {
     rail: createFlow({ path: rail.path, layer: flowL, spacing: 16, radius: 3.5 }),
     ret: createFlow({ path: ret.path, layer: flowL, spacing: 16 }),
   };
-  void wireEcu;
 
   // ---------- Estado de la animación ----------
   let rotorAngle = 0;
-  let prevCrank = null;
+  let prevCrank: number | null = null;
   let wave = 0;
   let dripT = 0;
   let lastSpringKey = '';
-  let lastKey = '';
+  let lastKey: IgnitionKey | null = null;
 
-  function setFlow(f, lh, { air = 0 } = {}) {
+  function setFlow(f: Flow, lh: number, { air = 0 }: { air?: number } = {}): void {
     f.setSpeed(lh * PX_PER_LH);
     f.setDensity(lh > 0.3 ? 1 : 0);
     f.setAir(air);
   }
 
-  function update(dt) {
+  function update(dt: number): void {
     const s = model.state;
     const p = model.params;
     const f = model.faults;
@@ -195,8 +197,8 @@ export function createFuelView({ svg, model }) {
     battText.textContent = `${v.toFixed(1).replace('.', ',')} V`;
     if (p.ignitionKey !== lastKey) {
       lastKey = p.ignitionKey;
-      keyText.textContent = KEY_LABEL[p.ignitionKey] || p.ignitionKey;
-      keyBlade.setAttribute('transform', `rotate(${KEY_ANGLE[p.ignitionKey] ?? 0} 190 70)`);
+      keyText.textContent = KEY_LABEL[p.ignitionKey];
+      keyBlade.setAttribute('transform', `rotate(${KEY_ANGLE[p.ignitionKey]} 190 70)`);
     }
     relayArm.setAttribute('transform', s.relayOn ? '' : 'rotate(-28 280 80)');
     const keyLive = p.ignitionKey !== 'off';
@@ -249,18 +251,18 @@ export function createFuelView({ svg, model }) {
     // Inyectores: pulso por cruce de ángulo (no se pierde ninguno entre frames)
     const delta = prevCrank === null ? 0 : wrap(s.crankAngle - prevCrank, 720);
     injectors.forEach((inj, i) => {
-      const hit = s.injectors[i].open || (prevCrank !== null && crossed(prevCrank, delta, INJ_OFFSETS[i]) && s.rpmEff > 0);
+      const hit = (s.injectors[i]?.open ?? false) || (prevCrank !== null && crossed(prevCrank, delta, INJ_OFFSETS[i] ?? 0) && s.rpmEff > 0);
       inj.intensity = hit ? 1 : expSmooth(inj.intensity, 0, dt, 0.04);
       const k = inj.intensity * clamp(s.mixtureRatio || 1, 0.2, 1.3);
       inj.spray.setAttribute('opacity', k.toFixed(2));
       inj.needle.setAttribute('transform', inj.intensity > 0.5 ? 'translate(0 -5)' : '');
-      injWires[i].classList.toggle('pulse', inj.intensity > 0.5);
+      injWires[i]?.classList.toggle('pulse', inj.intensity > 0.5);
     });
     prevCrank = s.crankAngle;
 
     // Motor
     engineTagBg.setAttribute('class', `tag tag-${s.engineState}`);
-    engineTagText.textContent = ENGINE_LABEL[s.engineState] || s.engineState;
+    engineTagText.textContent = ENGINE_LABEL[s.engineState];
 
     // Regulador: el resorte se comprime al abrir
     const springKey = s.regOpen.toFixed(2);
@@ -294,7 +296,7 @@ export function createFuelView({ svg, model }) {
   return {
     update,
     highlight() {},
-    destroy() {
+    destroy(): void {
       for (const fl of Object.values(flows)) fl.destroy();
       root.remove();
     },

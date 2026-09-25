@@ -40,7 +40,7 @@ cambian.
 | TS1 | Core puro (`types, math, rng, loop, history`, `format` nuevo) | TS0 | ✅ |
 | TS2 | Core con DOM + paneles + router | TS1 | ✅ |
 | TS3 | Juego (`game/**`, `ui/hud`), intents como unión discriminada | TS2 | ✅ |
-| TS4 | Módulos (`fuel`, `_demo`, registry) + comparación de estado idéntico | TS3 | ⏳ |
+| TS4 | Módulos (`fuel`, `_demo`, registry) + comparación de estado idéntico | TS3 | ✅ |
 | TS5 | Shell, legacy, main; `allowJs: false`; docs (§1, §7, §18, §31–§33) + checklist en Firefox | TS4 | ⏳ |
 
 Se usa **TS 6.0 + ESLint** (opción A, decidida el 2026-09-24; comparación en
@@ -77,7 +77,32 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
 | A9 | Armar circuitos (E4) | A7 | ⏳ |
 | A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
 
-**Siguiente paso:** TS4 (módulos `_demo` y `fuel` + registry a `.ts`, comparación de estado idéntico). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+**Siguiente paso:** TS5 (shell, legacy y main; `allowJs: false`; docs y checklist de Firefox). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+
+## CERRADO 2026-09-25 — TS4 módulos
+
+- `src/modules/{registry,_demo/*,fuel/*}.js` → `.ts` y `tests/fuel/{model,content}.test.js`
+  → `.ts` (aserciones intactas; sólo anotaciones, guards y rutas `.ts`).
+- Física intacta, **comprobada**: antes del port se guardó el `state` completo del
+  combustible a 10 s simulados en 3 escenarios (arranque normal, `filterClog: 0.8`,
+  `relay: 'dead'`, semilla 12345) en `/tmp/opencode/fuel-state-before.json`; después del
+  port la comparación con `toEqual` (igualdad exacta) dio **idéntica**.
+- Tipos del combustible en `fuel/model.ts` según 8.2: `IgnitionKey`, `EngineState`,
+  `RelayState`, `RegulatorState`, `FuelParams/Faults/State`, `FuelModel` y `FuelOverrides`;
+  `DEFAULT_*` con `Readonly`. `state` se crea completo (`initialState()`) y `reset()` muta
+  el mismo objeto; `time` es un getter sobre la variable interna (Model.time es readonly).
+- `fuel/index.ts` usa `defineModule<FuelModel>`; `specs.ts` tipa `ControlSpec<FuelModel>`,
+  `ReadoutSpec<FuelState>` y `Preset<FuelModel>`; `view.ts` con `ViewContext<FuelModel>`.
+  `_demo` también quedó tipado (control con `disabledWhen` sobre `DemoModel`).
+- Desviaciones/reglas nuevas:
+  - `consistent-type-definitions` off para `src/modules/*/model.{js,ts}` con motivo: el
+    plan §8.1 exige `type` (alias) para que `params/faults/state` sean asignables a
+    `Record<string, …>`.
+  - Se quitaron `void wireEcu`/`void valve` (variables sólo para descartar): ahora la
+    llamada se hace sin asignar.
+- `knip.json` pasa a `src|tests/**/*.{js,ts}` y el ignore de `_demo` a `.ts`.
+- `npm run check` verde: typecheck, lint 0 warnings, knip, 123 tests y build.
+
 
 ## CERRADO 2026-09-25 — TS3 juego con tipos
 

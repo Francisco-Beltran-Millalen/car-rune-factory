@@ -1,15 +1,22 @@
 // Criterios de aceptación de docs/modules/fuel.md §9.
 import { describe, it, expect } from 'vitest';
-import { createFuelModel } from '../../src/modules/fuel/model.js';
 import { createRng } from '../../src/core/rng.ts';
+import {
+  createFuelModel,
+  type FuelModel,
+  type FuelState,
+  type IgnitionKey,
+  type RegulatorState,
+  type RelayState,
+} from '../../src/modules/fuel/model.ts';
 
 const DT = 0.001;
-function run(m, seconds) {
+function run(m: FuelModel, seconds: number): void {
   const n = Math.round(seconds / DT);
   for (let i = 0; i < n; i++) m.step(DT);
 }
 /** Contacto (cebado) → arranque → marcha, como lo haría una persona. */
-function startEngine(m) {
+function startEngine(m: FuelModel): void {
   m.params.ignitionKey = 'on';
   run(m, 2.5);
   m.params.ignitionKey = 'start';
@@ -18,7 +25,7 @@ function startEngine(m) {
   run(m, 2);
 }
 /** Promedio de una magnitud durante `seconds` (suaviza los pulsos de inyección). */
-function avg(m, seconds, get) {
+function avg(m: FuelModel, seconds: number, get: (s: FuelState) => number): number {
   const n = Math.round(seconds / DT);
   let sum = 0;
   for (let i = 0; i < n; i++) {
@@ -134,7 +141,9 @@ describe('fuel model — §9', () => {
 
   it('10. robustez: combinaciones aleatorias nunca dan NaN y la presión queda acotada', () => {
     const rng = createRng(99);
-    const keys = ['off', 'on', 'start', 'run'];
+    const keys: IgnitionKey[] = ['off', 'on', 'start', 'run'];
+    const relays: RelayState[] = ['ok', 'intermittent', 'dead'];
+    const regulators: RegulatorState[] = ['ok', 'stuckOpen', 'stuckClosed'];
     for (let k = 0; k < 1000; k++) {
       const m = createFuelModel({
         seed: k,
@@ -150,8 +159,8 @@ describe('fuel model — §9', () => {
           strainerClog: rng.next(),
           filterClog: rng.next(),
           pumpWear: rng.next(),
-          relay: rng.pick(['ok', 'intermittent', 'dead']),
-          regulator: rng.pick(['ok', 'stuckOpen', 'stuckClosed']),
+          relay: rng.pick(relays),
+          regulator: rng.pick(regulators),
           vacuumHoseOff: rng.chance(0.5),
           injectorLeak: rng.next(),
           lineLeak: rng.next(),
@@ -161,7 +170,7 @@ describe('fuel model — §9', () => {
         if (i === 1000) m.params.ignitionKey = rng.pick(keys);
         m.step(DT);
       }
-      for (const [name, v] of Object.entries(m.state)) {
+      for (const [name, v] of Object.entries(m.state) as [string, unknown][]) {
         if (typeof v === 'number') expect(Number.isFinite(v), `${name} en caso ${k}`).toBe(true);
       }
       expect(m.state.pRail).toBeGreaterThanOrEqual(0);
@@ -214,13 +223,14 @@ describe('fuel model — §9', () => {
       ['faults', 'pumpWear'],
       ['faults', 'injectorLeak'],
       ['faults', 'lineLeak'],
-    ];
+    ] as const;
     for (const [group, key] of numeric) {
       const m = createFuelModel();
       startEngine(m);
-      m[group][key] = NaN;
+      if (group === 'params') m.params[key] = NaN;
+      else m.faults[key] = NaN;
       run(m, 1);
-      for (const [name, v] of Object.entries(m.state)) {
+      for (const [name, v] of Object.entries(m.state) as [string, unknown][]) {
         if (typeof v === 'number') expect(Number.isFinite(v), `${name} con ${key}=NaN`).toBe(true);
       }
     }
@@ -229,7 +239,7 @@ describe('fuel model — §9', () => {
   it('inyectores pulsan en orden 1-3-4-2', () => {
     const m = createFuelModel();
     startEngine(m);
-    const order = [];
+    const order: number[] = [];
     let prev = [false, false, false, false];
     for (let i = 0; i < 400; i++) {
       m.step(DT);

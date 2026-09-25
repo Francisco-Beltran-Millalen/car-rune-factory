@@ -1,10 +1,12 @@
 // Reglas de "¿Qué está pasando?" (docs/modules/fuel.md §8). Sólo leen el modelo (§2).
 
 import { fmt } from '../../core/format.ts';
+import type { Narration } from '../../core/types.ts';
+import type { FuelModel } from './model.ts';
 
 /** Memoria mínima para detectar que la presión residual cae (motor apagado). */
-function createPressureWatch() {
-  let lastT = null;
+function createPressureWatch(): (m: FuelModel) => number {
+  let lastT: number | null = null;
   let lastP = 0;
   let rate = 0;
   return (m) => {
@@ -23,14 +25,14 @@ function createPressureWatch() {
 }
 
 /** Crea el narrador (con su propio estado interno, uno por montaje). */
-export function createNarrator() {
+export function createNarrator(): (m: FuelModel) => Narration[] {
   const watch = createPressureWatch();
 
-  return function narrate(m) {
+  return function narrate(m): Narration[] {
     const s = m.state;
     const p = m.params;
     const f = m.faults;
-    const out = [];
+    const out: Narration[] = [];
     const running = s.engineState === 'running' || s.engineState === 'misfire';
     const dropRate = watch(m);
 

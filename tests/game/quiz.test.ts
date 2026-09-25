@@ -15,9 +15,9 @@ import {
 } from '../../src/game/modes/quiz.ts';
 import { createSession } from '../../src/game/session.ts';
 import type { QuizStageConfig, SaveApi, Stage } from '../../src/game/types.ts';
-import { parts as contentParts } from '../../src/modules/fuel/content.js';
+import { parts as contentParts } from '../../src/modules/fuel/content.ts';
 
-// `content.js` sigue en JS hasta TS4: el test lo ve por el contrato.
+// El contenido cumple el contrato PartInfo; el alias deja claro el uso en el test.
 const parts: Readonly<Record<string, PartInfo>> = contentParts;
 
 const INJ = [['injector1', 'injector2', 'injector3', 'injector4']];
@@ -303,7 +303,7 @@ describe('campaña (§6.8)', () => {
 });
 
 describe('etiquetas delatoras en la vista (riesgo §6)', () => {
-  const src = readFileSync(new URL('../../src/modules/fuel/view.js', import.meta.url), 'utf8');
+  const src = readFileSync(new URL('../../src/modules/fuel/view.ts', import.meta.url), 'utf8');
   const classAfter = (text: string): string | null => {
     const i = src.indexOf(`'${text}',`);
     if (i < 0) return null;

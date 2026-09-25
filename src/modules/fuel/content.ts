@@ -1,6 +1,8 @@
-// Fichas de cada pieza (PartInfo). Los partId coinciden con los data-part de view.js (§10).
+// Fichas de cada pieza (PartInfo). Los partId coinciden con los data-part de view.ts (§10).
 
-const injector = (n) => ({
+import type { PartInfo } from '../../core/types.ts';
+
+const injector = (n: number): PartInfo => ({
   name: `Inyector ${n}`,
   what: 'Una válvula eléctrica (solenoide) con una tobera muy fina en la punta.',
   why: 'Pulveriza la bencina en el múltiple de admisión, justo antes de la válvula de admisión del cilindro.',
@@ -14,7 +16,7 @@ const injector = (n) => ({
   ],
 });
 
-export const parts = {
+export const parts: Readonly<Record<string, PartInfo>> = {
   battery: {
     name: 'Batería',
     what: 'Batería de plomo-ácido de 12 V.',

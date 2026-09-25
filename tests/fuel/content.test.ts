@@ -1,28 +1,30 @@
 import { describe, it, expect } from 'vitest';
-import { parts } from '../../src/modules/fuel/content.js';
-import { createNarrator } from '../../src/modules/fuel/narrate.js';
-import { controls, faults, readouts, presets } from '../../src/modules/fuel/specs.js';
-import { createFuelModel, DEFAULT_PARAMS, DEFAULT_FAULTS } from '../../src/modules/fuel/model.js';
+import type { Narration } from '../../src/core/types.ts';
+import { parts } from '../../src/modules/fuel/content.ts';
+import { DEFAULT_FAULTS, DEFAULT_PARAMS, createFuelModel, type FuelModel } from '../../src/modules/fuel/model.ts';
+import { createNarrator } from '../../src/modules/fuel/narrate.ts';
+import { controls, faults, presets, readouts } from '../../src/modules/fuel/specs.ts';
 
 const PART_IDS = [
   'battery', 'key', 'relay', 'tank', 'strainer', 'pump', 'checkValve', 'feedLine', 'filter', 'rail',
   'injector1', 'injector2', 'injector3', 'injector4', 'injectorWires', 'manifold', 'regulator', 'vacuumHose', 'returnLine', 'ecu',
 ];
-const run = (m, s) => { for (let i = 0; i < s * 1000; i++) m.step(0.001); };
-function start(m) {
+const run = (m: FuelModel, s: number): void => { for (let i = 0; i < s * 1000; i++) m.step(0.001); };
+function start(m: FuelModel): void {
   m.params.ignitionKey = 'on'; run(m, 2.5);
   m.params.ignitionKey = 'start'; run(m, 1.5);
   m.params.ignitionKey = 'run'; run(m, 2);
 }
-const texts = (narr, m) => narr(m).map((n) => n.text).join(' | ');
+const texts = (narr: (m: FuelModel) => Narration[], m: FuelModel): string =>
+  narr(m).map((n) => n.text).join(' | ');
 
 describe('contenido del combustible', () => {
   it('hay ficha completa para cada pieza de la spec', () => {
     for (const id of PART_IDS) {
       expect(parts[id], id).toBeDefined();
-      expect(parts[id].name.length).toBeGreaterThan(2);
-      expect(parts[id].what && parts[id].why && parts[id].how, id).toBeTruthy();
-      expect(Array.isArray(parts[id].failures)).toBe(true);
+      expect(parts[id]!.name.length).toBeGreaterThan(2);
+      expect(parts[id]!.what && parts[id]!.why && parts[id]!.how, id).toBeTruthy();
+      expect(Array.isArray(parts[id]!.failures)).toBe(true);
     }
   });
 
@@ -34,9 +36,9 @@ describe('contenido del combustible', () => {
     for (const f of faults) expect(DEFAULT_FAULTS, f.key).toHaveProperty(f.key);
     const actions = createFuelModel().actions;
     for (const p of presets) {
-      for (const k of Object.keys(p.params || {})) expect(DEFAULT_PARAMS, `${p.id}.${k}`).toHaveProperty(k);
-      for (const k of Object.keys(p.faults || {})) expect(DEFAULT_FAULTS, `${p.id}.${k}`).toHaveProperty(k);
-      for (const k of Object.keys(p.setup || {})) expect(actions, `${p.id}.${k}`).toHaveProperty(k);
+      for (const k of Object.keys(p.params ?? {})) expect(DEFAULT_PARAMS, `${p.id}.${k}`).toHaveProperty(k);
+      for (const k of Object.keys(p.faults ?? {})) expect(DEFAULT_FAULTS, `${p.id}.${k}`).toHaveProperty(k);
+      for (const k of Object.keys(p.setup ?? {})) expect(actions, `${p.id}.${k}`).toHaveProperty(k);
     }
   });
 
@@ -114,8 +116,8 @@ describe('narración del combustible', () => {
 describe('vista ↔ contenido (§10)', () => {
   it('cada data-part que dibuja la vista tiene ficha', async () => {
     const { readFileSync } = await import('node:fs');
-    const src = readFileSync(new URL('../../src/modules/fuel/view.js', import.meta.url), 'utf8');
-    const ids = new Set([...src.matchAll(/part: '([\w]+)'/g)].map((m) => m[1]));
+    const src = readFileSync(new URL('../../src/modules/fuel/view.ts', import.meta.url), 'utf8');
+    const ids = new Set([...src.matchAll(/part: '([\w]+)'/g)].map((m) => m[1]!));
     if (src.includes('part: `injector${i + 1}`')) [1, 2, 3, 4].forEach((n) => ids.add(`injector${n}`));
     for (const id of ids) expect(parts, id).toHaveProperty(id);
     for (const id of PART_IDS) expect(ids.has(id), `la vista no dibuja ${id}`).toBe(true);

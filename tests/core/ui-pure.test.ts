@@ -3,7 +3,7 @@ import { parseHash } from '../../src/core/router.ts';
 import { sparklinePoints } from '../../src/core/ui/readouts.ts';
 import { pickNarrations } from '../../src/core/ui/infoPanel.ts';
 import { isFaultActive } from '../../src/core/ui/faults.ts';
-import { createDemoModel } from '../../src/modules/_demo/model.js';
+import { createDemoModel } from '../../src/modules/_demo/model.ts';
 import type { Narration } from '../../src/core/types.ts';
 
 describe('router', () => {
@@ -50,17 +50,8 @@ describe('fallas', () => {
 });
 
 describe('_demo', () => {
-  interface DemoModel {
-    params: { valve: number };
-    state: { level: number };
-    step(dt: number): void;
-    reset(): void;
-  };
   it('se vacía, reset conserva identidad de params/faults', () => {
-    // El módulo `_demo` sigue en JS (inferencia `state: {}`) hasta TS4:
-    // el test lo ve por su forma de uso.
-    const raw: unknown = createDemoModel();
-    const m = raw as DemoModel;
+    const m = createDemoModel();
     const p = m.params;
     for (let i = 0; i < 5000; i++) m.step(0.001);
     expect(m.state.level).toBeLessThan(80);
