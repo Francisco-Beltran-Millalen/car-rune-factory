@@ -1,5 +1,7 @@
 # Plan: arquitectura para juegos (modos, solver de redes y renderer intercambiable)
 
+> **Aviso (2026-09-25).** El **orden** y las dependencias de §9 ya no rigen: los reemplaza `2026-09-25-simulacion-antes-que-juego.md`. El **contenido** técnico de cada tarea sigue vigente, pero léase sólo lo que nombre la ficha de la tarea (§6 de ese plan). Las rutas `.js` se leen como `.ts`.
+
 Fecha: 2026-09-23. Estado: **revisado dos veces** (revisiones adversarias 2026-09-23, triaje en la sección 13). **Listo para implementar desde A0.**
 Reemplaza el orden de `plans/2026-09-22-hoja-de-ruta-juego.md` (que queda como
 registro de la conversación) y deja en pausa T7–T10 del plan maestro.

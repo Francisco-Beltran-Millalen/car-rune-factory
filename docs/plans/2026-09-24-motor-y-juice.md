@@ -1,5 +1,7 @@
 # Plan: motor de juego, juice y hasta dónde llega el prototipo
 
+> **Aviso (2026-09-25).** Su orden (§2) ya no rige: lo reemplaza `2026-09-25-simulacion-antes-que-juego.md`. A7 ya **no** espera a D-motor (el laboratorio es SVG). §3, §4 y §6 siguen vigentes sólo para el bloque G (juego).
+
 Fecha: 2026-09-24. Acordado con el usuario el mismo día. **No elige motor**:
 fija *cuándo* y *cómo* se decide, y qué se hace mientras tanto. Enmienda el
 orden de A7–A9 del plan `2026-09-23-arquitectura-juego.md` (que no se

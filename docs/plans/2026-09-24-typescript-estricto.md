@@ -1,5 +1,7 @@
 # Plan: TypeScript estricto y leyes verificadas por herramientas
 
+> **Cerrado (2026-09-25).** TS0–TS5 hechas; informe en `docs/informes/2026-09-25-migracion-typescript.md`. No hay nada pendiente aquí salvo TS 7 (ver `AHORA.md`).
+
 Fecha: 2026-09-24. Aprobado por el usuario el mismo día ("vamos con lo de
 typescript primero"). Va **antes de A3** y no cambia el orden de A3–A10.
 

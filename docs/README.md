@@ -18,7 +18,10 @@
 - `core-requests.md` — pedidos de los módulos al core, pendientes.
 
 **Registro histórico:** `plans/` — cada plan tal como se aprobó, con fecha.
-No se edita después de aprobado. `informes/` — informes de ejecución de un
+No se edita después de aprobado, salvo un aviso al inicio que diga qué
+lo reemplaza. Para implementar, **la ficha de la tarea** (hoy:
+`plans/2026-09-25-simulacion-antes-que-juego.md` §6, apuntada desde
+`AHORA.md`) dice qué partes de qué planes leer. `informes/` — informes de ejecución de un
 hito o migración (qué se hizo y qué errores aparecieron); tampoco se editan.
 
 Si algo en los docs vivos se contradice con un plan, manda lo vivo. Si dos

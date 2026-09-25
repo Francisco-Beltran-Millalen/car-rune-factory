@@ -5,7 +5,9 @@ Reglas para cualquier agente/asistente que trabaje en este repo.
 1. **Lee `docs/ARCHITECTURE.md` primero**, siempre, antes de tocar código —
    es la autoridad viva del proyecto (leyes §1-§33 + pipeline). Después
    `docs/AHORA.md` (qué está en curso), `docs/CONTRATOS.md` (interfaces
-   exactas) y el `docs/modules/<id>.md` de tu tarea.
+   exactas), la **ficha de tu tarea** (`AHORA.md` dice dónde está: qué
+   secciones de qué planes leer y cuáles ignorar) y el `docs/modules/<id>.md`
+   de tu tarea. No leas planes viejos enteros: sólo lo que nombre la ficha.
 2. **No asumas qué hace el código por su nombre.** Lee la lógica real antes
    de describir o depender de un comportamiento.
 3. **El usuario se puede equivocar.** No le des la razón por default —

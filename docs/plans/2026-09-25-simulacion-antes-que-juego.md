@@ -214,3 +214,104 @@ el usuario decide si se abre la puerta del bloque G.
 | A7 | Paridad visual con el laboratorio actual, tema oscuro, quiz 1/2 |
 | A11–A14 | El laboratorio de cada sistema |
 | A15 | El laboratorio del vehículo: una falla de un sistema se ve en otro |
+
+## 6. Ficha por tarea: lo único que lee el agente
+
+Cada ficha dice **exactamente** qué leer y qué ignorar. Siempre se leen
+antes `AGENTS.md`, `ARCHITECTURE.md`, `AHORA.md` y `CONTRATOS.md`
+(AGENTS.md, regla 1). Todo lo demás, sólo si la ficha lo nombra. En los
+planes viejos, las rutas `.js` se leen como `.ts`. Si una ficha y un plan
+viejo chocan, **manda la ficha**; si falta algo, se pregunta al usuario o
+se anota en el CERRADO, no se improvisa.
+
+Abreviaturas: **P23** = `2026-09-23-arquitectura-juego.md`, **P25** = este
+plan.
+
+**Ignorar en todo el bloque S**: el plan maestro (salvo lo que nombren
+A11–A14), la hoja de ruta, motor-y-juice, `2026-09-25-a3-revision.md`, y en
+P23 las §4.6–§7 (juego), §8.6–§8.7 (Phaser, armado) y §12–§13.
+
+### A4 — Solver nodal + linalg
+
+- **Leer**: P23 §2 (D4 y D9), §8.1 y la fila A4 de §9; ARCHITECTURE §4 y §24.
+- **Archivos**: `src/sim/solver/{linalg,nodal,types}.ts`, `tests/sim/*.test.ts`,
+  `docs/modules/solver.md` (nuevo), sección nueva "Solver" en `CONTRATOS.md`.
+- **Aclaraciones** (no están en P23):
+  - No crear `src/sim/elements/` (eso es A5). Los elementos que usan los
+    tests (resistencia, capacitor, inductancia, restrictor, nodo fijo) se
+    definen **dentro de los tests** con el contrato de P23 §8.2 (`eval` con
+    `flow`/`jac` locales, `commit`, `capacitance`). Así el contrato queda
+    probado antes de A5.
+  - "Matriz singular detectada" se prueba en `linalg` (`solveDense` →
+    `false`). En `nodal`, `gmin` evita la singularidad por nodos flotantes:
+    el test de nodo flotante comprueba que no aparezca `NaN`.
+  - Los tipos del contrato de elemento y del solver van en
+    `src/sim/solver/types.ts`.
+- **Aceptación**: la fila A4 de P23 §9, más el benchmark impreso y anotado.
+  Sin checklist de Firefox.
+
+### A5 — Elementos + circuito + controladores base
+
+- **Leer**: P23 §8.2 (la tabla completa), §8.3 (**sólo** el contrato de
+  controlador: `ecuFuel`, `engineCore`, `alternator` y `fuelSupply` son de
+  A6), §8.4 y la fila A5 de §9; ARCHITECTURE §24, §25 y §30.
+- **Archivos**: `src/sim/elements/**`, `src/sim/circuit/**`,
+  `src/sim/controllers/{index,base}.ts`, `tests/sim/**`; `CONTRATOS.md`
+  sección Solver (elementos, `CircuitDef`).
+- **Aceptación**: la fila A5 de P23 §9. Sin checklist de Firefox.
+
+### A6 — Combustible sobre el solver
+
+- **Leer**: P23 §8.2 ("Paridad con el modelo de referencia"), §8.3 completo,
+  §8.4 ("Fábrica" y `state`), §14.1 punto 2, §14.4 punto 4 y la fila A6 de
+  §9; P25 §3.1; `docs/modules/fuel.md` §4, §5 y §9b.
+- **Archivos**: los de la fila A6 + `src/modules/fuel/faults.ts` (P25 §3.1)
+  + `FaultCatalogEntry` en `src/core/types.ts`. **No** depende de A3: la
+  columna "Depende" de P23 queda anulada.
+- **No hacer**: cambiar la física. Si algo no cuadra, se anota; eso es A6b.
+- **Aceptación**: la fila A6 de P23 §9 + checklist de Firefox (el
+  laboratorio del combustible y las etapas 1 y 2 del quiz se ven y se
+  comportan igual).
+
+### A6b — Síntomas del combustible
+
+- **Leer**: P25 §3.3; la tabla de la §1 de `2026-09-25-a3-revision.md`
+  (**sólo las cifras**, el resto es del bloque G); `docs/modules/fuel.md`.
+- **Archivos**: `src/modules/fuel/**` (circuito, constantes, referencia),
+  `tests/fuel/**`, `docs/modules/fuel.md` (la cuenta de cada cambio, §14).
+- **Aceptación**: P25 §3.3 + checklist de Firefox por falla.
+
+### A7 — Presenter + renderer SVG del laboratorio
+
+- **Leer**: P23 §2 (D6 y D7), §8.5 y la fila A7 de §9; `CONTRATOS.md` §6.4 y
+  §6.5; P25 §3.2. **Ignorar** lo que dice motor-y-juice sobre A7 (ya no
+  espera a D-motor).
+- **Archivos**: los de la fila A7 de P23 §9 + `src/core/shell.ts` (montar
+  el renderer nuevo). Se borran `src/render/legacy/` y `fuel/view.ts`.
+- **Aceptación**: tests del presenter + checklist de Firefox (la checklist
+  detallada del combustible de `AHORA.md` con los 10 puntos, tema oscuro, y
+  las etapas 1 y 2 del quiz sin etiquetas delatoras).
+
+### A10 — Plan del vehículo (sin código)
+
+- **Leer**: P23 §14 completa; `SISTEMAS.md`; P25 §3.4; ARCHITECTURE §11,
+  §25, §28 y §29. **Ignorar** plan maestro §11 (el "orquestador que copia
+  señales" lo reemplaza `compileVehicle` de P23 §14).
+- **Entrega**: `docs/plans/AAAA-MM-DD-vehiculo.md` con el detalle de P23 y
+  con revisión adversaria de un subagente sin contexto, triada en el mismo
+  plan. Si hace falta enmendar §11 de ARCHITECTURE, se propone ahí.
+- **Aceptación**: el usuario aprueba el plan.
+
+### A11–A14 — Un sistema cada una
+
+- **Leer**: P25 §3.5; `docs/modules/<id>.md`; el plan del vehículo (A10);
+  `SISTEMAS.md`; `docs/modules/fuel.md` como ejemplo del nivel de detalle.
+- **Pasos**: spec → plan en `docs/plans/` → código → checklist (P25 §3.5).
+- **Aceptación**: la que fije su plan, más la checklist del laboratorio del
+  sistema en Firefox.
+
+### A15 — Laboratorio del vehículo
+
+- **Leer**: el plan del vehículo (A10) y P25 §3.6.
+- **Aceptación**: la que fije el plan de A10, más la checklist en Firefox.
+  Al cerrar, preguntar al usuario si abre la puerta del bloque G.

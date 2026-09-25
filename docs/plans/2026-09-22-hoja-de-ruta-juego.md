@@ -1,5 +1,7 @@
 # Plan: hoja de ruta hacia el "mechanic simulator" con diagramas
 
+> **Registro histórico (2026-09-25).** No se usa para implementar. Lo vivo: `AHORA.md` y `2026-09-25-simulacion-antes-que-juego.md` §6.
+
 Fecha: 2026-09-22. **Reemplazado en orden y detalle por `2026-09-23-arquitectura-juego.md`.** Estado: **propuesta aceptada en líneas generales**; el
 usuario la va a repensar (sesión del 2026-09-23) antes de diseñar en detalle.
 

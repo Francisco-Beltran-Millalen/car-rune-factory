@@ -26,7 +26,7 @@ léanse como `.ts`.
 
 ## EN CURSO — Simulación antes que juego (plan 2026-09-25)
 
-**Leer primero `plans/2026-09-25-simulacion-antes-que-juego.md`.** Decisión del
+**Leer primero `plans/2026-09-25-simulacion-antes-que-juego.md` (§6: la ficha de la tarea).** Decisión del
 usuario (2026-09-25): el laboratorio (se ve todo) va primero y vale por sí
 solo como herramienta para aprender mecánica; el juego (se oculta el estado y
 se diagnostica con herramientas) va después, cuando el usuario diga que la
@@ -68,26 +68,9 @@ Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
 | D-motor | Decisión del usuario; afecta al juego, el laboratorio sigue en SVG | A8 | ⏸ |
 | A9 | Armar circuitos E4 (plan propio) | D-motor | ⏸ |
 
-**Siguiente paso: A4.** Leer `plans/2026-09-23-arquitectura-juego.md` §2 (D4, D9),
-§8.1 y la fila A4 de §9; las rutas `.js` del plan se leen como `.ts`
-(`src/sim/solver/{linalg,nodal}.ts`, `tests/sim/*.test.ts`). El lint ya tiene
-reglas para `src/sim/**` (§19: puro, sin DOM). Aceptación: tests analíticos
-(divisor de tensión, RC al 63 % en τ, RL, dos restrictores en serie contra la
-fórmula cerrada, nodo flotante sin NaN por `gmin`, matriz singular detectada) y
-un benchmark que **imprime** ms por 1000 pasos, anotado en
-`docs/modules/solver.md`. Sin cambios visuales: no hay checklist de Firefox.
-
-Aclaraciones para A4 (no están explícitas en el plan):
-- A4 no crea `src/sim/elements/` (eso es A5). Los elementos que usan los tests
-  analíticos (resistencia, capacitor, inductancia, restrictor, fuente fija) se
-  definen **dentro de los tests** con el contrato de §8.2 (`eval`/`commit`,
-  `flow` y `jac` locales, `capacitance`). Así el contrato queda probado antes de
-  A5. Si alguno sirve tal cual para A5, A5 lo mueve a `src/sim/elements/`.
-- "Matriz singular detectada" se prueba en `linalg` (`solveDense` → `false`).
-  En `nodal`, `gmin` en la diagonal evita la singularidad por nodos flotantes; el
-  test de nodo flotante comprueba que no hay `NaN`.
-- Los tipos del contrato de elemento y del solver van en `src/sim/solver/types.ts`
-  (§18), y se documentan en `CONTRATOS.md` como sección nueva "Solver".
+**Siguiente paso: A4.** Su ficha está en `plans/2026-09-25-simulacion-antes-que-juego.md`
+§6: dice qué leer, qué ignorar, qué archivos tocar y cómo se acepta. **Cada tarea
+del bloque S tiene su ficha ahí; léanla antes que cualquier otro plan.**
 
 ## CERRADO 2026-09-25 — limpieza post-TS y revisión del plan de A3
 

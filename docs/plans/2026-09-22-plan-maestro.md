@@ -1,5 +1,7 @@
 # Plan maestro: Simulador didáctico de motor por componentes (`car-rune-factory`)
 
+> **Registro histórico (2026-09-25).** T0–T6 están cerradas. T7–T10 las reemplazan A11–A14 y su §11 lo reemplaza la §14 de `2026-09-23-arquitectura-juego.md`. Lo vivo: `AHORA.md` y la ficha de la tarea en `2026-09-25-simulacion-antes-que-juego.md` §6. Las specs de módulo viven en `docs/modules/`.
+
 > Este documento es la **especificación de referencia** para varios agentes que construirán el proyecto en paralelo.
 > **Primer paso al salir del modo plan (T0-a):** guardar este archivo textual en `docs/plans/2026-09-22-plan-maestro.md` y crear los docs de arquitectura y reglas (sección 3.1), siguiendo el patrón de los otros proyectos de `uneven/` (`golden-sun-godot`, `whispers-of-freedom`, `breath-of-freedom`). Todos los agentes leen esos docs; este plan queda como registro histórico en `docs/plans/`.
 

@@ -1,5 +1,7 @@
 # Plan 2026-09-24 — arreglos de la revisión (robustez NaN, reset, preset)
 
+> **Cerrado (2026-09-24).** Registro histórico.
+
 Origen: revisión del repo tras A1. Arreglo chico, sin cambio de contratos.
 
 1. **NaN en la física (§6)**: `clamp(NaN, …)` devolvía NaN, así que un NaN en
