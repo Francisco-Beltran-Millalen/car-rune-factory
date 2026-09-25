@@ -127,6 +127,40 @@ El elemento (`ElementDef`, §24) declara `ports`, `params`, `control`, `state`,
 `faults?` (ids §26 `<instancia>.<faultKey>`) y `fixed?(out)` para los nodos
 Dirichlet que fija el propio elemento (p. ej. `pressureSource`).
 
+### 4.10 Elementos y circuito — `src/sim/elements/`, `src/sim/circuit/`
+Tipos exactos en `src/sim/elements/index.ts` y `src/sim/circuit/types.ts`;
+leyes, params y validación en `docs/modules/solver.md` §6 y §7.
+
+```ts
+// Elementos (A5): una fábrica por tipo, registradas en ELEMENT_TYPES.
+type ElementFactory = (params: Readonly<Record<string, number>>, fluid: Fluid) => ElementDef;
+interface ElementTypeInfo { create: ElementFactory; joint?: boolean; multiple?: boolean }
+// restrictor, checkValve, leak, volume, tee, electricPump, reliefRegulator,
+// orifice, tank, pressureSource, battery, resistor, switch (el resistor lo
+// pide el juguete de A5; no estaba en la tabla de P23 §8.2).
+
+// Circuito (A5):
+compileCircuit<S extends CircuitState>(options: CompileOptions<S>): CompiledCircuit<S>
+validateCircuit(def, types, controllerTypes?): CircuitIssue[]
+// CircuitDef: parts, links ('part.port'), controllers, probes, params, faults,
+//   fixed ('part.port' → potencial: atm/chasis), fluid
+// CompileOptions: types, controllerTypes?, bindings?, init?, state, params?,
+//   faults?, actions?, seed?
+// CircuitBinding: { source: 'params'|'faults', key, part, input } copia un
+//   valor del modelo al `control` del elemento en cada paso
+// CompiledCircuit: model (contrato Model), solver, elements, controllers,
+//   nodes (count/ports/fixed), portToNode, linkToNodes, issues
+// CircuitStateValue = number | string | boolean | readonly unknown[]
+// Salida de validate: error | warning (puerto sin conectar es warning)
+
+// Controladores (A5) — src/sim/controllers/:
+interface ControllerDef { id; probes?; state?; update(ctx: ControllerContext): void }
+interface ControllerContext { dt; read(probe): number; params; faults; elements; rng }
+// Corren antes del solver y `read` devuelve el muestreo del paso anterior (§25).
+// A6 agrega `engineCore` y `stubs`; el combustible, `ecuFuel`, `alternator` y
+// `fuelSupply`.
+```
+
 ## Shell de la UI
 
 ### 5.1 Layout (escritorio ≥ 1024 px)

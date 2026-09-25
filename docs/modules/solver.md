@@ -92,15 +92,74 @@ capacitancias activas). `tests/sim/nodal.test.ts`, con `dt = 1 ms`:
 | 3 | 19,6 | 51 000 |
 
 Máquina: Intel i7-7700HQ, Node 26. Corriendo toda la suite en paralelo se
-midieron 28 ms. El presupuesto de 4× tiempo real = 4000 pasos/s queda holgado
-(>9×). No hay umbral en el test: imprime y listo; si un día baja del
+midieron 28–50 ms. El presupuesto de 4× tiempo real = 4000 pasos/s queda
+holgado (>8×). No hay umbral en el test: imprime y listo; si un día baja del
 presupuesto, se anota y se decide (bajar `maxScale` o optimizar, P23 §10).
 
-## 6. Qué falta
+## 6. Biblioteca de elementos — `src/sim/elements/`
 
-- A5: elementos en `src/sim/elements/`, compilación/validación del circuito
-  (`src/sim/circuit/`) y controladores base (`src/sim/controllers/`).
-- A5 verifica cada jacobiano contra diferencias finitas (error relativo
-  < 1e-4) y cada ley contra su fórmula cerrada.
-- A6: el combustible sobre el solver, con paridad contra el modelo de
-  referencia y `failures === 0`.
+Cada tipo es una fábrica `createX(params, fluid) → ElementDef` con `params`
+numéricos y las entradas de `control` que los controladores/bindings escriben.
+Registro en `ELEMENT_TYPES` (`index.ts`), que además marca `joint` (todos los
+puertos son un nodo interno) y `multiple` (un puerto admite varias conexiones).
+
+| tipo | puertos | ley y params | control | fallas |
+|---|---|---|---|---|
+| `restrictor` | a, b (hidr) | `q = Δp/√(k(|Δp|+ε))`, ε=1e-4; `k`, `clogFactor` | `clog` | `clog` |
+| `checkValve` | in, out (hidr) | conductancia de `1e-6·g` a `g` en 0,02 bar; `g` | — | — |
+| `leak` | a (hidr, a atm) | `q = k·s·√(p⁺)`; `k` | `severity` | `leak` |
+| `volume` | a (hidr) | sólo `capacitance = c·3600`; `c` (L/bar) | — | — |
+| `tee` | a, b, c (hidr) | nudo: sin flujos (`joint`, `multiple`) | — | — |
+| `electricPump` | e+, e-, in, out | `q = Qm(V)(1−Δp/Pm)⁺(1−air)`, `I = (1.5+5.5·Δp⁺/(Pm+εP))·vf`, guarda `V<0.5` → `q=0`, `I=V/1Ω`; `qMax`, `pMax`, `vNominal`, `wearQ`, `wearP`, `epsP`, `windingR`, `minV` | `air`, `wear` | `wear` |
+| `reliefRegulator` | in, ret, ref | `q = k·softRelu(p_in−p_ref−set)`; `k`, `set`, `smooth` | `set`, `noReturn` | `state` |
+| `orifice` | in, out (hidr) | abierto `k·√(Δp⁺)`, cerrado `leakCoeff·s·√(Δp⁺)`; `k`, `leakCoeff` | `open`, `leak` | `leak` |
+| `tank` | out, ret (hidr) | nodo fijo 0 bar (`joint`); `commit` integra `level −= neto/3600·dt·(fast?100:1)`; `capacity`, `pickupLow` | `fast` | — |
+| `pressureSource` | a (hidr) | nodo fijo (Dirichlet) con `control.p` | `p` | — |
+| `battery` | +, - (eléc) | `V = control.v − R·I`; `r` | `v` | — |
+| `resistor` | a, b (eléc) | `q = Δp/r` (el juguete de A5; no estaba en §8.2) | — | — |
+| `switch` | a, b (eléc) | `R_on`/`R_off` según `control.closed`; `rOn`, `rOff` | `closed` | — |
+
+Las sondas de elemento (`probes`) llevan `pot` del elemento; pueden cerrar
+sobre su `state` (p. ej. `tank.level`). ℹ︎ `q` en la tabla es flujo hacia
+`out`; `flow[p]` del contrato sigue el signo de §3.
+
+## 7. Circuito compilado — `src/sim/circuit/`
+
+```ts
+compileCircuit<S extends CircuitState>(options): CompiledCircuit<S>
+validateCircuit(def, types, controllerTypes?): CircuitIssue[]
+```
+
+- **`CircuitDef`**: `parts` (`id`, `type`, `x`, `y`, `rot?`, `params?`,
+  `fluid?`, `label?`), `links` (`id`, `from: 'part.port'`, `to`, `route?`),
+  `controllers`, `probes` (`{ node }` o `{ element, probe }`), `params` y
+  `faults` por defecto, `fixed` (`'part.port' → potencial`, atmósfera/chasis).
+  El layout es parte del circuito (D5).
+- **Union-find**: cada conexión une puertos; los elementos `joint` unen sus
+  propios puertos (`tank`, `tee`). Los puertos sin conectar quedan con `gmin`.
+  `portToNode`, `linkToNodes` y `nodes.ports` salen del compilado.
+- **`CompileOptions`**: `types` (registro de elementos), `controllerTypes`,
+  `bindings` (`{ source:'params'|'faults', key, part, input }`: copia un
+  valor del modelo al `control` de una parte en cada paso), `init` (overrides
+  para `ElementDef.init`, p. ej. `tankLevel`), `state` (el objeto del módulo;
+  el compilador escribe sondas y estado de controladores), `params`, `faults`,
+  `actions` y `seed`.
+- **Pipeline de `step`**: bindings → controladores (leen sondas del paso
+  anterior, §25) → `solver.step` → muestreo de sondas y publicación del estado
+  de los controladores → `time += dt`. `reset()` restaura params/faults,
+  re-inicializa elementos, recompila solver y controladores y vuelve `time` a 0.
+- **`validateCircuit`** detecta: parte/controlador/conexión duplicados, tipo
+  desconocido, puerto inexistente, self-link, dominio distinto, fluido distinto
+  (§30), puerto con más de una conexión (salvo `multiple`), sonda inválida y
+  fijo inválido. Puerto sin conectar es **aviso** (en el armado es didáctico).
+
+## 8. Qué falta
+
+- A6: el combustible sobre el solver (`fuel/circuit.ts` y controladores
+  `ecuFuel`, `engineCore` en `sim/controllers/`, `stubs.ts`), con paridad
+  contra el modelo de referencia y `failures === 0`.
+- A7: presenter y drawer SVG por tipo; A10: `compileVehicle` y el laboratorio
+  del vehículo.
+- Los tests de A5 están en `tests/sim/elements.test.ts` (ley + jacobiano
+  contra diferencias finitas, error < 1e-4) y `tests/sim/circuit.test.ts`
+  (validate, juguetes analíticos, controladores y reset).

@@ -45,8 +45,8 @@ Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
 | A0–A2 | Docs, sesión/intents/modos, quiz E1, HUD, guardado | — | ✅ |
 | TS0–TS5 | TypeScript estricto | — | ✅ |
 | A4 | Solver nodal + linalg (plan 2026-09-23 §8.1, fila A4) | — | ✅ |
-| A5 | Elementos + circuito (compile/validate) + controladores base (§8.2–§8.4) | A4 | ⏳ **siguiente** |
-| A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ⏳ |
+| A5 | Elementos + circuito (compile/validate) + controladores base (§8.2–§8.4) | A4 | ✅ |
+| A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ⏳ **siguiente** |
 | A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ⏳ |
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ⏳ |
 | A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) | A7 | ⏳ |
@@ -68,9 +68,42 @@ Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
 | D-motor | Decisión del usuario; afecta al juego, el laboratorio sigue en SVG | A8 | ⏸ |
 | A9 | Armar circuitos E4 (plan propio) | D-motor | ⏸ |
 
-**Siguiente paso: A5.** Su ficha está en `plans/2026-09-25-simulacion-antes-que-juego.md`
+**Siguiente paso: A6.** Su ficha está en `plans/2026-09-25-simulacion-antes-que-juego.md`
 §6: dice qué leer, qué ignorar, qué archivos tocar y cómo se acepta. **Cada tarea
 del bloque S tiene su ficha ahí; léanla antes que cualquier otro plan.**
+
+## CERRADO 2026-09-25 — A5 Elementos + circuito + controladores base
+
+- `src/sim/elements/`: 13 tipos (`restrictor`, `checkValve`, `leak`, `volume`,
+  `tee`, `electricPump`, `reliefRegulator`, `orifice`, `tank`,
+  `pressureSource`, `battery`, `resistor`, `switch`), registro `ELEMENT_TYPES`
+  con `joint` (tank/tee: sus puertos son un nodo interno) y `multiple` (tee).
+  Helpers de regularización en `common.ts` (`√` suavizada, `softRelu`,
+  `noCommit`/`noEval` con comentario para el lint).
+- **`resistor` es nuevo respecto de §8.2**: la aceptación de A5 pide el
+  juguete "batería-switch-resistencia" y la tabla del plan sólo traía el
+  `switch`. Documentado en `solver.md` §6 y `CONTRATOS.md` §4.10.
+- `src/sim/circuit/`: `types.ts`, `parts.ts`, `validate.ts` y `compile.ts`.
+  Union-find de puertos (joint incluido), nodos fijos por `def.fixed`,
+  sondas `{node}`/`{element,probe}`, `bindings` params/faults → `control`,
+  `init` (tankLevel), `actions`, `seed`, y un `Model` que corre bindings →
+  controladores (leen el paso anterior, §25) → solver → publicación de sondas
+  y estado de controladores. `reset()` re-inicializa todo y deja `time = 0`.
+- `src/sim/controllers/{base,index}.ts`: contrato `ControllerDef`
+  (`probes`, `state` publicado, `update(ctx)` con `read/params/faults/elements/rng`)
+  y `createControllers`. `ecuFuel`/`engineCore`/`stubs` son de A6.
+- `validateCircuit` cubre los 5 problemas de §8.4 (puerto inexistente,
+  dominio, fluido, >1 conexión salvo tee, sin conectar como aviso) más
+  duplicados, sonda y fijo inválidos, y controlador desconocido.
+- Tests (+23, **164** en total): `tests/sim/elements.test.ts` (ley + jacobiano
+  contra diferencias finitas con tolerancia 1e-9 + 1e-4·|fd|, ε de
+  regularización respetado) y `tests/sim/circuit.test.ts` (validate por caso,
+  juguete eléctrico 12,6 V/10,03 Ω = 1,2562 A, lazo bomba-restrictor-tanque
+  contra raíz cerrada con la misma ley, binding de `filterClog`, retraso de un
+  paso del controlador, nodos `joint` y reset).
+- `npm run check` verde: typecheck, lint 0 warnings, knip, 164 tests y build.
+  **Sin checklist de Firefox** (A5 no es visual, lo dice su ficha).
+- Docs: `solver.md` §6–§8 (biblioteca y circuito) y `CONTRATOS.md` §4.10.
 
 ## CERRADO 2026-09-25 — A4 Solver nodal + linalg
 

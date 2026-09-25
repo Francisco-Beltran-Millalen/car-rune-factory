@@ -1,0 +1,264 @@
+// A5: un test por elemento con su ley y el jacobiano contra diferencias
+// finitas (error relativo < 1e-4). Referencias: P23 §8.2 y solver.md §7.
+import { describe, expect, it } from 'vitest';
+import {
+  ELEMENT_TYPES,
+  createBattery,
+  createCheckValve,
+  createElectricPump,
+  createLeak,
+  createOrifice,
+  createPressureSource,
+  createReliefRegulator,
+  createResistor,
+  createRestrictor,
+  createSwitch,
+  createTank,
+  createTee,
+  createVolume,
+} from '../../src/sim/elements/index.ts';
+import type { ElementDef, EvalOut } from '../../src/sim/solver/types.ts';
+
+interface Evaluated {
+  flow: Float64Array;
+  jac: Float64Array;
+}
+
+function evaluate(def: ElementDef, pot: readonly number[], dt = 0.001): Evaluated {
+  const k = def.ports.length;
+  const out: EvalOut = { flow: new Float64Array(k), jac: new Float64Array(k * k) };
+  def.eval(Float64Array.from(pot), out, dt);
+  return { flow: out.flow, jac: out.jac };
+}
+
+/** Compara `jac[p*k+q]` con la derivada central. La tolerancia mezcla absoluta
+ *  (1e-9, para entradas exactamente nulas) y relativa (1e-4). */
+function checkJacobian(def: ElementDef, pot: readonly number[], label: string): void {
+  const k = def.ports.length;
+  const jac = evaluate(def, pot).jac;
+  const h = 1e-6;
+  for (let q = 0; q < k; q++) {
+    const plus = [...pot];
+    plus[q] = (plus[q] ?? 0) + h;
+    const minus = [...pot];
+    minus[q] = (minus[q] ?? 0) - h;
+    const fp = evaluate(def, plus).flow;
+    const fm = evaluate(def, minus).flow;
+    for (let p = 0; p < k; p++) {
+      const fd = ((fp[p] ?? 0) - (fm[p] ?? 0)) / (2 * h);
+      const an = jac[p * k + q] ?? 0;
+      const tolerance = 1e-9 + 1e-4 * Math.abs(fd);
+      expect(Math.abs(an - fd), `${label}: ∂flow${p}/∂pot${q} (an=${an}, fd=${fd})`).toBeLessThan(
+        tolerance,
+      );
+    }
+  }
+}
+
+describe('elementos — ley y jacobiano (§8.2)', () => {
+  it('restrictor: q = Δp/√(k(|Δp|+ε)) y `clog` escala k', () => {
+    const restrictor = createRestrictor({ k: 1e-3, clogFactor: 1000 }, 'fuel');
+    const dp = 2;
+    const q = -(evaluate(restrictor, [3 + dp, 3]).flow[0] ?? 0);
+    expect(q).toBeCloseTo(dp / Math.sqrt(1e-3 * (dp + 1e-4)), 9);
+
+    restrictor.control['clog'] = 1;
+    const qClog = -(evaluate(restrictor, [3 + dp, 3]).flow[0] ?? 0);
+    expect(qClog).toBeCloseTo(dp / Math.sqrt(1e-3 * 1001 * (dp + 1e-4)), 9);
+
+    checkJacobian(restrictor, [3, 1], 'restrictor Δp=2');
+    checkJacobian(restrictor, [1, 3], 'restrictor Δp=−2');
+    checkJacobian(restrictor, [1e-3, 0], 'restrictor Δp≈0');
+  });
+
+  it('checkValve: conduce en directo y bloquea en inversa', () => {
+    const valve = createCheckValve({ g: 100 }, 'fuel');
+    expect(-(evaluate(valve, [0.5, 0]).flow[0] ?? 0)).toBeCloseTo(50, 9);
+    expect(-(evaluate(valve, [-0.5, 0]).flow[0] ?? 0)).toBeCloseTo(-5e-5, 12);
+    // En la transición (0,02 bar) la conductancia va a la mitad.
+    const q = -(evaluate(valve, [0.01, 0]).flow[0] ?? 0);
+    expect(q).toBeCloseTo(0.5000005, 6);
+
+    checkJacobian(valve, [0.01, 0], 'checkValve transición');
+    checkJacobian(valve, [0.5, 0], 'checkValve abierta');
+    checkJacobian(valve, [-0.5, 0], 'checkValve cerrada');
+  });
+
+  it('leak: q = k·s·√(p⁺) y se pierde', () => {
+    const leak = createLeak({ k: 2 }, 'fuel');
+    leak.control['severity'] = 1;
+    expect(-(evaluate(leak, [4]).flow[0] ?? 0)).toBeCloseTo((2 * 4) / Math.sqrt(4.0001), 9);
+    leak.control['severity'] = 0.5;
+    expect(-(evaluate(leak, [4]).flow[0] ?? 0)).toBeCloseTo(4 / Math.sqrt(4.0001), 9);
+    expect(evaluate(leak, [-1]).flow[0]).toBeCloseTo(0, 12);
+
+    checkJacobian(leak, [4], 'leak p=4');
+    checkJacobian(leak, [1e-3], 'leak p≈0');
+    checkJacobian(leak, [-1], 'leak p<0');
+  });
+
+  it('volume: sólo capacitancia, ya en flujo/(bar·s)', () => {
+    const volume = createVolume({ c: 0.005 }, 'fuel');
+    expect(volume.capacitance?.['a']).toBeCloseTo(0.005 * 3600, 12);
+    expect(evaluate(volume, [3]).flow[0]).toBe(0);
+    checkJacobian(volume, [3], 'volume');
+  });
+
+  it('tee: no aporta flujos', () => {
+    const tee = createTee({}, 'fuel');
+    expect(tee.ports).toHaveLength(3);
+    expect([...evaluate(tee, [1, 2, 3]).flow]).toEqual([0, 0, 0]);
+    checkJacobian(tee, [1, 2, 3], 'tee');
+  });
+
+  it('electricPump: curva, guarda de V y desgaste', () => {
+    const pump = createElectricPump({}, 'fuel');
+    const nominal = evaluate(pump, [13.5, 0, 0, 3]);
+    expect(-(nominal.flow[2] ?? 0)).toBeCloseTo(120 * (1 - 3 / 6.51), 9);
+    expect(nominal.flow[0] ?? 0).toBeCloseTo(-(1.5 + (5.5 * 3) / 6.51), 9);
+
+    // Guarda: V = 0 con Δp = 3 bar → todo finito, q = 0.
+    const guard = evaluate(pump, [0, 0, 0, 3]);
+    expect(guard.flow[2]).toBeCloseTo(0, 12);
+    expect(guard.flow[0]).toBeCloseTo(0, 12);
+
+    pump.control['air'] = 1;
+    expect(evaluate(pump, [13.5, 0, 0, 3]).flow[3]).toBeCloseTo(0, 12);
+    pump.control['air'] = 0;
+
+    pump.control['wear'] = 1;
+    const worn = evaluate(pump, [13.5, 0, 0, 1]);
+    expect(-(worn.flow[2] ?? 0)).toBeCloseTo(120 * 0.3 * (1 - 1 / 3.26), 9);
+    pump.control['wear'] = 0;
+
+    checkJacobian(pump, [13.5, 0, 0, 3], 'pump nominal');
+    checkJacobian(pump, [12, 0, 0, 1], 'pump 12 V');
+    checkJacobian(pump, [0.4, 0, 0, 3], 'pump guarda');
+  });
+
+  it('reliefRegulator: setpoint, sin retorno y referencia', () => {
+    const regulator = createReliefRegulator({ k: 1000, set: 3 }, 'fuel');
+    expect(-(evaluate(regulator, [4, 0, 0]).flow[0] ?? 0)).toBeCloseTo(1000, 6);
+    expect(evaluate(regulator, [2, 0, 0]).flow[0]).toBeCloseTo(0, 12);
+
+    checkJacobian(regulator, [4, 0, 0], 'regulador abierto');
+    checkJacobian(regulator, [3.005, 0, 0], 'regulador transición');
+    checkJacobian(regulator, [2, 0, 0], 'regulador cerrado');
+    checkJacobian(regulator, [4, 0, -1], 'regulador con referencia');
+
+    regulator.control['noReturn'] = true;
+    expect(evaluate(regulator, [6, 0, 0]).flow[0]).toBeCloseTo(0, 12);
+    regulator.control['noReturn'] = false;
+
+    regulator.control['set'] = 0.8;
+    expect(-(evaluate(regulator, [1.8, 0, 0]).flow[0] ?? 0)).toBeCloseTo(1000, 6);
+  });
+
+  it('orifice: abierto √Δp, cerrado con fuga por severidad', () => {
+    const injector = createOrifice({ k: 12 / Math.sqrt(3), leakCoeff: 0.6 }, 'fuel');
+    injector.control['open'] = true;
+    const kInj = 12 / Math.sqrt(3);
+    expect(-(evaluate(injector, [3.65, 0.65]).flow[0] ?? 0)).toBeCloseTo(
+      (kInj * 3) / Math.sqrt(3.0001),
+      9,
+    );
+    checkJacobian(injector, [3.65, 0.65], 'orifice abierto');
+    checkJacobian(injector, [0.001, 0], 'orifice abierto Δp≈0');
+
+    injector.control['open'] = false;
+    injector.control['leak'] = 1;
+    expect(-(evaluate(injector, [3.65, 0.65]).flow[0] ?? 0)).toBeCloseTo(
+      (0.6 * 3) / Math.sqrt(3.0001),
+      6,
+    );
+    checkJacobian(injector, [3.65, 0.65], 'orifice fuga');
+
+    injector.control['leak'] = 0;
+    expect(evaluate(injector, [3.65, 0.65]).flow[0]).toBeCloseTo(0, 12);
+  });
+
+  it('tank: nivel, commit con la reacción, probes e init', () => {
+    const tank = createTank({ capacity: 50, pickupLow: 1 }, 'fuel');
+    const state = tank.state;
+    expect(tank.probes?.['level']?.(new Float64Array(2))).toBe(40);
+    expect(tank.probes?.['pickupAir']?.(new Float64Array(2))).toBe(0);
+
+    state['level'] = 0.5;
+    expect(tank.probes?.['pickupAir']?.(new Float64Array(2))).toBeCloseTo(0.5, 12);
+
+    // 36 L/h de neto durante 1 s → 0,01 L.
+    tank.commit(new Float64Array(2), 1, new Float64Array([36, 36]));
+    expect(state['level']).toBeCloseTo(0.49, 9);
+    tank.control['fast'] = true;
+    tank.commit(new Float64Array(2), 1, new Float64Array([36, 36]));
+    expect(state['level']).toBeCloseTo(0, 9);
+    tank.control['fast'] = false;
+
+    tank.init?.({ tankLevel: 75 });
+    expect(state['level']).toBe(50);
+    tank.init?.({ tankLevel: 20 });
+    expect(state['level']).toBe(20);
+    tank.init?.({ tankLevel: Number.NaN });
+    expect(state['level']).toBe(40);
+
+    const fixedOut = new Float64Array(2).fill(NaN);
+    tank.fixed?.(fixedOut);
+    expect([...fixedOut]).toEqual([0, 0]);
+    checkJacobian(tank, [0, 0], 'tank');
+  });
+
+  it('pressureSource: fija su nodo con control.p', () => {
+    const source = createPressureSource({}, 'fuel');
+    source.control['p'] = -0.65;
+    const fixedOut = new Float64Array(1).fill(NaN);
+    source.fixed?.(fixedOut);
+    expect(fixedOut[0]).toBeCloseTo(-0.65, 12);
+    expect(evaluate(source, [-0.65]).flow[0]).toBe(0);
+    checkJacobian(source, [-0.65], 'pressureSource');
+  });
+
+  it('battery: V = control.v − R·I', () => {
+    const battery = createBattery({ r: 0.02 });
+    battery.control['v'] = 12.6;
+    expect(evaluate(battery, [12.6, 0]).flow[0]).toBeCloseTo(0, 9);
+    expect(evaluate(battery, [12, 0]).flow[0]).toBeCloseTo(30, 9);
+    expect(battery.probes?.['i']?.(new Float64Array([12, 0]))).toBeCloseTo(30, 9);
+    checkJacobian(battery, [12, 0], 'battery');
+  });
+
+  it('switch y resistor: conductancias', () => {
+    const sw = createSwitch({ rOn: 0.01, rOff: 1e7 });
+    sw.control['closed'] = true;
+    expect(-(evaluate(sw, [1, 0]).flow[0] ?? 0)).toBeCloseTo(100, 6);
+    sw.control['closed'] = false;
+    expect(-(evaluate(sw, [1, 0]).flow[0] ?? 0)).toBeCloseTo(1e-7, 12);
+    checkJacobian(sw, [1, 0], 'switch');
+
+    const resistor = createResistor({ r: 10 });
+    expect(-(evaluate(resistor, [10, 0]).flow[0] ?? 0)).toBeCloseTo(1, 12);
+    expect(resistor.probes?.['q']?.(new Float64Array([10, 0]))).toBeCloseTo(1, 12);
+    checkJacobian(resistor, [10, 0], 'resistor');
+  });
+
+  it('el registro tiene todos los tipos con fábrica', () => {
+    const types = [
+      'restrictor',
+      'checkValve',
+      'leak',
+      'volume',
+      'tee',
+      'electricPump',
+      'reliefRegulator',
+      'orifice',
+      'tank',
+      'pressureSource',
+      'battery',
+      'resistor',
+      'switch',
+    ];
+    for (const type of types) {
+      expect(ELEMENT_TYPES[type]?.create, type).toBeDefined();
+    }
+    expect(Object.keys(ELEMENT_TYPES)).toHaveLength(types.length);
+  });
+});
