@@ -2,7 +2,7 @@
 
 import { h, clear } from '../dom.js';
 
-/** @param {HTMLElement} container @param {Record<string, import('../types.js').PartInfo>} parts */
+/** @param {HTMLElement} container @param {Record<string, import('../types.ts').PartInfo>} parts */
 export function createInfoPanel(container, parts) {
   function empty() {
     clear(container);
@@ -44,7 +44,7 @@ export function pickNarrations(list, max = 3) {
 export function createNarrationBar(container) {
   let lastKey = '';
   return {
-    /** @param {import('../types.js').Narration[]} list */
+    /** @param {import('../types.ts').Narration[]} list */
     set(list) {
       const top = pickNarrations(list || []);
       const key = top.map((n) => n.level + n.text).join('|');

@@ -10,9 +10,9 @@ const HIGHLIGHT_STYLES = ['selected', 'correct', 'wrong', 'target'];
 /**
  * @param {Object} opts
  * @param {HTMLElement} opts.container
- * @param {import('../../core/types.js').ModuleDescriptor} opts.module
+ * @param {import('../../core/types.ts').ModuleDescriptor} opts.module
  * @param {(intent: import('../../game/types.js').Intent) => void} opts.emit
- * @param {import('../../core/types.js').Model} opts.model
+ * @param {import('../../core/types.ts').Model} opts.model
  * @param {HTMLElement} [opts.tooltip]
  */
 export function createLegacyRenderer({ container, module, emit, model, tooltip }) {

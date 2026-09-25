@@ -1,37 +1,68 @@
 // Bucle de paso fijo (§4): la física avanza en pasos de fixedDt sin importar el framerate.
 
-import { clamp } from './math.js';
+import { clamp } from './math.ts';
 
-export const TIME_SCALES = [0.01, 0.05, 0.25, 1, 2, 4];
+const TIME_SCALE_MIN = 0.01;
+const TIME_SCALE_MAX = 4;
+export const TIME_SCALES: readonly number[] = [
+  TIME_SCALE_MIN,
+  0.05,
+  0.25,
+  1,
+  2,
+  TIME_SCALE_MAX,
+];
 const MAX_FRAME_DT = 0.1;
 const EPS = 1e-9; // evita perder un paso por redondeo (0.02 / 0.001 → 19,999…)
 
-/**
- * @param {Object} opts
- * @param {import('./types.js').Model} opts.model
- * @param {number} [opts.fixedDt]
- * @param {number} [opts.maxStepsPerFrame]
- * @param {(simDt:number, steps:number)=>void} [opts.onFrame]
- * @param {(cb:FrameRequestCallback)=>number} [opts.raf]  Inyectable para tests.
- * @param {(id:number)=>void} [opts.caf]
- */
-export function createLoop({
+/** Lo único que el loop necesita del modelo: avanzar un paso. */
+export interface SteppableModel {
+  step(dt: number): void;
+}
+
+export interface LoopOptions<M extends SteppableModel = SteppableModel> {
+  model: M;
+  fixedDt?: number;
+  maxStepsPerFrame?: number;
+  onFrame?: (simDt: number, steps: number) => void;
+  /** Inyectables para tests (D9 del plan de juego). */
+  raf?: (cb: FrameRequestCallback) => number;
+  caf?: (id: number) => void;
+}
+
+export interface Loop {
+  tick(realDt: number): number;
+  start(): void;
+  stop(): void;
+  setTimeScale(x: number): void;
+  setPaused(b: boolean): void;
+  /** Da exactamente un paso aunque esté en pausa (botón "paso a paso"). */
+  stepOnce(): void;
+  readonly timeScale: number;
+  readonly paused: boolean;
+  readonly running: boolean;
+  destroy(): void;
+}
+
+export function createLoop<M extends SteppableModel = SteppableModel>({
   model,
   fixedDt = 0.001,
   maxStepsPerFrame = 4000,
   onFrame = () => {},
   raf = (cb) => requestAnimationFrame(cb),
-  caf = (id) => cancelAnimationFrame(id),
-}) {
+  caf = (id) => {
+    cancelAnimationFrame(id);
+  },
+}: LoopOptions<M>): Loop {
   let acc = 0;
   let timeScale = 1;
   let paused = false;
   let running = false;
   let rafId = 0;
-  let last = null;
+  let last: number | null = null;
 
   /** Avanza un frame de `realDt` segundos reales. Devuelve los pasos dados. */
-  function tick(realDt) {
+  function tick(realDt: number): number {
     const dt = clamp(realDt, 0, MAX_FRAME_DT);
     let steps = 0;
     let simDt = 0;
@@ -51,7 +82,7 @@ export function createLoop({
     return steps;
   }
 
-  function frame(ts) {
+  function frame(ts: number): void {
     if (!running) return;
     const realDt = last === null ? 0 : (ts - last) / 1000;
     last = ts;
@@ -59,7 +90,7 @@ export function createLoop({
     rafId = raf(frame);
   }
 
-  return {
+  const loop: Loop = {
     tick,
     start() {
       if (running) return;
@@ -72,12 +103,11 @@ export function createLoop({
       caf(rafId);
     },
     setTimeScale(x) {
-      timeScale = clamp(x, TIME_SCALES[0], TIME_SCALES[TIME_SCALES.length - 1]);
+      timeScale = clamp(x, TIME_SCALE_MIN, TIME_SCALE_MAX);
     },
     setPaused(b) {
-      paused = !!b;
+      paused = b;
     },
-    /** Da exactamente un paso aunque esté en pausa (botón "paso a paso"). */
     stepOnce() {
       model.step(fixedDt);
       onFrame(fixedDt, 1);
@@ -92,7 +122,8 @@ export function createLoop({
       return running;
     },
     destroy() {
-      this.stop();
+      loop.stop();
     },
   };
+  return loop;
 }

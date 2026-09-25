@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { createRng } from '../../src/core/rng.js';
+import { createRng } from '../../src/core/rng.ts';
 import { createSession } from '../../src/game/session.js';
 import { intents } from '../../src/game/intents.js';
 import { parts } from '../../src/modules/fuel/content.js';

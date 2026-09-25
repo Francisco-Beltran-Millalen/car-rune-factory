@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { clamp, lerp, unlerp, smoothstep, approach, expSmooth, wrap, wrapDeg, finite } from '../../src/core/math.js';
+import { clamp, lerp, unlerp, smoothstep, approach, expSmooth, wrap, wrapDeg, finite } from '../../src/core/math.ts';
 
 describe('math', () => {
   it('clamp/lerp/unlerp', () => {

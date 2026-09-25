@@ -1,5 +1,5 @@
 // Módulo de prueba del shell: un estanque que se vacía por una válvula (Torricelli).
-import { clamp } from '../../core/math.js';
+import { clamp } from '../../core/math.ts';
 
 export const DEFAULT_PARAMS = { valve: 0.5, inflow: false, inflowRate: 300 };
 export const DEFAULT_FAULTS = { clog: 0, leak: false };

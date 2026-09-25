@@ -22,9 +22,9 @@
 
 /**
  * @typedef {Object} Session
- * @property {import('../core/types.js').Model} model
- * @property {ReturnType<import('../core/loop.js').createLoop>} loop
- * @property {ReturnType<import('../core/history.js').createRecorder>} recorder
+ * @property {import('../core/types.ts').Model} model
+ * @property {ReturnType<import('../core/loop.ts').createLoop>} loop
+ * @property {ReturnType<import('../core/history.ts').createRecorder>} recorder
  * @property {(realDt: number) => number} tick
  * @property {(cb: (simDt: number, steps: number) => void) => () => void} onFrame
  * @property {() => void} start
@@ -98,9 +98,9 @@
 /**
  * @typedef {Object} ModeContext
  * @property {Session} session
- * @property {import('../core/types.js').ModuleDescriptor} module
+ * @property {import('../core/types.ts').ModuleDescriptor} module
  * @property {Object|null} stage
- * @property {ReturnType<import('../core/rng.js').createRng>} [rng]
+ * @property {ReturnType<import('../core/rng.ts').createRng>} [rng]
  * @property {Object} [save]
  */
 

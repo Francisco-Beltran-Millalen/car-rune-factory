@@ -1,12 +1,16 @@
 import { describe, it, expect } from 'vitest';
-import { createRingBuffer, createRecorder } from '../../src/core/history.js';
+import { createRingBuffer, createRecorder, type HistoryReadout } from '../../src/core/history.ts';
 
 describe('ring buffer', () => {
   it('guarda en orden y descarta lo más viejo', () => {
     const b = createRingBuffer(3);
-    [1, 2].forEach(b.push);
+    [1, 2].forEach((v) => {
+      b.push(v);
+    });
     expect(b.toArray()).toEqual([1, 2]);
-    [3, 4, 5].forEach(b.push);
+    [3, 4, 5].forEach((v) => {
+      b.push(v);
+    });
     expect(b.toArray()).toEqual([3, 4, 5]);
     expect(b.size).toBe(3);
     expect(b.last()).toBe(5);
@@ -16,7 +20,7 @@ describe('ring buffer', () => {
 });
 
 describe('recorder', () => {
-  const readouts = [
+  const readouts: HistoryReadout<{ p: number; q: number }>[] = [
     { id: 'p', get: (s) => s.p, history: true },
     { id: 'q', get: (s) => s.q },
   ];
@@ -29,18 +33,18 @@ describe('recorder', () => {
       model.state.p = i;
       rec.sample(model);
     }
-    const n = rec.series.get('p').size;
+    const n = rec.series.get('p')!.size;
     expect(n).toBeGreaterThanOrEqual(20);
     expect(n).toBeLessThanOrEqual(21);
   });
   it('detecta un reinicio del modelo', () => {
-    const model = { time: 5, state: { p: 1 } };
+    const model = { time: 5, state: { p: 1, q: 0 } };
     const rec = createRecorder(readouts);
     rec.sample(model);
     model.time = 0;
     rec.sample(model);
     model.time = 0.06;
     rec.sample(model);
-    expect(rec.series.get('p').size).toBeGreaterThan(1);
+    expect(rec.series.get('p')!.size).toBeGreaterThan(1);
   });
 });

@@ -3,7 +3,7 @@
 import './fuel.css';
 import { el, group, pipe, label, gaugeSvg, roundedPathD } from '../../core/svg.js';
 import { createFlow } from '../../core/particles.js';
-import { clamp, wrap, expSmooth } from '../../core/math.js';
+import { clamp, wrap, expSmooth } from '../../core/math.ts';
 
 const PX_PER_LH = 4.6; // escala visual de este módulo (fuel.md §7)
 const INJ_X = [760, 860, 960, 1060];

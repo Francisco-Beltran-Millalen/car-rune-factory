@@ -1,6 +1,6 @@
 // Helpers SVG. Colores sólo vía clases/variables CSS (§9).
 
-import { clamp, lerp } from './math.js';
+import { clamp, lerp } from './math.ts';
 
 export const SVG_NS = 'http://www.w3.org/2000/svg';
 

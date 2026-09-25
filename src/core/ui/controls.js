@@ -1,7 +1,7 @@
 // Panel de controles generado desde ControlSpec[] (§8). Emite intents (§20).
 
 import { h } from '../dom.js';
-import { fmt } from '../format.js';
+import { fmt } from '../format.ts';
 import { intents } from '../../game/intents.js';
 
 /** Grupo de botones excluyentes (para selects cortos, p. ej. la llave). */
@@ -87,10 +87,10 @@ const BUILDERS = { slider, toggle, select, button };
 
 /**
  * @param {HTMLElement} container
- * @param {import('../types.js').ControlSpec[]} specs
+ * @param {import('../types.ts').ControlSpec[]} specs
  * @param {(key: string) => any} getValue
  * @param {(intent: import('../../game/types.js').Intent) => void} emit
- * @param {import('../types.js').Model} [modelContext]
+ * @param {import('../types.ts').Model} [modelContext]
  */
 export function createControlsPanel(container, specs, getValue, emit = () => {}, modelContext) {
   const items = [];

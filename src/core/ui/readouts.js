@@ -1,7 +1,7 @@
 // Mediciones: valor numérico + sparkline del historial + manómetro opcional.
 
 import { h } from '../dom.js';
-import { fmt } from '../format.js';
+import { fmt } from '../format.ts';
 import { el, gaugeSvg } from '../svg.js';
 
 const SPARK_W = 120;
@@ -32,8 +32,8 @@ export function sparklinePoints(values, w = SPARK_W, h = SPARK_H) {
 
 /**
  * @param {HTMLElement} container
- * @param {import('../types.js').ReadoutSpec[]} specs
- * @param {ReturnType<import('../history.js').createRecorder>} recorder
+ * @param {import('../types.ts').ReadoutSpec[]} specs
+ * @param {ReturnType<import('../history.ts').createRecorder>} recorder
  */
 export function createReadoutsPanel(container, specs, recorder) {
   const rows = specs.map((spec) => {

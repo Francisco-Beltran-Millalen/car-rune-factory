@@ -1,8 +1,15 @@
 import { describe, it, expect } from 'vitest';
-import { createLoop } from '../../src/core/loop.js';
+import { createLoop } from '../../src/core/loop.ts';
 
 function counter() {
-  const m = { steps: 0, time: 0, step(dt) { m.steps++; m.time += dt; } };
+  const m = {
+    steps: 0,
+    time: 0,
+    step(dt: number): void {
+      m.steps++;
+      m.time += dt;
+    },
+  };
   return m;
 }
 const noRaf = { raf: () => 0, caf: () => {} };
@@ -64,13 +71,13 @@ describe('loop', () => {
     expect(got).toBeCloseTo(0.02, 3);
   });
   it('start/stop usan raf inyectado', () => {
-    const cbs = [];
+    const cbs: FrameRequestCallback[] = [];
     let cancelled = false;
     const model = counter();
     const loop = createLoop({ model, raf: (cb) => (cbs.push(cb), cbs.length), caf: () => (cancelled = true) });
     loop.start();
-    cbs.shift()(0);
-    cbs.shift()(100);
+    cbs.shift()!(0);
+    cbs.shift()!(100);
     expect(model.steps).toBeGreaterThanOrEqual(99);
     loop.stop();
     expect(cancelled).toBe(true);

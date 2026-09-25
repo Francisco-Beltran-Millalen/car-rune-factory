@@ -14,7 +14,7 @@ import { stages as campaignStages, getStage, isStageUnlocked, nextStageOf } from
 import { createLegacyRenderer } from '../render/legacy/index.js';
 import { intents, INTENT_TYPES } from '../game/intents.js';
 import { createHud } from '../ui/hud.js';
-import { createRng } from './rng.js';
+import { createRng } from './rng.ts';
 import { parseHash } from './router.js';
 
 const NARRATE_EVERY = 0.25; // s reales
@@ -55,7 +55,7 @@ function section(title, open = true) {
 
 /**
  * @param {HTMLElement} root
- * @param {import('./types.js').ModuleDescriptor[]} modules  ordenados por `order`
+ * @param {import('./types.ts').ModuleDescriptor[]} modules  ordenados por `order`
  * @param {{ go: (target: any) => void }} nav
  */
 export function createShell(root, modules, nav) {
@@ -154,7 +154,7 @@ export function createShell(root, modules, nav) {
   }
 
   /**
-   * @param {import('./types.js').ModuleDescriptor|{ module: import('./types.js').ModuleDescriptor, stage: any, attempt?: number }} target
+   * @param {import('./types.ts').ModuleDescriptor|{ module: import('./types.ts').ModuleDescriptor, stage: any, attempt?: number }} target
    */
   function mount(target) {
     unmount();

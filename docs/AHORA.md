@@ -37,7 +37,7 @@ cambian.
 | # | Tarea | Depende de | Estado |
 |---|---|---|---|
 | TS0 | Herramientas: tsconfig, ESLint con leyes, knip, checker, `npm run check`, test de las leyes | — | ✅ |
-| TS1 | Core puro (`types, math, rng, loop, history`, `format` nuevo) | TS0 | ⏳ |
+| TS1 | Core puro (`types, math, rng, loop, history`, `format` nuevo) | TS0 | ✅ |
 | TS2 | Core con DOM + paneles + router | TS1 | ⏳ |
 | TS3 | Juego (`game/**`, `ui/hud`), intents como unión discriminada | TS2 | ⏳ |
 | TS4 | Módulos (`fuel`, `_demo`, registry) + comparación de estado idéntico | TS3 | ⏳ |
@@ -77,7 +77,32 @@ A3 emite eventos con `partIds` y propone `data.cue` (plan motor-y-juice §6).
 | A9 | Armar circuitos (E4) | A7 | ⏳ |
 | A10 | Plan del vehículo y casos entre sistemas | A6 | ⏳ |
 
-**Siguiente paso:** TS1 (core puro a `.ts`: `types, math, rng, loop, history` + `format` nuevo). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+**Siguiente paso:** TS2 (core con DOM y UI: `dom, svg, particles, router` y `core/ui/*` a `.ts`). Después de TS5: A3 (Diagnóstico E2 + `faultCatalog` del combustible + herramientas + visibilidad de indicios).
+
+## CERRADO 2026-09-25 — TS1 core puro
+
+- `src/core/{types,math,rng,loop,history,format}.js` → `.ts` y `tests/core/{math,rng,loop,history}.test.js`
+  → `.ts` (aserciones intactas; sólo anotaciones y extensiones). `format.ts` ya existía desde el
+  arreglo de TS0.
+- `types.ts` según el plan §8.1: `Model<P,F,S>`, `ReadoutSpec`, `ModuleDescriptor`, `ViewContext`,
+  `View`, `ControlSpec`, `FaultSpec`, `PartInfo`, `Narration`, `Preset` y `defineModule`
+  (identidad, `@public` para TS4). Callbacks que reciben tipos del módulo con sintaxis de método
+  (nota de varianza).
+- `rng.ts` exporta `Rng`; `loop.ts` exporta `Loop`, `LoopOptions` y `SteppableModel` (lo mínimo
+  que el loop usa del modelo: sólo `step`); `history.ts` exporta `Recorder`, `RingBuffer` y
+  `HistoryReadout`. Los tipos mínimos evitan casts y `!` innecesarios en los tests, que no
+  construyen modelos completos.
+- Imports y JSDoc de los `.js` que faltan pasan a `.ts` (`allowImportingTsExtensions`, D4);
+  `game/types.js` sigue en JS hasta TS3.
+- Adaptaciones de tipo, sin cambio de física:
+  - `TIME_SCALES` se arma con `TIME_SCALE_MIN/MAX` nombrados: `noUncheckedIndexedAccess` no puede
+    probar `TIME_SCALES[TIME_SCALES.length - 1]`.
+  - `rng.pick` lanza `invariante: …` con arreglo vacío (antes devolvía `undefined`); los llamadores
+    lo usan con arreglos no vacíos.
+  - Se quitó el `Number(...)` redundante del recorder y el `!!` de `setPaused`
+    (`no-unnecessary-type-conversion`); el guard `|| 0` de NaN queda.
+- `npm run check` verde: typecheck, lint 0 warnings, knip, 122 tests y build.
+
 
 ## CERRADO 2026-09-25 — TS0 herramientas (plan 2026-09-24-typescript-estricto)
 

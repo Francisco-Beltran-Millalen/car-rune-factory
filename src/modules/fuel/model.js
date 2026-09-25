@@ -1,8 +1,8 @@
 // Sistema de combustible con retorno. Física en docs/modules/fuel.md §4 (orden de evaluación 1–11).
 // Puro (§1), determinista (§3), unidades: bar relativos, L/h, V, A, s (§5).
 
-import { clamp, expSmooth, wrap } from '../../core/math.js';
-import { createRng } from '../../core/rng.js';
+import { clamp, expSmooth, wrap } from '../../core/math.ts';
+import { createRng } from '../../core/rng.ts';
 
 export const DEFAULT_PARAMS = {
   ignitionKey: 'off', // 'off' | 'on' | 'start' | 'run'

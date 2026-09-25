@@ -1,13 +1,13 @@
 // Sesión de simulación desacoplada del shell (CONTRATOS.md §6.1).
 // Pura, testeable en Node sin DOM (§1).
 
-import { createLoop } from '../core/loop.js';
-import { createRecorder } from '../core/history.js';
+import { createLoop } from '../core/loop.ts';
+import { createRecorder } from '../core/history.ts';
 
 /**
  * @param {Object} opts
- * @param {() => import('../core/types.js').Model} opts.createModel
- * @param {import('../core/types.js').ReadoutSpec[]} [opts.readouts]
+ * @param {() => import('../core/types.ts').Model} opts.createModel
+ * @param {import('../core/types.ts').ReadoutSpec[]} [opts.readouts]
  * @param {'raf'|'external'} [opts.driver]
  * @param {(cb: FrameRequestCallback) => number} [opts.raf]
  * @param {(id: number) => void} [opts.caf]

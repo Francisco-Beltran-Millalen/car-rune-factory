@@ -1,7 +1,7 @@
 // Modo quiz E1: nombrar piezas (docs/plans/2026-09-23-arquitectura-juego.md §6).
 // Puro (§21): sin DOM; el azar sale del rng con semilla (§3, D10).
 
-import { createRng } from '../../core/rng.js';
+import { createRng } from '../../core/rng.ts';
 import { INTENT_TYPES, intents } from '../intents.js';
 import { nextStageOf } from '../campaign.js';
 
@@ -66,7 +66,7 @@ function partName(parts, id) {
 /**
  * Genera las preguntas de una partida con el rng dado (§6, D10).
  * @param {ReturnType<typeof createRng>} rng
- * @param {Record<string, import('../../core/types.js').PartInfo>} parts
+ * @param {Record<string, import('../../core/types.ts').PartInfo>} parts
  * @param {{questions?:number, types?:string[], parts?:string[]|'all', sameConcept?:string[][]}} config
  */
 export function generateQuestions(rng, parts, config = {}) {

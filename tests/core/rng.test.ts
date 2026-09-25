@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mulberry32, createRng } from '../../src/core/rng.js';
+import { mulberry32, createRng } from '../../src/core/rng.ts';
 
 describe('rng', () => {
   it('es determinista con la misma semilla', () => {

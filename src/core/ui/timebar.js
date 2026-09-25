@@ -1,14 +1,14 @@
 // Barra de tiempo: pausa, paso a paso, velocidad y reinicio.
 
 import { h } from '../dom.js';
-import { fmt } from '../format.js';
-import { TIME_SCALES } from '../loop.js';
+import { fmt } from '../format.ts';
+import { TIME_SCALES } from '../loop.ts';
 
 const scaleLabel = (s) => `${fmt(s, s < 1 ? 2 : 0)}×`;
 
 /**
  * @param {HTMLElement} container
- * @param {{ loop: ReturnType<import('../loop.js').createLoop>, onReset: () => void }} opts
+ * @param {{ loop: ReturnType<import('../loop.ts').createLoop>, onReset: () => void }} opts
  */
 export function createTimebar(container, { loop, onReset }) {
   const pauseBtn = h('button', { type: 'button', class: 'btn tb-pause', title: 'Pausa (espacio)', onclick: togglePause });

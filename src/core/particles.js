@@ -1,7 +1,7 @@
 // Partículas que recorren un path SVG. Velocidad ∝ caudal (CONTRATOS.md 4.6).
 
 import { el } from './svg.js';
-import { wrap } from './math.js';
+import { wrap } from './math.ts';
 
 /**
  * Escala visual por defecto: 100 L/h → 250 px/s.

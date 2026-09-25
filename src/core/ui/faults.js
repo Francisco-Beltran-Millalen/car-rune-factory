@@ -56,7 +56,7 @@ const BUILDERS = { severity, toggle, enum: enumFault };
 
 /**
  * @param {HTMLElement} container
- * @param {import('../types.js').FaultSpec[]} specs
+ * @param {import('../types.ts').FaultSpec[]} specs
  * @param {(key: string) => any} getValue
  * @param {(intent: import('../../game/types.js').Intent) => void} emit
  * @param {Record<string, any>} [defaultFaults]

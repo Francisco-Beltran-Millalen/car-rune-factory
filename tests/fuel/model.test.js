@@ -1,7 +1,7 @@
 // Criterios de aceptación de docs/modules/fuel.md §9.
 import { describe, it, expect } from 'vitest';
 import { createFuelModel } from '../../src/modules/fuel/model.js';
-import { createRng } from '../../src/core/rng.js';
+import { createRng } from '../../src/core/rng.ts';
 
 const DT = 0.001;
 function run(m, seconds) {
