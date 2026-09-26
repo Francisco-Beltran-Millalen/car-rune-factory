@@ -4,6 +4,7 @@ import fuel from './fuel/index.ts';
 import { fourStrokeDohc, fourStrokeOhv } from './four-stroke/index.ts';
 import { ignitionCop, ignitionPoints } from './ignition/index.ts';
 import { coolingElectric, coolingViscous } from './cooling/index.ts';
+import { lubricationGauge, lubricationLamp } from './lubrication/index.ts';
 
 export const modules: readonly ModuleDescriptor[] = [
   fuel,
@@ -13,4 +14,6 @@ export const modules: readonly ModuleDescriptor[] = [
   ignitionCop,
   coolingViscous,
   coolingElectric,
+  lubricationGauge,
+  lubricationLamp,
 ].sort((a, b) => a.order - b.order);

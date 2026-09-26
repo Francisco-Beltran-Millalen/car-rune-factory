@@ -145,7 +145,8 @@ interface ElementTypeInfo { create: ElementFactory; joint?: boolean; multiple?: 
 // pide el juguete de A5; no estaba en la tabla de P23 §8.2), currentLoad (A12:
 // la carga de corriente media del primario de la bobina), junction, hydroNode,
 // thermalNode (A12/A13: nudos `joint`/`multiple`), centrifugalPump,
-// variableOrifice, heatSource, temperatureSource, thermalConductance,
+// variableOrifice, displacementPump, linearRestrictor (A14), heatSource,
+// temperatureSource, thermalConductance,
 // advection y heatCapacity (A13: dominio thermal: °C/W/J/K) y visual (A7: la
 // pieza sólo dibujable; se movió a `sim/elements/` en A11).
 

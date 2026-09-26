@@ -37,6 +37,7 @@ export const LAB_ALIASES: Readonly<Record<string, string>> = {
   'four-stroke': 'four-stroke-dohc',
   ignition: 'ignition-cop',
   cooling: 'cooling-electric',
+  lubrication: 'lubrication-lamp',
 };
 
 export function resolveLabAlias(id: string): string {

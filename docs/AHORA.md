@@ -72,7 +72,7 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A11 | Ciclo de 4 tiempos y distribución (spec + plan listos) | A10 | ✅ |
 | A12 | Encendido: platinos y COP (spec + plan listos) | A10 | ✅ |
 | A13 | Refrigeración (spec + plan listos) | A10 | ✅ |
-| A14 | Lubricación (spec + plan listos) | A10 | ⏳ |
+| A14 | Lubricación (spec + plan listos) | A10 | ✅ |
 | A16 | Carburador (spec + plan listos) | A10 | ⏳ |
 | A15 | Laboratorio del vehículo: `vehicle-70` y `vehicle-2000` (plan del vehículo) | A11–A14, A16 | ⏳ |
 
@@ -108,8 +108,89 @@ Turbo y diésel: sin plan hasta que el usuario diga si entran.
 **Planes (2026-09-26)**: el agente planificador escribió la spec
 (`docs/modules/<id>.md`) y el plan (`docs/plans/2026-09-26-<id>.md`) de
 todos los sistemas, A11–A25, y alineó el plan del vehículo (v3). El usuario
-aprobó el plan del vehículo el 2026-09-26; A11, A12 y A13 ya están
-implementadas (ver los CERRADO de abajo). Sigue A14, en orden.
+aprobó el plan del vehículo el 2026-09-26; A11, A12, A13 y A14 ya están
+implementadas (ver los CERRADO de abajo). Sigue A16, en orden.
+
+## CERRADO 2026-09-26 — A14 Lubricación
+
+Plan: `plans/2026-09-26-lubrication.md`; spec: `modules/lubrication.md`. Dos
+descriptores (`lubrication-gauge`, `lubrication-lamp`) y la ruta
+`#/lab/lubrication` → `lubrication-lamp`. `npm run check` verde (**358**
+tests). `typescript-eslint` acepta TS `>=4.8.4 <6.1.0` (paso 1 del plan).
+
+- **Core nuevo**: elementos `displacementPump` (in/out; `disp`, `slip`,
+  `pMax`, `wearQ`; control `n`, `air`, `wear`, `slipFactor`) y
+  `linearRestrictor` (`q = g·Δp`), y el control `drain` del `tank`; ley +
+  jacobiano contra diferencias finitas. El `reliefRegulator` suma sondas `q`
+  y `open`. Filas en `modules/solver.md` §6 y `CONTRATOS.md` §4.10.
+- **Física sin calibrar** (§14): las constantes son las de la spec §5.
+  Medido a 1,5 s, 10W-40: 100 °C → 1,14 / 2,86 / 4,28 / 4,52 bar a
+  800/2000/3000/6000 rpm; grados en ralentí caliente 0,82 / 1,14 / 1,47;
+  cojinetes 0,2/0,5/1 → 0,68 / 0,36 / 0,15; bomba gastada 0,44 y 1,66. Única
+  diferencia con la tabla §5.7: 120 °C a 6000 rpm da 4,23 (no 4,5) porque la
+  galería está aguas abajo del filtro (0,4 bar a 2400 L/h) y la cuenta del
+  planificador no lo sumaba; no hay test sobre ese punto.
+- **Arreglos de la revisión** (la sesión anterior quedó cortada antes de
+  cerrar):
+  - *Ciclo límite de la cavitación*: con el paso de retraso (§25) el lazo
+    aire → caudal → presión de aspiración tenía ganancia ≈ 7 y oscilaba cada
+    paso (aire 0,8 ↔ 0,04, caudal 148 ↔ 880 L/h) y hacía fallar al solver. El
+    aire por cavitación ahora se filtra con `cavTau = 50 ms` (ganancia
+    efectiva ≈ 0,15). El test 14 ahora exige `failures === 0` en las 200
+    combinaciones del fuzz (fue el que lo encontró) y el test 9 fija que no
+    oscila.
+  - rpm y carga se leen del bus (`engine.rpm`, `engine.load`, spec §12/§29);
+    el stub del laboratorio da rpm sólo con la llave en `run`.
+  - Presenter: los tubos del alivio y del filtro mostraban el caudal de la
+    bomba (y el de la salida del filtro el del bypass); ahora usan `qRelief` y
+    el caudal real del filtro (sonda nueva `qFilter`). Los canales de piezas
+    dibujadas dentro de otro drawer (rejilla, tapón, interruptor de presión,
+    antirretorno) nunca llegaban (el renderer entrega por id de pieza): se
+    movieron al drawer que las dibuja. El interruptor se dibujaba siempre
+    abierto; ahora cierra bajo 0,5 bar (o según la falla), con o sin llave.
+  - Narración del aceite frío: `qRelief > 1 L/h` (el `softRelu` nunca es 0).
+  - Tests nuevos: acciones de nivel + `reset`, fuga de la junta y goteo del
+    tapón, golpeteo, testigo con llave apagada.
+- **Desviaciones anotadas**:
+  - Golpeteo (§5.5) `·carga` con `engine.load`; como el laboratorio no tiene
+    acelerador, el stub de carga es `rpm/6500`.
+  - Temperatura del aceite en el vehículo (§5.3: sigue a
+    `engine.coolantTemp + 10·load` con τ = 120 s) **no está implementada**:
+    el controlador usa el param `oilTempC` también dentro del vehículo. Queda
+    para A15 (cómo convive el slider del laboratorio con la señal).
+  - Los 8 drawers viven en un solo archivo `drawers/lubrication/oil.ts`
+    (~220 líneas) en vez de uno por pieza; las fallas se prueban en
+    `model.test.ts` (no hay `faults.test.ts`).
+  - `changeOil()` sólo repone 4 L: no hay estado de suciedad que limpiar.
+- Tests: `tests/lubrication/model.test.ts` (19), `content.test.ts` (12) y los
+  de elementos.
+
+**Checklist de Firefox** (`npm run dev`) — la del plan §6:
+
+`#/lab/lubrication-lamp`:
+1. Llave en "Contacto": testigo prendido y el interruptor dibujado cerrado;
+   al pasar a "Marcha" se apaga en < 1 s y el interruptor abre.
+2. "Arranque en frío": presión al tope (~4,5 bar) y la bola del alivio
+   bajada, con caudal por el tubo de retorno; al subir `oilTempC` a 100 baja
+   la presión en ralentí (~1,1 bar).
+3. "Cojinetes gastados": en ralentí caliente se prende el testigo; al
+   acelerar se apaga. Los cascos se ven con borde de aviso.
+4. "Poco aceite en las curvas": al subir la fuerza lateral el aceite se
+   inclina, aparecen burbujas en el cárter y cae la presión; **no debe
+   parpadear cuadro a cuadro** (era el ciclo límite).
+5. "Filtro tapado": la chapaleta de bypass se abre, el filtro se ve sucio y
+   el Δp marca ~1 bar.
+6. "Motor sin aceite": el daño sube hasta que se agarrota (narración) y los
+   engranajes de la bomba se detienen.
+7. Falla "Antirretorno vencido" (el punto del filtro se pone rojo): con la
+   llave en "Contacto" espera 60 s y pasa a "Marcha": unos 3 s sin presión.
+8. Falla "Rejilla tapada" a fondo y 6000 rpm: la rejilla se oscurece y la
+   bomba aspira aire; falla "Tapón del cárter gotea": cae una gota bajo el
+   cárter.
+
+`#/lab/lubrication-gauge`: el manómetro sigue la presión (con retardo corto)
+y el filtro dice "de cartucho", sin punto antirretorno. Los demás
+laboratorios y el quiz siguen funcionando; F12 sin errores.
 
 ## CERRADO 2026-09-26 — A13 Refrigeración
 

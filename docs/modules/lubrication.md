@@ -97,7 +97,9 @@ Laboratorio: `oilTempC`. Vehículo: `T_aceite` sigue a
 - `aire_nivel = clamp((2,0 − nivel_ef)/1,0, 0, 1)`, con el nivel efectivo
   `nivel_ef = nivel − 1,5·lateralG` (el aceite se corre en las curvas): a
   4 L nada; a 2,3 L con 0,6 g, 0,6; a 1 L, todo aire;
-- `aire_cavitación = clamp((−0,6 − p_aspiración)/0,3, 0, 0,8)`.
+- `aire_cavitación = clamp((−0,6 − p_aspiración)/0,3, 0, 0,8)`, filtrado
+  con τ = 50 ms (A14): con el paso de retraso (§25) el lazo aire → caudal →
+  p_aspiración tiene ganancia ≈ 7 y sin filtro oscila 0,8 ↔ 0 cada paso.
 - `antiDrainbackFailed` (sólo enroscable): si el motor estuvo detenido más
   de 60 s, al arrancar `startupDry = 3 s` y durante ese tiempo `aire = 1`
   (la bomba está llenando el filtro vacío).

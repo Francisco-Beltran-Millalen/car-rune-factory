@@ -8,11 +8,13 @@ import {
   createCentrifugalPump,
   createCheckValve,
   createCurrentLoad,
+  createDisplacementPump,
   createElectricPump,
   createHeatCapacity,
   createHeatSource,
   createJunction,
   createLeak,
+  createLinearRestrictor,
   createOrifice,
   createPressureSource,
   createReliefRegulator,
@@ -290,6 +292,33 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
     expect(-(evaluate(vo, [dp, 0]).flow[0] ?? 0)).toBeCloseTo(0, 12);
   });
 
+  it('displacementPump: caudal por revoluciones menos la fuga interna (A14)', () => {
+    const pump = createDisplacementPump({ disp: 6.67e-3, slip: 20, pMax: 0 }, 'oil');
+    pump.control['n'] = 3000;
+    const q = -(evaluate(pump, [0, 1]).flow[0] ?? 0);
+    expect(q).toBeCloseTo(6.67e-3 * 3000 * 60 - 20, 6);
+    checkJacobian(pump, [0, 1], 'displacementPump');
+    const limited = createDisplacementPump({ disp: 6.67e-3, slip: 0, pMax: 2 }, 'oil');
+    limited.control['n'] = 3000;
+    expect(-(evaluate(limited, [0, 2]).flow[0] ?? 0)).toBeCloseTo(0, 3);
+    limited.control['air'] = 1;
+    expect(-(evaluate(limited, [0, 0]).flow[0] ?? 0)).toBeCloseTo(0, 9);
+  });
+
+  it('linearRestrictor: q = g·Δp (A14)', () => {
+    const res = createLinearRestrictor({ g: 260 }, 'oil');
+    expect(-(evaluate(res, [1, 0]).flow[0] ?? 0)).toBeCloseTo(260, 9);
+    checkJacobian(res, [0.5, 0.2], 'linearRestrictor');
+  });
+
+  it('tank: el control `drain` baja el nivel sin pasar por la red (A14)', () => {
+    const tank = createTank({ capacity: 5 }, 'oil');
+    tank.init?.({ tankLevel: 4 });
+    tank.control['drain'] = 3600;
+    tank.commit(new Float64Array([0, 0]), 1, new Float64Array([0, 0]));
+    expect(tank.probes?.['level']?.(new Float64Array(2))).toBeCloseTo(3, 6);
+  });
+
   it('heatSource, thermalConductance, advection y heatCapacity (A13)', () => {
     const source = createHeatSource({});
     source.control['q'] = 1000;
@@ -362,6 +391,8 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
       'junction',
       'centrifugalPump',
       'variableOrifice',
+      'displacementPump',
+      'linearRestrictor',
       'heatSource',
       'temperatureSource',
       'thermalConductance',

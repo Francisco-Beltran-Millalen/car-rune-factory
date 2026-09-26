@@ -192,6 +192,36 @@ export function createLeak(
   return def;
 }
 
+/** Restrictor lineal (`q = g·Δp`, A14): cojinetes y purgas, `g` en L/h/bar. */
+export function createLinearRestrictor(
+  params: Readonly<Record<string, number>>,
+  fluid: Fluid,
+): ElementDef {
+  const g0 = controlNumber(params['g'], 0);
+  const def: ElementDef = {
+    ports: hydraulic2('a', 'b', fluid),
+    params: { g: g0 },
+    control: { g: g0 },
+    state: {},
+    eval(pot, out) {
+      const g = Math.max(0, controlNumber(def.control['g'], g0));
+      const q = g * ((pot[0] ?? 0) - (pot[1] ?? 0));
+      out.flow[0] = -q;
+      out.flow[1] = q;
+      out.jac[0] = -g;
+      out.jac[1] = g;
+      out.jac[2] = g;
+      out.jac[3] = -g;
+    },
+    commit: noCommit,
+    probes: {
+      q: (pot) =>
+        Math.max(0, controlNumber(def.control['g'], g0)) * ((pot[0] ?? 0) - (pot[1] ?? 0)),
+    },
+  };
+  return def;
+}
+
 /** Sólo compliancia; params: `c` (L/bar). El solver la usa en flujo/(bar·s). */
 export function createVolume(
   params: Readonly<Record<string, number>>,

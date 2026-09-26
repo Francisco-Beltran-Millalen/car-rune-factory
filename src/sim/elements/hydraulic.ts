@@ -109,6 +109,57 @@ export function createCentrifugalPump(
   return def;
 }
 
+/** Bomba de desplazamiento positivo (A14, spec lubrication §5.1): puertos
+ *  `in`/`out`; control `n` (rpm), `air`, `wear` y `slipFactor` (la viscosidad
+ *  escala la fuga interna). `q = disp·n·60·(1−wearQ·wear)·(1−aire)·lim −
+ *  slip·slipFactor·(1+4·wear)·Δp`, con `Δp = p_out − p_in` y
+ *  `lim = pMax > 0 ? √⁺(1 − Δp/pMax) : 1`. */
+export function createDisplacementPump(
+  params: Readonly<Record<string, number>>,
+  fluid: Fluid,
+): ElementDef {
+  const disp = controlNumber(params['disp'], 6.67e-3);
+  const slip = controlNumber(params['slip'], 20);
+  const pMax = controlNumber(params['pMax'], 0);
+  const wearQ = controlNumber(params['wearQ'], 0.5);
+  const def: ElementDef = {
+    ports: hydraulic2('in', 'out', fluid),
+    params: { disp, slip, pMax, wearQ },
+    control: { n: 0, air: 0, wear: 0, slipFactor: 1 },
+    state: {},
+    faults: { wear: { label: 'Desgaste', kind: 'severity' } },
+    eval(pot, out) {
+      const o = displacementPoint(pot);
+      out.flow[0] = -o.q;
+      out.flow[1] = o.q;
+      out.jac[0] = o.dq;
+      out.jac[1] = -o.dq;
+      out.jac[2] = -o.dq;
+      out.jac[3] = o.dq;
+    },
+    commit: noCommit,
+    probes: { q: (pot) => displacementPoint(pot).q },
+  };
+  function displacementPoint(pot: Float64Array): { q: number; dq: number } {
+    const dp = (pot[1] ?? 0) - (pot[0] ?? 0);
+    const n = Math.max(0, controlNumber(def.control['n']));
+    const air = clamp(controlNumber(def.control['air']), 0, 1);
+    const wear = clamp(controlNumber(def.control['wear']), 0, 1);
+    const slipFactor = Math.max(0, controlNumber(def.control['slipFactor'], 1));
+    const q0 = disp * n * 60 * (1 - wearQ * wear) * (1 - air);
+    let lim = 1;
+    let dlim = 0;
+    if (pMax > 1e-9) {
+      const x = 1 - dp / pMax;
+      lim = smoothSqrt(x);
+      dlim = smoothSqrtSlope(x) * (-1 / pMax);
+    }
+    const leak = slip * slipFactor * (1 + 4 * wear);
+    return { q: q0 * lim - leak * dp, dq: q0 * dlim - leak };
+  }
+  return def;
+}
+
 /** Bomba: puertos `e+`, `e-` (eléctricos) e `in`, `out` (hidráulicos). */
 export function createElectricPump(
   params: Readonly<Record<string, number>>,
@@ -221,6 +272,23 @@ export function createReliefRegulator(
       out.jac[8] = 0;
     },
     commit: noCommit,
+    probes: {
+      q: (pot) =>
+        controlFlag(def.control['noReturn'])
+          ? 0
+          : k *
+            softRelu(
+              (pot[0] ?? 0) - (pot[2] ?? 0) - controlNumber(def.control['set'], setDefault),
+              smooth,
+            ),
+      open: (pot) =>
+        controlFlag(def.control['noReturn'])
+          ? 0
+          : softReluSlope(
+              (pot[0] ?? 0) - (pot[2] ?? 0) - controlNumber(def.control['set'], setDefault),
+              smooth,
+            ),
+    },
   };
   return def;
 }
@@ -281,7 +349,7 @@ export function createTank(
   const def: ElementDef = {
     ports: hydraulic2('out', 'ret', fluid),
     params: { capacity, pickupLow },
-    control: { fast: false },
+    control: { fast: false, drain: 0 },
     state,
     init(overrides) {
       const level = overrides['tankLevel'];
@@ -296,7 +364,12 @@ export function createTank(
     commit(_pot, dt, reaction) {
       const net = reaction[0] ?? 0;
       const factor = controlFlag(def.control['fast']) ? 100 : 1;
-      state['level'] = clamp((state['level'] ?? 0) - (net / 3600) * dt * factor, 0, capacity);
+      const drain = Math.max(0, controlNumber(def.control['drain']));
+      state['level'] = clamp(
+        (state['level'] ?? 0) - ((net + drain) / 3600) * dt * factor,
+        0,
+        capacity,
+      );
     },
     probes: {
       level: () => state['level'] ?? 0,

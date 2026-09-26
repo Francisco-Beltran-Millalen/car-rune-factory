@@ -120,7 +120,7 @@ puertos son un nodo interno) y `multiple` (un puerto admite varias conexiones).
 | `electricPump` | e+, e-, in, out | `q = Qm(V)(1−Δp/Pm)⁺(1−air)`, `I = (1.5+5.5·Δp⁺/(Pm+εP))·vf`; para `V ≤ 0` no bombea y la bobina es `R`; `qMax`, `pMax`, `vNominal`, `wearQ`, `wearP`, `epsP`, `windingR` | `air`, `wear` | `wear` |
 | `reliefRegulator` | in, ret, ref | `q = k·softRelu(p_in−p_ref−set)`; `k`, `set`, `smooth` | `set`, `noReturn` | `state` |
 | `orifice` | in, out (hidr) | abierto `k·√(Δp⁺)`, cerrado `leakCoeff·s·√(Δp⁺)`; `k`, `leakCoeff` | `open`, `leak` | `leak` |
-| `tank` | out, ret (hidr) | nodo fijo 0 bar (`joint`); `commit` integra `level −= neto/3600·dt·(fast?100:1)`; `capacity`, `pickupLow` | `fast` | — |
+| `tank` | out, ret (hidr) | nodo fijo 0 bar (`joint`); `commit` integra `level −= (neto + drain)/3600·dt·(fast?100:1)`; `capacity`, `pickupLow` | `fast`, `drain` (L/h que se pierden, A14) | — |
 | `pressureSource` | a (hidr) | nodo fijo (Dirichlet) con `control.p` | `p` | — |
 | `battery` | +, - (eléc) | `V = control.v − R·I`; `r` | `v` | — |
 | `resistor` | a, b (eléc) | `q = Δp/r` (el juguete de A5; no estaba en §8.2) | — | — |
@@ -130,6 +130,8 @@ puertos son un nodo interno) y `multiple` (un puerto admite varias conexiones).
 | `hydroNode` | a..f (hidr) | nudo hidráulico `joint`/`multiple` (A13) | — | — |
 | `centrifugalPump` | in, out (hidr) | `H = pMax·(n/nRef)²`, `q = qMax·(n/nRef)·√⁺(1−Δp/H)·(1−aire)` con `Δp = p_out−p_in`; params `qMax`, `pMax`, `nRef` en L/h/bar/rpm | `n`, `air`, `wear` | `wear` |
 | `variableOrifice` | a, b (hidr) | restrictor con `k = 1/g²`, `g = gOpen·open + gLeak`; `gOpen`, `gLeak` | `open` | — |
+| `displacementPump` | in, out (hidr) | `q = disp·n·60·(1−wearQ·wear)·(1−aire)·lim − slip·slipFactor·(1+4·wear)·Δp`, `Δp = p_out−p_in`, `lim = √⁺(1−Δp/pMax)` si `pMax > 0`; params `disp` (L/rev), `slip` (L/h/bar), `pMax`, `wearQ` | `n`, `air`, `wear`, `slipFactor` | `wear` |
+| `linearRestrictor` | a, b (hidr) | `q = g·Δp`; `g` en L/h/bar | `g` | — |
 | `heatSource` | a (térm) | inyecta `control.q` W (positivo calienta) | `q` | — |
 | `temperatureSource` | a (térm) | nodo fijo (Dirichlet) con `control.t` en °C | `t` | — |
 | `thermalConductance` | a, b (térm) | `q = g·(Ta − Tb)` W; `g` en W/K | `g` | — |

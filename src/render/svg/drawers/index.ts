@@ -11,6 +11,16 @@ import {
   tempGaugeDrawer,
 } from './cooling/loop.ts';
 import { batteryDrawer, ecuDrawer, keyDrawer, relayDrawer, wiresDrawer } from './electrical.ts';
+import {
+  bearingDrawer,
+  galleryDrawer,
+  gearPumpDrawer,
+  oilFilterDrawer,
+  oilGaugeDrawer,
+  reliefValveDrawer,
+  sumpDrawer,
+  warningLampDrawer,
+} from './lubrication/oil.ts';
 import { compressionBarsDrawer } from './engine/bars.ts';
 import { cylinderSectionDrawer } from './engine/cylinder.ts';
 import { pvDiagramDrawer } from './engine/pv.ts';
@@ -62,4 +72,12 @@ export const DRAWERS: Readonly<Record<string, DrawerFactory>> = {
   expansionTank: expansionTankDrawer,
   heaterCore: heaterCoreDrawer,
   tempGauge: tempGaugeDrawer,
+  sump: sumpDrawer,
+  gearPump: gearPumpDrawer,
+  reliefValve: reliefValveDrawer,
+  oilFilter: oilFilterDrawer,
+  gallery: galleryDrawer,
+  bearing: bearingDrawer,
+  warningLamp: warningLampDrawer,
+  oilGauge: oilGaugeDrawer,
 };
