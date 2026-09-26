@@ -1,9 +1,7 @@
 # Plan: simulación antes que juego (nuevo orden de tareas)
 
-> **Aviso 2026-09-26:** las fichas de §6 tienen agregados en
-> `2026-09-26-sistemas-genericos.md` §5 (sistemas por arquetipo, A16
-> carburador, bloque S2). Se leen **junto con la ficha**, y si chocan,
-> mandan los agregados.
+> **Aviso 2026-09-26:** las fichas vivas están en `docs/FICHAS.md`, que
+> reemplaza a la §6 de este plan. No usar §6 para trabajar.
 
 Fecha: 2026-09-25. Lo decidió el usuario el mismo día. **Reordena** las
 tareas de `plans/2026-09-23-arquitectura-juego.md` (§9) y

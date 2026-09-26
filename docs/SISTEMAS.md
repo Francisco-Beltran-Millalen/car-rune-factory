@@ -77,8 +77,8 @@ sistema es un arquetipo que encapsula sus variantes. Si la física es la
 misma, la variante es una pieza intercambiable (platinos o transistor
 cortando la misma bobina). Si la física cambia, es un sistema hermano que
 publica las mismas señales (carburador e inyección → `fuel.mixture`). El
-criterio y la lista de arquetipos los fija A10
-(`plans/2026-09-26-sistemas-genericos.md` §1). La tabla sirve para ubicar
+criterio está en `FICHAS.md` (Contexto común, 3) y la lista de arquetipos
+la fija A10. La tabla sirve para ubicar
 qué variantes tiene que cubrir cada arquetipo; las fechas son aproximadas y
 cambian según el mercado.
 

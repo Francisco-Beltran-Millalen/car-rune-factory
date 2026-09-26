@@ -7,6 +7,9 @@
   cita por `§n`.
 - `AHORA.md` — bitácora de trabajo (≤500 líneas). Lo cerrado se recorta; la
   historia queda en git.
+- `FICHAS.md` — una ficha autocontenida por tarea pendiente: qué es, qué
+  leer (con sección exacta), qué archivos tocar y cómo se acepta. Es lo que
+  lee el agente que trabaja.
 - `SISTEMAS.md` — catálogo de sistemas del auto → módulo → estado.
 - `CONTRATOS.md` — interfaces exactas del core (descriptor, modelo, vista,
   specs de UI, loop, partículas, shell). La fuente de verdad de las firmas es
@@ -19,9 +22,8 @@
 
 **Registro histórico:** `plans/` — cada plan tal como se aprobó, con fecha.
 No se edita después de aprobado, salvo un aviso al inicio que diga qué
-lo reemplaza. Para implementar, **la ficha de la tarea** (hoy:
-`plans/2026-09-25-simulacion-antes-que-juego.md` §6, apuntada desde
-`AHORA.md`) dice qué partes de qué planes leer. `informes/` — informes de ejecución de un
+lo reemplaza. Para implementar, **la ficha de la tarea** (`FICHAS.md`) dice qué partes de
+qué planes leer. `informes/` — informes de ejecución de un
 hito o migración (qué se hizo y qué errores aparecieron); tampoco se editan.
 
 Si algo en los docs vivos se contradice con un plan, manda lo vivo. Si dos

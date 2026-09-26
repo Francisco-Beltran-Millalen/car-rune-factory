@@ -1,5 +1,9 @@
 # Plan: sistemas genéricos (arquetipos) y carrocería a futuro
 
+> **Aviso:** lo vigente de este plan (§1, §4 y §5) quedó consolidado en
+> `docs/FICHAS.md`. Este archivo es registro histórico; para trabajar se
+> usa la ficha.
+
 Enmienda del mismo día a `2026-09-26-alcance-auto-completo.md`. Reemplaza
 su §4 punto 1 (configuración del vehículo) y el alcance de restauración de
 su §1 y §3. Lo demás de ese plan sigue vigente.

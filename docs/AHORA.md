@@ -43,16 +43,13 @@ es una tarea chica (plan §12, camino 1) y se agrega a la tabla de abajo
 Las listas de archivos de los planes 2026-09-23 y 2026-09-24 dicen `.js`:
 léanse como `.ts`.
 
-## EN CURSO — Simulación antes que juego (plan 2026-09-25)
+## EN CURSO — Simulación antes que juego
 
-**Leer primero `plans/2026-09-25-simulacion-antes-que-juego.md` (§6: la ficha de la tarea).** Decisión del
-usuario (2026-09-25): el laboratorio (se ve todo) va primero y vale por sí
-solo como herramienta para aprender mecánica; el juego (se oculta el estado y
-se diagnostica con herramientas) va después, cuando el usuario diga que la
-simulación está bien. El **qué** de cada tarea sigue en
-`plans/2026-09-23-arquitectura-juego.md` (§8, §9, §14); ese plan de hoy fija el
-**orden** y los cambios (A6 crea `fuel/faults.ts`, A7 se desbloquea en SVG,
-A6b y A15 son nuevas, A10 incluye el laboratorio del vehículo).
+**Tu ficha está en `docs/FICHAS.md`**: lee su "Contexto común" y después la
+ficha de tu tarea, y sólo lo que esa ficha nombre. Ahí están las decisiones
+vigentes (laboratorio antes que juego; el auto completo de 1970 a 2010,
+modelado por sistema con arquetipos). No leas los planes de 2026-09-25 y
+2026-09-26 por tu cuenta: lo vigente ya está en las fichas.
 
 Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
 `npm run check` verde, un CERRADO aquí y un commit.
@@ -71,18 +68,18 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ✅ |
 | A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ⏳ **siguiente** |
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ⏳ |
-| A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ arquetipos por sistema y señales nuevas (plan 2026-09-26-sistemas-genericos §5)** | A7 | ⏳ |
+| A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ arquetipos por sistema y señales nuevas (`FICHAS.md`)** | A7 | ⏳ |
 | A11 | Ciclo de 4 tiempos: spec → plan → código (plan 2026-09-25 §3.5) | A10 | ⏳ |
 | A12 | Encendido | A10 | ⏳ |
 | A13 | Refrigeración | A10 | ⏳ |
 | A14 | Lubricación | A10 | ⏳ |
-| A16 | Carburador: sistema hermano de `fuel`, publica `fuel.mixture` (plan 2026-09-26-sistemas-genericos §5) | A10 | ⏳ |
+| A16 | Carburador: sistema hermano de `fuel`, publica `fuel.mixture` (`FICHAS.md`) | A10 | ⏳ |
 | A15 | Laboratorio del vehículo (sistemas relacionados), con un vehículo antiguo y uno moderno | A11–A14, A16 | ⏳ |
 
 **Bloque S2 — resto del auto** (después de A15; el usuario elige el orden al
 cerrar A15): eléctrico (carga y arranque), frenos, tren motriz, suspensión,
 dirección y ruedas, e inspección visual de carrocería. Sin fichas todavía
-(plan 2026-09-26-sistemas-genericos §5).
+(`FICHAS.md`).
 
 **Puerta:** el bloque G empieza sólo cuando el usuario lo escriba aquí.
 
@@ -96,12 +93,7 @@ dirección y ruedas, e inspección visual de carrocería. Sin fichas todavía
 | D-motor | Decisión del usuario; afecta al juego, el laboratorio sigue en SVG | A8 | ⏸ |
 | A9 | Armar circuitos E4 (plan propio) | D-motor | ⏸ |
 
-**Siguiente paso: A6b.** Su ficha está en `plans/2026-09-25-simulacion-antes-que-juego.md`
-§6: dice qué leer, qué ignorar, qué archivos tocar y cómo se acepta. **Cada tarea
-del bloque S tiene su ficha ahí; léanla antes que cualquier otro plan**, junto
-con sus agregados de `plans/2026-09-26-sistemas-genericos.md` §5 (sistemas
-por arquetipo: se modela por sistema, no por auto, con variantes de
-1970–2010; si chocan con la ficha, mandan los agregados).
+**Siguiente paso: A6b**, ficha en `docs/FICHAS.md#a6b--síntomas-del-combustible`.
 
 ## CERRADO 2026-09-25 — A6 Combustible sobre el solver (paridad con la referencia)
 

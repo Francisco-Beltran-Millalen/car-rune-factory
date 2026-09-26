@@ -5,9 +5,9 @@ Reglas para cualquier agente/asistente que trabaje en este repo.
 1. **Lee `docs/ARCHITECTURE.md` primero**, siempre, antes de tocar código —
    es la autoridad viva del proyecto (leyes §1-§33 + pipeline). Después
    `docs/AHORA.md` (qué está en curso), `docs/CONTRATOS.md` (interfaces
-   exactas), la **ficha de tu tarea** (`AHORA.md` dice dónde está: qué
-   secciones de qué planes leer y cuáles ignorar) y el `docs/modules/<id>.md`
-   de tu tarea. No leas planes viejos enteros: sólo lo que nombre la ficha.
+   exactas), y en `docs/FICHAS.md` el "Contexto común" y la **ficha de tu
+   tarea** (qué secciones de qué planes leer y cuáles ignorar). No leas
+   planes viejos enteros: sólo lo que nombre la ficha.
 2. **No asumas qué hace el código por su nombre.** Lee la lógica real antes
    de describir o depender de un comportamiento.
 3. **El usuario se puede equivocar.** No le des la razón por default —
@@ -21,6 +21,13 @@ Reglas para cualquier agente/asistente que trabaje en este repo.
 5. **Los planes se guardan.** Todo plan nuevo va a
    `docs/plans/AAAA-MM-DD-<tema>.md` antes de implementarlo. Los planes son
    registro histórico; lo vivo son los docs de `docs/`.
+   **Los planes y fichas se escriben para que otro los lea: detallados y
+   fáciles de leer**, con lectura lineal. Una ficha por tarea, autocontenida,
+   en `docs/FICHAS.md`; nada de mandar a saltar entre varios planes ni a
+   secciones ya reemplazadas. Si una decisión cambia una tarea, se actualiza
+   su ficha (no se apila una enmienda en otro archivo). Antes de cerrar un
+   plan, recorre el camino de lectura de punta a punta como si fueras el
+   próximo agente.
 6. **Toca sólo los archivos de tu tarea** (§12). Lo que el core no te da se
    pide en `docs/core-requests.md`, no se parcha desde un módulo.
 7. **Al cerrar una tarea**: `npm run check` en verde (tipos, lint sin

@@ -2,7 +2,7 @@
 
 > Extraído de `docs/plans/2026-09-22-plan-maestro.md`. Este archivo es el **vivo**: si cambia la spec, se cambia acá (y se anota en `AHORA.md`).
 
-- **Arquetipo**: esta spec es la variante COP (~1995–2010). La bobina es la misma en todas las épocas; lo intercambiable es quién corta el primario (platinos + condensador o transistor), quién reparte la alta (distribuidor o COP/DIS) y quién decide el avance (contrapesos + vacío o ECU). Plan 2026-09-26-sistemas-genericos §1; A10 lo confirma antes de A12.
+- **Arquetipo**: esta spec es la variante COP (~1995–2010). La bobina es la misma en todas las épocas; lo intercambiable es quién corta el primario (platinos + condensador o transistor), quién reparte la alta (distribuidor o COP/DIS) y quién decide el avance (contrapesos + vacío o ECU). Qué se implementa: `FICHAS.md` → A12.
 - **Tipo**: bobina por cilindro (COP) comandada por la ECU. Sensor de cigüeñal con rueda 60-2.
 - **Piezas**: `battery`, `key`, `ecu`, `crankSensor`, `toothWheel`, `igniter` (transistor), `coilPrimary`, `coilSecondary`, `sparkPlug`, `cylinder`.
 - **Física**:
