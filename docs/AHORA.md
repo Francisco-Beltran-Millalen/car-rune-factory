@@ -71,7 +71,7 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ✅ |
 | A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ⏳ **siguiente** |
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ⏳ |
-| A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ variantes por época y ubicación de la carrocería (plan 2026-09-26 §4)** | A7 | ⏳ |
+| A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ arquetipos por sistema (planes 2026-09-26: alcance §4 y sistemas-genericos §1)** | A7 | ⏳ |
 | A11 | Ciclo de 4 tiempos: spec → plan → código (plan 2026-09-25 §3.5) | A10 | ⏳ |
 | A12 | Encendido | A10 | ⏳ |
 | A13 | Refrigeración | A10 | ⏳ |

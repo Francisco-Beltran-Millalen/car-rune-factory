@@ -64,18 +64,23 @@ Catálogo de a dónde apuntar, no compromiso de orden. La prioridad real vive en
 
 ## Chasis y carrocería
 
-- **Estructura** 💭 — chasis de largueros (body-on-frame) o monocasco;
-  cotas de referencia para el enderezado.
-- **Restauración** 💭 — estado por panel (sano, óxido superficial,
-  perforado, soldado, desalineado, capas de pintura) y procesos que lo
-  cambian: lijar, cortar, soldar un parche, tirar en bancada, masillar,
-  aparejo, pintar. No es una red: va fuera del solver, con plan propio.
+- **Estructura** 💭 — chasis de largueros (body-on-frame) o monocasco.
+- **Inspección visual** 💭 — óxido, perforación y deformación como pistas
+  del diagnóstico. No es una red: va fuera del solver, con plan propio.
+- **Soldadura** 💭 — minijuego muy a futuro (`HORIZONTE_JUEGO.md`).
+  Enderezado y pintura quedan como ideas sin fecha.
 
 ## Variantes por época (1970–2010)
 
-Todo es combustión interna. Las fechas son aproximadas y cambian según el
-mercado. Cada auto es una combinación válida; el cómo se modela lo decide A10
-(`plans/2026-09-26-alcance-auto-completo.md` §4).
+Todo es combustión interna. **Se modela por sistema, no por auto**: cada
+sistema es un arquetipo que encapsula sus variantes. Si la física es la
+misma, la variante es una pieza intercambiable (platinos o transistor
+cortando la misma bobina). Si la física cambia, es un sistema hermano que
+publica las mismas señales (carburador e inyección → `fuel.mixture`). El
+criterio y la lista de arquetipos los fija A10
+(`plans/2026-09-26-sistemas-genericos.md` §1). La tabla sirve para ubicar
+qué variantes tiene que cubrir cada arquetipo; las fechas son aproximadas y
+cambian según el mercado.
 
 | Sistema | ~1970–1985 | ~1985–1995 | ~1995–2010 |
 |---|---|---|---|

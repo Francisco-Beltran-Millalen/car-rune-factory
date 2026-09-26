@@ -1,5 +1,9 @@
 # Plan: alcance del auto completo y variantes por época
 
+> **Enmendado el mismo día** por `2026-09-26-sistemas-genericos.md`: sistemas
+> por arquetipo en vez de configuración por auto (§4.1), y la restauración de
+> carrocería pasa a inspección visual, con la soldadura muy a futuro.
+
 Decisión del usuario del 2026-09-26. Este plan registra el alcance nuevo y lo
 lleva a los docs vivos (`NORTE.md`, `SISTEMAS.md`, `modules/four-stroke.md`,
 `modules/ignition.md`, `AHORA.md`). **No cambia el orden del bloque S**: sólo

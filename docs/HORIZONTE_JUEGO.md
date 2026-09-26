@@ -55,3 +55,12 @@ etapa posterior, **armar el sistema él mismo**.
 
 Antes de elegir: verificar las versiones actuales y el estado de cada engine
 contra su documentación. No decidir de memoria.
+
+## Soldadura de carrocería (muy a futuro, 2026-09-26)
+
+La carrocería y el chasis entran primero como **inspección visual** (óxido,
+perforación, deformación) dentro del diagnóstico. Mucho más adelante, un
+minijuego de **soldadura** con precisión abstracta, al estilo de los juegos
+de cirugía de Wii (tipo *Trauma Center*): seguir la unión, mantener la
+distancia y la velocidad, y no perforar la chapa. Ver
+`plans/2026-09-26-sistemas-genericos.md` §2.
