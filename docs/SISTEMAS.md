@@ -10,8 +10,12 @@ Catálogo de a dónde apuntar, no compromiso de orden. La prioridad real vive en
   colador, válvula check, filtro, riel, 4 inyectores, regulador con
   referencia de vacío, retorno. Spec completa en `modules/fuel.md`.
 - **Ciclo de 4 tiempos** ⏳ `four-stroke` — pistón, biela, cigüeñal,
-  válvulas, árbol de levas, correa de distribución 2:1, diagrama P-V.
+  válvulas, árbol de levas, distribución 2:1, diagrama P-V.
   `modules/four-stroke.md`.
+- **Distribución** ⏳ (dentro de `four-stroke`) — piñón del cigüeñal,
+  chaveta, cadena/correa/engranajes, tensor, guías, piñón de leva; OHV,
+  SOHC, DOHC. Fallas: chaveta cortada, tensor débil, guía rota, cadena
+  estirada.
 - **Encendido** ⏳ `ignition` — batería, ECU, sensor de cigüeñal 60-2,
   transistor, bobina COP, bujía, osciloscopio. `modules/ignition.md`.
 - **Refrigeración** ⏳ `cooling` — bomba de agua, termostato, radiador,
@@ -20,6 +24,9 @@ Catálogo de a dónde apuntar, no compromiso de orden. La prioridad real vive en
 - **Lubricación** ⏳ `lubrication` — cárter, bomba de engranajes, válvula de
   alivio, filtro con bypass, galerías, cojinetes, luz de presión.
   `modules/lubrication.md`.
+- **Carburador** 💭 — cuba, flotador, surtidores de ralentí y principal,
+  estrangulador (choke), bomba de aceleración, bomba de bencina mecánica.
+  Variante antigua de la alimentación.
 - **Admisión / mariposa / MAP** 💭 — hoy se representa sólo como `pMan` en
   combustible y como presión de admisión en 4 tiempos.
 - **Escape / catalizador / sonda lambda** 💭 — cerraría el lazo de mezcla con
@@ -29,15 +36,56 @@ Catálogo de a dónde apuntar, no compromiso de orden. La prioridad real vive en
 
 ## Eléctrico
 
-- **Carga (alternador + regulador)** 💭 — hoy es `+1.4 V` fijo con el motor
-  en marcha.
-- **Arranque (motor de partida)** 💭
+- **Carga** 💭 — dínamo (los más viejos), alternador con regulador externo
+  o interno. Hoy es `+1.4 V` fijo con el motor en marcha.
+- **Arranque (motor de partida)** 💭 — solenoide, piñón Bendix.
+- **Distribución eléctrica** 💭 — fusibles, relés, masas, luces.
 
-## Tren motriz y chasis
+## Tren motriz
 
-- **Embrague / caja de cambios** 💭
-- **Frenos hidráulicos** 💭 — bomba de freno, servo de vacío, cálipers, ABS.
-- **Dirección hidráulica** 💭
+- **Embrague** 💭 — disco, prensa, collarín, accionamiento por cable o
+  hidráulico.
+- **Caja de cambios** 💭 — manual y automática (convertidor de par).
+- **Disposición de la tracción** 💭 — trasera (cardán, crucetas, puente
+  rígido), delantera (semiejes, homocinéticas), 4x4 (caja de transferencia).
+- **Diferencial** 💭
+
+## Frenos, suspensión, dirección y ruedas
+
+- **Frenos hidráulicos** 💭 — bomba de freno, servo de vacío, líneas, disco
+  y tambor, cálipers, cilindros de rueda, freno de mano, ABS (desde los 90).
+- **Suspensión** 💭 — eje rígido con ballestas, McPherson, doble horquilla,
+  barra de torsión; amortiguadores, espirales, rótulas, bujes, bandejas.
+  Modelo cuasiestático (carga, juego, geometría, desgaste), sin manejo.
+- **Dirección** 💭 — caja de bolas recirculantes o cremallera, asistencia
+  hidráulica, terminales, alineación (convergencia, caída, avance).
+- **Ruedas y neumáticos** 💭 — llanta, neumático (presión, desgaste por
+  zona, fecha), rodamientos, balanceo, pernos.
+
+## Chasis y carrocería
+
+- **Estructura** 💭 — chasis de largueros (body-on-frame) o monocasco;
+  cotas de referencia para el enderezado.
+- **Restauración** 💭 — estado por panel (sano, óxido superficial,
+  perforado, soldado, desalineado, capas de pintura) y procesos que lo
+  cambian: lijar, cortar, soldar un parche, tirar en bancada, masillar,
+  aparejo, pintar. No es una red: va fuera del solver, con plan propio.
+
+## Variantes por época (1970–2010)
+
+Todo es combustión interna. Las fechas son aproximadas y cambian según el
+mercado. Cada auto es una combinación válida; el cómo se modela lo decide A10
+(`plans/2026-09-26-alcance-auto-completo.md` §4).
+
+| Sistema | ~1970–1985 | ~1985–1995 | ~1995–2010 |
+|---|---|---|---|
+| Alimentación | carburador, bomba mecánica | monopunto (TBI), multipunto con retorno | multipunto con retorno (`fuel`) y sin retorno |
+| Encendido | platinos + condensador + distribuidor | electrónico con distribuidor (Hall/inductivo) | DIS y COP (`ignition`) |
+| Distribución | OHV con varillas, cadena; SOHC | SOHC/DOHC, correa | DOHC, correa o cadena |
+| Carga | dínamo → alternador con regulador externo | alternador con regulador interno | alternador gestionado |
+| Tracción | trasera dominante | delantera se generaliza | delantera, trasera, 4x4 |
+| Estructura | largueros y monocasco | monocasco | monocasco |
+| Frenos | tambor atrás, disco o tambor adelante | disco adelante, ABS aparece | ABS habitual |
 
 ## Cómo se entrelazan los sistemas
 
@@ -74,7 +122,7 @@ tocan sólo a través del motor o por una falla, `—` nunca.
 | **Combustible** | | ○ vacío ref. | — | ○ mezcla | — | · dilución | ● bomba/relé | ○ lambda | — | — | — |
 | **Admisión/aire** | ○ | | — | ○ aire | — | — | ○ sensores | — | — | ○ servo de vacío | — |
 | **Encendido** | — | — | | ○ chispa | — | — | ● bobinas | — | — | — | — |
-| **Motor (4T)** | ○ | ○ | ○ | | ○ calor + correa | ○ engranaje | ○ arranque/alternador | ○ gases | ○ embrague | · vacío (vía admisión) | ○ correa |
+| **Motor (4T)** | ○ | ○ | ○ | | ○ calor + correa | ○ engranaje, tensor | ○ arranque/alternador | ○ gases | ○ embrague | · vacío (vía admisión) | ○ correa |
 | **Refrigeración** | — | — | — | ○ | | · culata/enfriador | ● ventilador | — | · enfriador ATF | — | — |
 | **Lubricación** | · | — | — | ○ | · | | ○ sensor presión | — | — | — | — |
 | **Eléctrico** | ● | ○ | ● | ○ | ● | ○ | | ○ sonda | ○ TCU (automáticas) | ○ ABS | ○ EPS |
@@ -91,7 +139,8 @@ ejemplo:
 
 (La matriz es de **contacto**: úsala para descartar, pero un generador de
 casos también debe seguir las celdas `·`, porque ahí están las pistas falsas
-útiles.)
+útiles.) La matriz todavía no incluye suspensión, ruedas ni carrocería;
+se completa en A10.
 
 Esto es útil para el juego: un síntoma de frenos **no** sirve de pista para
 el encendido. Los descartes también enseñan.

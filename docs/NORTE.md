@@ -26,6 +26,16 @@ enganchar. La jugabilidad nueva (diagnóstico, armado, casos) se construye
 después, sobre una simulación ya confiable. Orden en
 `plans/2026-09-25-simulacion-antes-que-juego.md`.
 
+**Alcance (decisión del usuario, 2026-09-26):** el **auto completo**, lo más
+cerca que se pueda simular y abstraer: motor, tren motriz, frenos, eléctrico,
+suspensión, dirección, ruedas y neumáticos, chasis y carrocería. Autos de
+**1970 a 2010**, sólo combustión interna, con sus **variantes por época**
+(carburador o inyección, platinos o encendido electrónico, tracción trasera,
+delantera o 4x4, chasis de largueros o monocasco). Además de diagnosticar y
+reparar, se **restaura**: óxido, corte y soldadura, enderezado del chasis y
+pintura. El orden no cambia: primero el laboratorio del motor. Detalle en
+`plans/2026-09-26-alcance-auto-completo.md`.
+
 (≤200 líneas; visión. Táctico en `AHORA.md`, reglas en `ARCHITECTURE.md`,
 catálogo en `SISTEMAS.md`.)
 
@@ -64,7 +74,10 @@ el candidato para cuando llegue "armar circuitos" (ver `HORIZONTE_JUEGO.md`).
 5. **Motor completo** 💭 — los módulos conectados por señales (ver §11).
 6. **Juegos** 💭 — nombrar piezas, diagnóstico dentro de un sistema, armar
    circuitos. Ver `plans/2026-09-23-arquitectura-juego.md`.
-7. **Casos entre sistemas** 💭 — **el objetivo final**: un vehículo con varios
+7. **Resto del auto** 💭 — tren motriz, frenos, eléctrico, suspensión,
+   dirección, ruedas, chasis y carrocería (restauración), y las variantes por
+   época de cada sistema. Catálogo en `SISTEMAS.md`.
+8. **Casos entre sistemas** 💭 — **el objetivo final**: un vehículo con varios
    sistemas acoplados y casos al estilo Carmen Sandiego (expediente, pistas,
    sospechosos, orden de trabajo). Ver la sección 14 del mismo plan.
 
@@ -75,4 +88,7 @@ el candidato para cuando llegue "armar circuitos" (ver `HORIZONTE_JUEGO.md`).
 - 3D, **por ahora**. Todo es 2D esquemático con layout fijo. El horizonte de
   juego (piezas movibles, armar el circuito, 3D) está en `HORIZONTE_JUEGO.md`.
 - Exactitud de ingeniería (CFD, termodinámica completa). Coherente > exacto.
+  Suspensión y ruedas se diagnostican en el taller (juego, ruido, desgaste,
+  cotas), sin simular la conducción.
+- Autos eléctricos o híbridos, y autos de antes de 1970 o después de 2010.
 - Multiusuario, cuentas, backend.

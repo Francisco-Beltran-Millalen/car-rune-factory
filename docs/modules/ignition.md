@@ -2,6 +2,7 @@
 
 > Extraído de `docs/plans/2026-09-22-plan-maestro.md`. Este archivo es el **vivo**: si cambia la spec, se cambia acá (y se anota en `AHORA.md`).
 
+- **Variante**: esta spec es la de ~1995–2010 (COP). Platinos + condensador + distribuidor, electrónico con distribuidor y DIS son variantes por época (`SISTEMAS.md`, plan 2026-09-26 §4); A10 decide cómo se modelan antes de A12.
 - **Tipo**: bobina por cilindro (COP) comandada por la ECU. Sensor de cigüeñal con rueda 60-2.
 - **Piezas**: `battery`, `key`, `ecu`, `crankSensor`, `toothWheel`, `igniter` (transistor), `coilPrimary`, `coilSecondary`, `sparkPlug`, `cylinder`.
 - **Física**:
