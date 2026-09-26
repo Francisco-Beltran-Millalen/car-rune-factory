@@ -4,13 +4,30 @@
 import type { ElementDef, Fluid } from '../solver/types.ts';
 import { createBattery, createCurrentLoad, createJunction, createResistor, createSwitch } from './electric.ts';
 import {
+  createCentrifugalPump,
   createElectricPump,
   createOrifice,
   createPressureSource,
   createReliefRegulator,
   createTank,
 } from './hydraulic.ts';
-import { createCheckValve, createLeak, createRestrictor, createTee, createVolume } from './passive.ts';
+import {
+  createCheckValve,
+  createHydroNode,
+  createLeak,
+  createRestrictor,
+  createTee,
+  createVariableOrifice,
+  createVolume,
+} from './passive.ts';
+import {
+  createAdvection,
+  createHeatCapacity,
+  createHeatSource,
+  createTemperatureSource,
+  createThermalConductance,
+  createThermalNode,
+} from './thermal.ts';
 import { VISUAL_TYPE } from './visual.ts';
 
 export type ElementFactory = (
@@ -27,10 +44,15 @@ export interface ElementTypeInfo {
 }
 
 export {
+  createAdvection,
   createBattery,
+  createCentrifugalPump,
   createCheckValve,
   createCurrentLoad,
   createElectricPump,
+  createHeatCapacity,
+  createHeatSource,
+  createHydroNode,
   createJunction,
   createLeak,
   createOrifice,
@@ -41,6 +63,10 @@ export {
   createSwitch,
   createTank,
   createTee,
+  createTemperatureSource,
+  createThermalConductance,
+  createThermalNode,
+  createVariableOrifice,
   createVolume,
 };
 
@@ -63,5 +89,14 @@ export const ELEMENT_TYPES: Readonly<Record<string, ElementTypeInfo>> = {
   switch: { create: createSwitch },
   currentLoad: { create: createCurrentLoad },
   junction: { create: createJunction, joint: true, multiple: true, },
+  centrifugalPump: { create: createCentrifugalPump },
+  variableOrifice: { create: createVariableOrifice },
+  hydroNode: { create: createHydroNode, joint: true, multiple: true },
+  heatSource: { create: createHeatSource },
+  temperatureSource: { create: createTemperatureSource },
+  thermalNode: { create: createThermalNode, joint: true, multiple: true },
+  thermalConductance: { create: createThermalConductance },
+  advection: { create: createAdvection },
+  heatCapacity: { create: createHeatCapacity },
   visual: VISUAL_TYPE,
 };

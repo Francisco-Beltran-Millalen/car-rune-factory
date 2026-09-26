@@ -179,6 +179,14 @@ export function compileCircuit<S extends CircuitState = CircuitState>(
     }
   }
 
+  /** `CircuitDef.initial`: potencial de arranque de nodos libres (A13). */
+  function applyInitial(): void {
+    for (const [key, value] of Object.entries(def.initial ?? {})) {
+      const node = portToNode[key];
+      if (node !== undefined) solver.setPotential(node, value);
+    }
+  }
+
   function step(dt: number): void {
     applyBindings();
     const context: ControllerContext = {
@@ -200,6 +208,7 @@ export function compileCircuit<S extends CircuitState = CircuitState>(
     Object.assign(faults, initialFaults);
     for (const element of Object.values(elements)) element.init?.(initOverrides);
     solver = createSolver({ nodeCount, elements: solverElements, ground: fixed });
+    applyInitial();
     controllers = createControllers(controllerDefs, controllerTypes);
     probeValues = {};
     publish();
@@ -218,6 +227,7 @@ export function compileCircuit<S extends CircuitState = CircuitState>(
     reset,
   };
 
+  applyInitial();
   publish();
 
   return {

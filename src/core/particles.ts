@@ -68,6 +68,8 @@ export interface FlowOptions {
 export interface Flow {
   setSpeed(pxPerSec: number): void;
   setStyle(className: string): void;
+  /** Tinte 0..1 para el CSS (`--t`), p. ej. la temperatura del refrigerante. */
+  setTint(t: number): void;
   setDensity(d: number): void;
   /** Fracción 0..1 de partículas dibujadas como burbujas de aire. */
   setAir(f: number): void;
@@ -94,6 +96,7 @@ export function createFlow({
   let airFraction = 0;
   let baseClass = className;
   let dirty = true;
+  let tint: number | null = null;
 
   function restyle(): void {
     for (let i = 0; i < count; i++) {
@@ -104,6 +107,7 @@ export function createFlow({
       const air = hash01(i + 7919) < airFraction;
       dot.setAttribute('class', `particle ${air ? 'p-air' : baseClass}`);
       dot.style.display = visible ? '' : 'none';
+      if (tint !== null) dot.style.setProperty('--t', tint.toFixed(3));
     }
     dirty = false;
   }
@@ -117,6 +121,12 @@ export function createFlow({
         baseClass = cls;
         dirty = true;
       }
+    },
+    setTint(t): void {
+      const v = Math.max(0, Math.min(1, Number.isFinite(t) ? t : 0));
+      if (v === tint) return;
+      tint = v;
+      for (const dot of dots) dot.style.setProperty('--t', v.toFixed(3));
     },
     setDensity(d): void {
       const v = Math.round(Math.max(0, Math.min(1, d)) * 20) / 20;

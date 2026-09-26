@@ -331,4 +331,43 @@ describe('circuit — validate (§8.4)', () => {
     expect(codes).toContain('invalid-fixed');
     expect(codes).toContain('unconnected-port');
   });
+
+  it('un puerto thermal con uno hydraulic es domain-mismatch (A13)', () => {
+    const def: CircuitDef = {
+      id: 'mixed',
+      fluid: 'coolant',
+      parts: [
+        { id: 'heat', type: 'heatSource', x: 0, y: 0 },
+        { id: 'hose', type: 'restrictor', x: 0, y: 0, params: { k: 1 } },
+      ],
+      links: [{ id: 'l', from: 'heat.a', to: 'hose.a' }],
+    };
+    expect(issueCodes(validateCircuit(def, ELEMENT_TYPES))).toContain('domain-mismatch');
+  });
+
+  it('CircuitDef.initial arranca los nodos libres y reset lo repite', () => {
+    const def: CircuitDef = {
+      id: 'initial',
+      fluid: 'fuel',
+      parts: [
+        { id: 'c', type: 'volume', x: 0, y: 0, params: { c: 0.01 } },
+        { id: 'drain', type: 'leak', x: 0, y: 0, params: { k: 100 } },
+      ],
+      links: [{ id: 'l', from: 'c.a', to: 'drain.a' }],
+      faults: { sev: 1 },
+      initial: { 'c.a': 3 },
+    };
+    const circuit = compileCircuit({
+      def,
+      types: ELEMENT_TYPES,
+      state: {},
+      bindings: [{ source: 'faults', key: 'sev', part: 'drain', input: 'severity' }],
+    });
+    const node = circuit.portToNode['c.a'] ?? 0;
+    expect(circuit.solver.potential(node)).toBeCloseTo(3, 6);
+    for (let i = 0; i < 500; i++) circuit.model.step(DT);
+    expect(circuit.solver.potential(node)).toBeLessThan(2.9);
+    circuit.model.reset();
+    expect(circuit.solver.potential(node)).toBeCloseTo(3, 6);
+  });
 });

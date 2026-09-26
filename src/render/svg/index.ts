@@ -184,6 +184,15 @@ export function createSvgRenderer({
           link.flow.setAir(values.air);
           link.flow.update(dt);
         }
+        const range = vis?.potentialRange;
+        if (range) {
+          const t = (values.potential - range[0]) / (range[1] - range[0] || 1);
+          const tint = Math.max(0, Math.min(1, Number.isFinite(t) ? t : 0));
+          link.inner.style.setProperty('--t', tint.toFixed(3));
+          link.flow?.setTint(tint);
+          link.inner.style.opacity = '0.9';
+          continue;
+        }
         const opacity =
           vis?.opacity ?? (values.potential > 0 ? pressureOpacity(values.potential) : undefined);
         if (opacity !== undefined) link.inner.style.opacity = String(opacity);

@@ -18,8 +18,9 @@ Código que viole estas leyes no se implementa ni mergea.
 - **§4** Paso fijo: la física avanza con `fixedDt = 1 ms`, sin importar el
   framerate. `timeScale` sólo cambia cuántos pasos se dan por frame.
 - **§5** Unidades reales y explícitas: bar relativos (manométricos), L/h, V,
-  A, rpm, °C, s. La tabla de estado de `modules/<id>.md` es la fuente de
-  verdad de las unidades.
+  A, rpm, °C, s. Térmico: °C (potencial), W (flujo), J/K (capacidad).
+  La tabla de estado de `modules/<id>.md` es la fuente de verdad de las
+  unidades.
 - **§6** Robustez numérica: `step` nunca produce `NaN`/`Infinity` con
   ninguna combinación de params/faults. Se limita con `clamp`, y un test de
   fuzz con semilla lo fija.

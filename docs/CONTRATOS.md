@@ -121,7 +121,7 @@ createSolver({ nodeCount, elements, ground?, gmin?, maxIterations?, maxDelta?, t
 solver.step(dt) → { ok, iterations }
 solver.potential(node) / solver.reaction(node)   // reaction = flujo que sale del nodo fijo
 solver.setFixed(node, value) / solver.free(node)
-solver.stats → { failures, iterations }
+solver.setPotential(node, value)                 // escritura directa de un nodo libre (A13)
 solveDense(A, b, n): boolean                     // linalg: false si es singular
 ```
 
@@ -143,15 +143,18 @@ interface ElementTypeInfo { create: ElementFactory; joint?: boolean; multiple?: 
 // restrictor, checkValve, leak, volume, tee, electricPump, reliefRegulator,
 // orifice, tank, pressureSource, battery, resistor, switch (el resistor lo
 // pide el juguete de A5; no estaba en la tabla de P23 §8.2), currentLoad (A12:
-// la carga de corriente media del primario de la bobina), junction (A12: nudo
-// eléctrico joint/multiple) y visual (A7: la pieza sólo dibujable, sin puertos
-// ni flujos; se movió a `sim/elements/` en A11).
+// la carga de corriente media del primario de la bobina), junction, hydroNode,
+// thermalNode (A12/A13: nudos `joint`/`multiple`), centrifugalPump,
+// variableOrifice, heatSource, temperatureSource, thermalConductance,
+// advection y heatCapacity (A13: dominio thermal: °C/W/J/K) y visual (A7: la
+// pieza sólo dibujable; se movió a `sim/elements/` en A11).
 
 // Circuito (A5):
 compileCircuit<S extends CircuitState>(options: CompileOptions<S>): CompiledCircuit<S>
 validateCircuit(def, types, controllerTypes?): CircuitIssue[]
 // CircuitDef: parts, links ('part.port'), controllers, probes, params, faults,
-//   fixed ('part.port' → potencial: atm/chasis), fluid
+//   fixed ('part.port' → potencial: atm/chasis), initial ('part.port' →
+//   potencial de arranque de un nodo libre, A13), fluid
 // CompileOptions: types, controllerTypes?, bindings?, init?, state, params?,
 //   faults?, actions?, seed?
 // CircuitBinding: { source: 'params'|'faults', key, part, input } copia un

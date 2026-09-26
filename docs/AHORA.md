@@ -71,7 +71,7 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A10 | Plan del vehículo (planificador): `plans/2026-09-26-vehiculo.md` **v3** | A7 | ✅ aprobado 2026-09-26 |
 | A11 | Ciclo de 4 tiempos y distribución (spec + plan listos) | A10 | ✅ |
 | A12 | Encendido: platinos y COP (spec + plan listos) | A10 | ✅ |
-| A13 | Refrigeración (spec + plan listos) | A10 | ⏳ |
+| A13 | Refrigeración (spec + plan listos) | A10 | ✅ |
 | A14 | Lubricación (spec + plan listos) | A10 | ⏳ |
 | A16 | Carburador (spec + plan listos) | A10 | ⏳ |
 | A15 | Laboratorio del vehículo: `vehicle-70` y `vehicle-2000` (plan del vehículo) | A11–A14, A16 | ⏳ |
@@ -108,8 +108,75 @@ Turbo y diésel: sin plan hasta que el usuario diga si entran.
 **Planes (2026-09-26)**: el agente planificador escribió la spec
 (`docs/modules/<id>.md`) y el plan (`docs/plans/2026-09-26-<id>.md`) de
 todos los sistemas, A11–A25, y alineó el plan del vehículo (v3). El usuario
-aprobó el plan del vehículo el 2026-09-26; A11 ya está implementada (ver el
-CERRADO de abajo). Sigue A12, en orden.
+aprobó el plan del vehículo el 2026-09-26; A11, A12 y A13 ya están
+implementadas (ver los CERRADO de abajo). Sigue A14, en orden.
+
+## CERRADO 2026-09-26 — A13 Refrigeración
+
+Plan: `plans/2026-09-26-cooling.md`; spec: `modules/cooling.md`. Dos
+descriptores (`cooling-viscous`, `cooling-electric`) y la ruta vieja
+`#/lab/cooling` → `cooling-electric`. `npm run check` verde (**324** tests).
+
+- **Core nuevo**: dominio `thermal` (°C/W/J/K) en `Domain`; `setPotential` en
+  el solver (escribe `x`/`xStart` de un nodo libre y no toca los fijos) con
+  su test; `CircuitDef.initial` aplicado al compilar y en `reset`, con test;
+  elementos `centrifugalPump` y `variableOrifice` (los reusan A16/A18/A23);
+  elementos térmicos `heatSource`, `thermalConductance`, `advection`,
+  `heatCapacity`; y tres que el plan no listaba (§12, anotado):
+  `temperatureSource` (el ambiente fijo, hacía falta), `hydroNode` y
+  `thermalNode` (nudos `joint`/`multiple` para las redes de A13).
+  `restrictor` y `leak` suman sonda `q`. Conservación de la advección en un
+  lazo cerrado de 3 nodos probada (±1e-6 relativo).
+- **Física**: en la bomba centrífuga `Δp = p_out − p_in` (el signo inicial
+  estaba al revés y Newton quedaba oscilando en 0; se corrigió, no se tocó la
+  ley). `fastThermal` escala los controles (×20) y el estado publica sin
+  escalar; la advección se pasa por controlador (§25); nivel, aire de nivel y
+  de ebullición, presión de tapa, ventilador por histéresis (eléctrico) o
+  acople viscoso, sensor que miente y códigos quedan como pide la spec.
+- **Único ajuste de constante** (§14): `thermostatLeak` 2 % → **1 %**. Con el
+  2 % el `stuckClosed` se estabilizaba en ~126 °C y **no hervía** (el test 8
+  pide >120 °C *y* `boiling` a los 15 min); con 1 % hierve (~10 min) y el
+  calentamiento en ralentí sigue cruzando 85 °C a los 21,6 min (rango 15–30).
+- **Desviaciones anotadas**: el test 11 (manguera rota) corre **sin**
+  `fastThermal` porque el nivel no es un flujo térmico y con ×20 la fuga no
+  drenaba 1,5 L en el tiempo del test; el test 12 deja asentar el calefactor
+  30 s (la masa térmica del núcleo tiene τ ~9 s). El escenario "panal tapado a
+  fondo" (test 10) pasa de 104 °C y sigue subiendo con ebullición: el modelo
+  no acota ese runaway (el rango del test sólo pide >104).
+- **Vista**: drawers nuevos (`engineJacket`, `waterPump`+`pumpBelt`,
+  `thermostat`, `radiator`+`radiatorCap`, `fan` con motor/termocontacto/relé/
+  fusible o embrague, `expansionTank`, `heaterCore`, `tempGauge`+`tempSensor`)
+  y `cooling.css`. Para colorear el refrigerante por temperatura se agregaron
+  `visual.potentialRange` al renderer y `Flow.setTint` (escribe `--t` en el
+  tubo y las partículas; el CSS interpola con `color-mix`).
+- **Core config**: `vite.config.ts` sube `testTimeout` a 30 s: las
+  simulaciones largas de A13 compiten en paralelo y hacían fallar por tiempo
+  tests viejos de 5 s (el test 8 de combustible). `eslint.config.js` extiende
+  la excepción de `type` a `controllers` (el `core`/`mechanism` de A11/A12 y
+  los nuevos `constants/gas/timing/events` ya estaban). `router.ts` suma el
+  alias `cooling`.
+- Tests: `tests/cooling/model.test.ts` (17), `content.test.ts` (12) y los de
+  elementos/nodal/circuito.
+
+**Checklist de Firefox** (`npm run dev`) — la del plan §6:
+
+`#/lab/cooling-electric`:
+1. "Calentar desde frío": las partículas van del azul al rojo en el motor;
+   hasta ~88 °C todo circula por el bypass; después se abre el termostato y
+   el radiador se entibia.
+2. En ralentí caliente el ventilador se prende a 100 °C y se apaga a 95.
+3. "Tráfico con el ventilador muerto": la temperatura sube pasando 105 °C;
+   con la tapa fallada hierve antes (aparece vapor y burbujas).
+4. "Termostato pegado abierto en invierno": no pasa de ~50 °C.
+5. "Manguera rota": gotea, baja el nivel del depósito y luego aparecen
+   burbujas y sube la temperatura.
+6. "El reloj miente": el motor está rojo y el reloj marca 30 °C menos.
+7. El calefactor calienta la cabina (kW en lecturas) y tapado casi no.
+
+`#/lab/cooling-viscous`: el ventilador gira con el motor y acopla más con el
+radiador caliente; embrague gastado → recalienta en tráfico.
+
+Combustible, 4 tiempos, encendido y quiz siguen funcionando; F12 sin errores.
 
 ## CERRADO 2026-09-26 — A12 Encendido (platinos y COP)
 
@@ -155,6 +222,8 @@ tests; +37).
   suma el alias `ignition` con tests.
 - Tests: `tests/ignition/events.test.ts` (6), `core.test.ts` (15) y
   `content.test.ts` (16), más el elemento y el alias.
+
+**Verificado por el usuario en Firefox (2026-09-26): funciona.**
 
 **Checklist de Firefox** (`npm run dev`) — la del plan §5:
 
@@ -222,6 +291,8 @@ las cuentas del gas y la distribución). El usuario aprobó el plan del vehícul
   distribución con inset del chavetero, P-V y barras de compresión) y
   `four-stroke.css`. Tests: `tests/four-stroke/*` (gas 7, timing 5, model 11,
   contenido 13) y `tests/sim/signals.test.ts` (8).
+
+**Verificado por el usuario en Firefox (2026-09-26): funciona.**
 
 **Checklist de Firefox** (`npm run dev`) — la del plan §6:
 1. `#/lab/four-stroke-dohc`: a 120 rpm (preset "Cámara lenta") se ven los 4

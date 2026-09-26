@@ -61,6 +61,54 @@ function pumpOutput(dp: number, v: number, wear: number, airF: number, c: PumpCo
   return { q, i: base * vf, dqDv, dqDdp, diDv, diDdp };
 }
 
+/** Bomba centrífuga movida por correa (A13, spec cooling §5.1): puertos
+ *  `in`/`out`; control `n` (rpm de la bomba), `air` y `wear`.
+ *  `H = pMax·(n/nRef)²`, `q = qMax·(n/nRef)·√⁺(1 − Δp/H)·(1 − aire)`. */
+export function createCentrifugalPump(
+  params: Readonly<Record<string, number>>,
+  fluid: Fluid,
+): ElementDef {
+  const qMax = controlNumber(params['qMax'], 9000);
+  const pMax = controlNumber(params['pMax'], 1.5);
+  const nRef = controlNumber(params['nRef'], 6000);
+  const def: ElementDef = {
+    ports: hydraulic2('in', 'out', fluid),
+    params: { qMax, pMax, nRef },
+    control: { n: 0, air: 0, wear: 0 },
+    state: {},
+    faults: { wear: { label: 'Desgaste', kind: 'severity' } },
+    eval(pot, out) {
+      const o = pumpPoint(pot);
+      out.flow[0] = -o.q;
+      out.flow[1] = o.q;
+      out.jac[0] = o.dq;
+      out.jac[1] = -o.dq;
+      out.jac[2] = -o.dq;
+      out.jac[3] = o.dq;
+    },
+    commit: noCommit,
+    probes: { q: (pot) => pumpPoint(pot).q },
+  };
+  function pumpPoint(pot: Float64Array): { q: number; dq: number } {
+    // Δp = p_out − p_in: lo que la bomba debe vencer.
+    const dp = (pot[1] ?? 0) - (pot[0] ?? 0);
+    const n = Math.max(0, controlNumber(def.control['n']));
+    const air = clamp(controlNumber(def.control['air']), 0, 1);
+    const wear = clamp(controlNumber(def.control['wear']), 0, 1);
+    const ratio = n / Math.max(nRef, 1);
+    const w = 1 - 0.85 * wear;
+    const qm = qMax * w * ratio;
+    const pm = pMax * w * ratio * ratio;
+    if (qm <= 0 || pm <= 1e-9) return { q: 0, dq: 0 };
+    const x = 1 - dp / pm;
+    return {
+      q: qm * smoothSqrt(x) * (1 - air),
+      dq: qm * (1 - air) * smoothSqrtSlope(x) * (-1 / pm),
+    };
+  }
+  return def;
+}
+
 /** Bomba: puertos `e+`, `e-` (eléctricos) e `in`, `out` (hidráulicos). */
 export function createElectricPump(
   params: Readonly<Record<string, number>>,

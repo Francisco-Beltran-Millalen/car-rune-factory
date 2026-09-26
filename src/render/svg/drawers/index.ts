@@ -2,6 +2,14 @@
 // dibuja (nodos `tee`, piezas sólo topológicas).
 
 import type { DrawerFactory } from '../types.ts';
+import { engineJacketDrawer, thermostatDrawer, waterPumpDrawer } from './cooling/engine.ts';
+import {
+  expansionTankDrawer,
+  fanDrawer,
+  heaterCoreDrawer,
+  radiatorDrawer,
+  tempGaugeDrawer,
+} from './cooling/loop.ts';
 import { batteryDrawer, ecuDrawer, keyDrawer, relayDrawer, wiresDrawer } from './electrical.ts';
 import { compressionBarsDrawer } from './engine/bars.ts';
 import { cylinderSectionDrawer } from './engine/cylinder.ts';
@@ -46,4 +54,12 @@ export const DRAWERS: Readonly<Record<string, DrawerFactory>> = {
   distributor: distributorDrawer,
   toothWheel: toothWheelDrawer,
   scope: scopeDrawer,
+  engineJacket: engineJacketDrawer,
+  waterPump: waterPumpDrawer,
+  thermostat: thermostatDrawer,
+  radiator: radiatorDrawer,
+  fan: fanDrawer,
+  expansionTank: expansionTankDrawer,
+  heaterCore: heaterCoreDrawer,
+  tempGauge: tempGaugeDrawer,
 };

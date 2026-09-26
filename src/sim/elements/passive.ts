@@ -43,8 +43,87 @@ export function createRestrictor(
       out.jac[3] = -dq;
     },
     commit: noCommit,
+    probes: {
+      q: (pot) => {
+        const dp = (pot[0] ?? 0) - (pot[1] ?? 0);
+        const clog = clamp(controlNumber(def.control['clog']), 0, 1);
+        const kEff = k * (1 + clogFactor * clog);
+        return dp / Math.sqrt(kEff * (Math.abs(dp) + EPS_P));
+      },
+    },
   };
   return def;
+}
+
+/**
+ * Orificio variable (A13, spec cooling §5.1): conductancia
+ * `g = gOpen·open + gLeak`; usa la ley del restrictor con `k_ef = 1/g²`
+ * (antisimétrica y suave en 0). Params: `gOpen`, `gLeak` (L/h/√bar);
+ * `control.open` va de 0 (cerrado, sólo la fuga) a 1 (abierto).
+ */
+export function createVariableOrifice(
+  params: Readonly<Record<string, number>>,
+  fluid: Fluid,
+): ElementDef {
+  const gOpen = controlNumber(params['gOpen'], 1);
+  const gLeak = controlNumber(params['gLeak'], 0);
+  const def: ElementDef = {
+    ports: hydraulic2('a', 'b', fluid),
+    params: { gOpen, gLeak },
+    control: { open: 0 },
+    state: {},
+    eval(pot, out) {
+      const open = clamp(controlNumber(def.control['open']), 0, 1);
+      const g = gOpen * open + gLeak;
+      if (g <= 1e-9) {
+        out.flow[0] = 0;
+        out.flow[1] = 0;
+        out.jac.fill(0);
+        return;
+      }
+      const k = 1 / (g * g);
+      const dp = (pot[0] ?? 0) - (pot[1] ?? 0);
+      const s = Math.abs(dp) + EPS_P;
+      const q = dp / Math.sqrt(k * s);
+      const dq = (Math.abs(dp) / 2 + EPS_P) / (Math.sqrt(k) * Math.pow(s, 1.5));
+      out.flow[0] = -q;
+      out.flow[1] = q;
+      out.jac[0] = -dq;
+      out.jac[1] = dq;
+      out.jac[2] = dq;
+      out.jac[3] = -dq;
+    },
+    commit: noCommit,
+    probes: {
+      q: (pot) => {
+        const open = clamp(controlNumber(def.control['open']), 0, 1);
+        const g = gOpen * open + gLeak;
+        if (g <= 1e-9) return 0;
+        const dp = (pot[0] ?? 0) - (pot[1] ?? 0);
+        return dp / Math.sqrt((Math.abs(dp) + EPS_P) / (g * g));
+      },
+    },
+  };
+  return def;
+}
+
+/** Nudo hidráulico de 6 puertos (A13): todos al mismo nodo (`joint`,`multiple`). */
+export function createHydroNode(
+  _params: Readonly<Record<string, number>>,
+  fluid: Fluid,
+): ElementDef {
+  return {
+    ports: (['a', 'b', 'c', 'd', 'e', 'f'] as const).map((id) => ({
+      id,
+      domain: 'hydraulic' as const,
+      fluid,
+    })),
+    params: {},
+    control: {},
+    state: {},
+    eval: noEval,
+    commit: noCommit,
+  };
 }
 
 /**
@@ -106,6 +185,9 @@ export function createLeak(
       out.jac[0] = -k * severity * smoothSqrtSlope(p);
     },
     commit: noCommit,
+    probes: {
+      q: (pot) => k * clamp(controlNumber(def.control['severity']), 0, 1) * smoothSqrt(pot[0] ?? 0),
+    },
   };
   return def;
 }

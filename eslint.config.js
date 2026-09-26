@@ -255,7 +255,7 @@ export default tseslint.config(
   // `reference-model` es el nombre de A6 para el modelo de referencia;
   // `mechanism` y `core` son los de A11/A12 para sus controladores.
   {
-    files: ['src/modules/*/{model,reference-model,mechanism,core}.{js,ts}'],
+    files: ['src/modules/*/{model,reference-model,mechanism,core,controllers}.{js,ts}'],
     rules: { '@typescript-eslint/consistent-type-definitions': 'off' },
   },
 

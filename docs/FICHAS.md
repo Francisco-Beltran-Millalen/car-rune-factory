@@ -95,15 +95,6 @@ ellos ya está en las specs, los planes nuevos y aquí.
 
 ---
 
-## A13 — Refrigeración
-
-- **Spec**: `docs/modules/cooling.md`.
-- **Plan**: `docs/plans/2026-09-26-cooling.md`.
-- **Estrena**: el dominio `thermal` del solver, `heatSource`,
-  `thermalConductance`, `advection`, `heatCapacity`, `centrifugalPump`,
-  `variableOrifice`, `CircuitDef.initial` y `solver.setPotential`.
-- **Aceptación**: tests de la spec §11 y checklist del plan §6.
-
 ## A14 — Lubricación
 
 - **Spec**: `docs/modules/lubrication.md`.

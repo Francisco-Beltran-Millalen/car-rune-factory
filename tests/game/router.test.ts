@@ -21,6 +21,7 @@ describe('router (rutas nuevas A1)', () => {
     expect(parseHash('#/lab/four-stroke-ohv')).toEqual({ kind: 'lab', id: 'four-stroke-ohv' });
     expect(parseHash('#/ignition')).toEqual({ kind: 'lab', id: 'ignition-cop' });
     expect(parseHash('#/lab/ignition-points')).toEqual({ kind: 'lab', id: 'ignition-points' });
+    expect(parseHash('#/cooling')).toEqual({ kind: 'lab', id: 'cooling-electric' });
 
     // Portada y vacíos
     expect(parseHash('#/')).toEqual({ kind: 'home', id: null });

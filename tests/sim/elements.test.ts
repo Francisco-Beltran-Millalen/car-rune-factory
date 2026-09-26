@@ -3,10 +3,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   ELEMENT_TYPES,
+  createAdvection,
   createBattery,
+  createCentrifugalPump,
   createCheckValve,
   createCurrentLoad,
   createElectricPump,
+  createHeatCapacity,
+  createHeatSource,
   createJunction,
   createLeak,
   createOrifice,
@@ -17,8 +21,11 @@ import {
   createSwitch,
   createTank,
   createTee,
+  createThermalConductance,
+  createVariableOrifice,
   createVolume,
 } from '../../src/sim/elements/index.ts';
+import { createSolver } from '../../src/sim/solver/nodal.ts';
 import type { ElementDef, EvalOut } from '../../src/sim/solver/types.ts';
 
 interface Evaluated {
@@ -254,6 +261,80 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
     checkJacobian(load, [1.5, 0.8], 'currentLoad ΔV=0,7');
   });
 
+  it('centrifugalPump: ley de la bomba centrífuga (A13)', () => {
+    const pump = createCentrifugalPump({ qMax: 9000, pMax: 1.5, nRef: 6000 }, 'coolant');
+    pump.control['n'] = 6000;
+    const q0 = -(evaluate(pump, [0, 0]).flow[0] ?? 0);
+    expect(q0).toBeCloseTo(9000 / Math.sqrt(1 + 1e-4), 3);
+    expect(-(evaluate(pump, [0, 0.75]).flow[0] ?? 0)).toBeCloseTo(
+      9000 * (0.5 / Math.sqrt(0.5 + 1e-4)),
+      3,
+    );
+    pump.control['n'] = 3000;
+    expect(-(evaluate(pump, [0, 0]).flow[0] ?? 0)).toBeCloseTo(4500 / Math.sqrt(1 + 1e-4), 3);
+    pump.control['n'] = 6000;
+    pump.control['air'] = 0.5;
+    expect(-(evaluate(pump, [0, 0]).flow[0] ?? 0)).toBeCloseTo(q0 * 0.5, 3);
+    pump.control['air'] = 0;
+    checkJacobian(pump, [0, 0.5], 'centrifugalPump');
+  });
+
+  it('variableOrifice: g controla la conductancia (A13)', () => {
+    const vo = createVariableOrifice({ gOpen: 1000, gLeak: 0 }, 'coolant');
+    vo.control['open'] = 0.5;
+    const k = 1 / (500 * 500);
+    const dp = 0.5;
+    expect(-(evaluate(vo, [dp, 0]).flow[0] ?? 0)).toBeCloseTo(dp / Math.sqrt(k * (dp + 1e-4)), 6);
+    checkJacobian(vo, [0.5, 0], 'variableOrifice');
+    vo.control['open'] = 0;
+    expect(-(evaluate(vo, [dp, 0]).flow[0] ?? 0)).toBeCloseTo(0, 12);
+  });
+
+  it('heatSource, thermalConductance, advection y heatCapacity (A13)', () => {
+    const source = createHeatSource({});
+    source.control['q'] = 1000;
+    const heat = evaluate(source, [25]);
+    expect(heat.flow[0]).toBe(1000);
+    expect(heat.jac[0]).toBe(0);
+
+    const conductance = createThermalConductance({ g: 100 });
+    const cond = evaluate(conductance, [90, 20]);
+    expect(-(cond.flow[0] ?? 0)).toBeCloseTo(7000, 6);
+    expect(cond.flow[1]).toBeCloseTo(7000, 6);
+    checkJacobian(conductance, [90, 20], 'thermalConductance');
+
+    const advection = createAdvection({ mc: 500 });
+    const adv = evaluate(advection, [90, 60]);
+    expect(adv.flow[0]).toBe(0);
+    expect(adv.flow[1]).toBeCloseTo(15000, 6);
+    checkJacobian(advection, [90, 60], 'advection');
+  });
+
+  it('advection conserva la energía en un lazo cerrado de 3 nodos', () => {
+    const mc = 500;
+    const cap = 1000;
+    const solver = createSolver({
+      nodeCount: 3,
+      elements: [
+        { def: createAdvection({ mc }), nodes: [0, 1] },
+        { def: createAdvection({ mc }), nodes: [1, 2] },
+        { def: createAdvection({ mc }), nodes: [2, 0] },
+        { def: createHeatCapacity({ c: cap }), nodes: [0] },
+        { def: createHeatCapacity({ c: cap }), nodes: [1] },
+        { def: createHeatCapacity({ c: cap }), nodes: [2] },
+      ],
+    });
+    solver.setPotential(0, 80);
+    solver.setPotential(1, 40);
+    solver.setPotential(2, 20);
+    const total = (): number =>
+      cap * (solver.potential(0) + solver.potential(1) + solver.potential(2));
+    const before = total();
+    for (let i = 0; i < 2000; i++) solver.step(0.001);
+    expect(solver.stats.failures).toBe(0);
+    expect(Math.abs(total() - before)).toBeLessThan(Math.abs(before) * 1e-6);
+  });
+
   it('junction: todos los puertos son un nodo sin flujos', () => {
     const junction = createJunction();
     expect(junction.ports).toHaveLength(6);
@@ -279,6 +360,15 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
       'switch',
       'currentLoad',
       'junction',
+      'centrifugalPump',
+      'variableOrifice',
+      'heatSource',
+      'temperatureSource',
+      'thermalConductance',
+      'advection',
+      'heatCapacity',
+      'thermalNode',
+      'hydroNode',
       'visual',
     ];
     for (const type of types) {

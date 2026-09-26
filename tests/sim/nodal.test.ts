@@ -237,6 +237,17 @@ describe('nodal — createSolver (§8.1)', () => {
     expect(solver.potential(2)).toBe(0);
   });
 
+  it('setPotential arranca un nodo libre y no toca los fijos', () => {
+    const solver = createSolver({ nodeCount: 2, elements: [] });
+    solver.setPotential(0, 42);
+    solver.setFixed(1, 7);
+    solver.setPotential(1, 99);
+    const res = solver.step(DT);
+    expect(res.ok).toBe(true);
+    expect(solver.potential(0)).toBeCloseTo(42, 9);
+    expect(solver.potential(1)).toBeCloseTo(7, 9);
+  });
+
   it('setFixed/free cambian la incógnita sin NaN', () => {
     const solver = createSolver({ nodeCount: 2, elements: [el(resistor(10), 0, 1)] });
     run(solver, 0.01);

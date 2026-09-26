@@ -258,6 +258,15 @@ export function createSolver(options: SolverOptions): Solver {
     setFixed(node, NaN);
   }
 
+  /** Potencial inicial de un nodo libre (los fijos no se tocan). */
+  function setPotential(node: number, value: number): void {
+    if (node < 0 || node >= nodeCount) return;
+    if (!Number.isFinite(value)) return;
+    if (Number.isFinite(fixed[node] ?? NaN)) return;
+    x[node] = value;
+    xStart[node] = value;
+  }
+
   rebuildUnknowns();
 
   return {
@@ -266,6 +275,7 @@ export function createSolver(options: SolverOptions): Solver {
     reaction: (node: number): number => reactions[node] ?? 0,
     setFixed,
     free,
+    setPotential,
     stats,
   };
 }

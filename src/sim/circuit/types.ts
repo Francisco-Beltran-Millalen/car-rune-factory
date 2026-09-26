@@ -36,6 +36,11 @@ export interface CircuitLinkVisual {
   width?: number;
   /** Opacidad fija del fluido cuando no hay `potential`. */
   opacity?: number;
+  /**
+   * Rango `[frío, caliente]` del `potential` para colorear el fluido (A13):
+   * el renderer escribe `--t` (0..1) en el tubo y en las partículas.
+   */
+  potentialRange?: readonly [number, number];
 }
 
 export interface CircuitLinkDef {
@@ -78,6 +83,8 @@ export interface CircuitDef {
   faults?: Readonly<ParamRecord>;
   /** Puertos con potencial fijo: `'part.port'` → bar/V (atm, chasis, …). */
   fixed?: Readonly<Record<string, number>>;
+  /** Potencial inicial de nodos libres: `'part.port'` → valor (A13). */
+  initial?: Readonly<Record<string, number>>;
 }
 
 /** Enlaza un param/falla del modelo con el `control` de una parte. */

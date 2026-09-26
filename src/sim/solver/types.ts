@@ -4,7 +4,7 @@
 import type { FaultSpec } from '../../core/types.ts';
 
 /** Dominio de un puerto. El solver no convierte entre dominios (§8.1). */
-export type Domain = 'hydraulic' | 'electric';
+export type Domain = 'hydraulic' | 'electric' | 'thermal';
 
 /** Fluido de un puerto hidráulico; `air` es el vacío del múltiple (§30). */
 export type Fluid = 'fuel' | 'coolant' | 'oil' | 'brake' | 'atf' | 'air';
@@ -102,5 +102,11 @@ export interface Solver {
   setFixed(node: number, value: number): void;
   /** Libera un nodo fijado con `setFixed` (vuelve a ser incógnita). */
   free(node: number): void;
+  /**
+   * Escrita directa del potencial de un nodo **libre** (no toca los fijos):
+   * la usan `CircuitDef.initial` y las acciones de módulo (p. ej. la
+   * temperatura inicial del térmico, A13).
+   */
+  setPotential(node: number, value: number): void;
   readonly stats: SolverStats;
 }

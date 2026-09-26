@@ -3,6 +3,7 @@ import type { ModuleDescriptor } from '../core/types.ts';
 import fuel from './fuel/index.ts';
 import { fourStrokeDohc, fourStrokeOhv } from './four-stroke/index.ts';
 import { ignitionCop, ignitionPoints } from './ignition/index.ts';
+import { coolingElectric, coolingViscous } from './cooling/index.ts';
 
 export const modules: readonly ModuleDescriptor[] = [
   fuel,
@@ -10,4 +11,6 @@ export const modules: readonly ModuleDescriptor[] = [
   fourStrokeDohc,
   ignitionPoints,
   ignitionCop,
+  coolingViscous,
+  coolingElectric,
 ].sort((a, b) => a.order - b.order);

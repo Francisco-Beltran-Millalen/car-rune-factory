@@ -127,7 +127,20 @@ puertos son un nodo interno) y `multiple` (un puerto admite varias conexiones).
 | `switch` | a, b (eléc) | `R_on`/`R_off` según `control.closed`; `rOn`, `rOff` | `closed` | — |
 | `currentLoad` | a, b (eléc) | carga de corriente media: `I = control.i·smoothstep(ΔV/1 V)` (C¹, sin escalones para Newton); `i` | `i` | — |
 | `junction` | a..f (eléc) | nudo eléctrico: todos los puertos son el mismo nodo (`joint`, `multiple`), sin flujos (A12) | — | — |
+| `hydroNode` | a..f (hidr) | nudo hidráulico `joint`/`multiple` (A13) | — | — |
+| `centrifugalPump` | in, out (hidr) | `H = pMax·(n/nRef)²`, `q = qMax·(n/nRef)·√⁺(1−Δp/H)·(1−aire)` con `Δp = p_out−p_in`; params `qMax`, `pMax`, `nRef` en L/h/bar/rpm | `n`, `air`, `wear` | `wear` |
+| `variableOrifice` | a, b (hidr) | restrictor con `k = 1/g²`, `g = gOpen·open + gLeak`; `gOpen`, `gLeak` | `open` | — |
+| `heatSource` | a (térm) | inyecta `control.q` W (positivo calienta) | `q` | — |
+| `temperatureSource` | a (térm) | nodo fijo (Dirichlet) con `control.t` en °C | `t` | — |
+| `thermalConductance` | a, b (térm) | `q = g·(Ta − Tb)` W; `g` en W/K | `g` | — |
+| `advection` | a, b (térm) | *upwind*: inyecta en `b` `mc·(Ta − Tb)` W y nada en `a`; `mc` en W/K | `mc` | — |
+| `heatCapacity` | a (térm) | sólo `capacitance = c` (J/K, sin ×3600) | — | — |
+| `thermalNode` | a..f (térm) | nudo térmico `joint`/`multiple` (A13) | — | — |
 | `visual` | — | pieza sólo dibujable: sin puertos, sin flujos (A7; vive en `visual.ts` desde A11) | — | — |
+
+**Dominio térmico (A13)**: potencial °C, flujo W y capacidad J/K; lo usan las
+leyes de la refrigeración. El paso no cruza el 0 del nodo (§4), así que un
+nodo que pasa por 0 °C se detiene un instante en 0: se acepta.
 
 Las sondas de elemento (`probes`) llevan `pot` del elemento; pueden cerrar
 sobre su `state` (p. ej. `tank.level`). ℹ︎ `q` en la tabla es flujo hacia
