@@ -57,6 +57,9 @@ A6b y A15 son nuevas, A10 incluye el laboratorio del vehículo).
 Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
 `npm run check` verde, un CERRADO aquí y un commit.
 
+Informe del bloque ya hecho (qué se hizo, dificultades del solver y gaps del
+plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
+
 **Bloque S — simulación y laboratorio**
 
 | # | Tarea | Depende de | Estado |
