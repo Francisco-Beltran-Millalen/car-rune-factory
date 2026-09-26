@@ -3,6 +3,10 @@
 
 import type { DrawerFactory } from '../types.ts';
 import { batteryDrawer, ecuDrawer, keyDrawer, relayDrawer, wiresDrawer } from './electrical.ts';
+import { compressionBarsDrawer } from './engine/bars.ts';
+import { cylinderSectionDrawer } from './engine/cylinder.ts';
+import { pvDiagramDrawer } from './engine/pv.ts';
+import { timingDriveDrawer } from './engine/timing.ts';
 import { checkValveDrawer, pumpDrawer, strainerDrawer, tankDrawer } from './hydraulic.ts';
 import { filterDrawer, railDrawer } from './fuel-path.ts';
 import { injectorDrawer } from './injector.ts';
@@ -27,4 +31,8 @@ export const DRAWERS: Readonly<Record<string, DrawerFactory>> = {
   regulator: regulatorDrawer,
   vacuumHose: vacuumHoseDrawer,
   returnLine: returnLineDrawer,
+  cylinderSection: cylinderSectionDrawer,
+  timingDrive: timingDriveDrawer,
+  pvDiagram: pvDiagramDrawer,
+  compressionBars: compressionBarsDrawer,
 };

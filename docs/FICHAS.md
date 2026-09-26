@@ -95,24 +95,6 @@ ellos ya está en las specs, los planes nuevos y aquí.
 
 ---
 
-## A10 — Plan del vehículo (planificador; sin implementador)
-
-El plan está escrito (`plans/2026-09-26-vehiculo.md`, **v3**: alineado con
-las specs de todos los sistemas). **Falta la aprobación del usuario.** Al
-aprobarlo se cierra con un commit y empieza A11. Ningún agente
-implementador tiene que hacer nada en A10.
-
----
-
-## A11 — Ciclo de 4 tiempos y distribución
-
-- **Spec**: `docs/modules/four-stroke.md`.
-- **Plan**: `docs/plans/2026-09-26-four-stroke.md`.
-- **Estrena**: el bus de laboratorio (`src/sim/signals/`), el stub de fase,
-  `src/sim/engine/geometry.ts` y los mecanismos sobre `compileCircuit`.
-- **Aceptación**: los tests de la spec §11 y la checklist del plan §6
-  (incluye el chavetero ovalado que vio el usuario).
-
 ## A12 — Encendido (platinos y COP)
 
 - **Spec**: `docs/modules/ignition.md`.

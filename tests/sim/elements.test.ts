@@ -255,6 +255,7 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
       'battery',
       'resistor',
       'switch',
+      'visual',
     ];
     for (const type of types) {
       expect(ELEMENT_TYPES[type]?.create, type).toBeDefined();

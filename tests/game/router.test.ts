@@ -13,7 +13,12 @@ describe('router (rutas nuevas A1)', () => {
 
     // Compatibilidad (#/<id> → lab)
     expect(parseHash('#/fuel')).toEqual({ kind: 'lab', id: 'fuel' });
-    expect(parseHash('#/four-stroke')).toEqual({ kind: 'lab', id: 'four-stroke' });
+    expect(parseHash('#/otro')).toEqual({ kind: 'lab', id: 'otro' });
+
+    // Alias de A11: la ruta vieja redirige a la variante moderna
+    expect(parseHash('#/four-stroke')).toEqual({ kind: 'lab', id: 'four-stroke-dohc' });
+    expect(parseHash('#/lab/four-stroke')).toEqual({ kind: 'lab', id: 'four-stroke-dohc' });
+    expect(parseHash('#/lab/four-stroke-ohv')).toEqual({ kind: 'lab', id: 'four-stroke-ohv' });
 
     // Portada y vacíos
     expect(parseHash('#/')).toEqual({ kind: 'home', id: null });

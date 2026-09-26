@@ -11,6 +11,7 @@ import {
   createTank,
 } from './hydraulic.ts';
 import { createCheckValve, createLeak, createRestrictor, createTee, createVolume } from './passive.ts';
+import { VISUAL_TYPE } from './visual.ts';
 
 export type ElementFactory = (
   params: Readonly<Record<string, number>>,
@@ -41,6 +42,8 @@ export {
   createVolume,
 };
 
+export { VISUAL_TYPE };
+
 /** Registro de tipos por defecto para `compileCircuit`. */
 export const ELEMENT_TYPES: Readonly<Record<string, ElementTypeInfo>> = {
   restrictor: { create: createRestrictor },
@@ -56,4 +59,5 @@ export const ELEMENT_TYPES: Readonly<Record<string, ElementTypeInfo>> = {
   battery: { create: createBattery },
   resistor: { create: createResistor },
   switch: { create: createSwitch },
+  visual: VISUAL_TYPE,
 };

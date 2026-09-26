@@ -304,7 +304,8 @@ describe('campaña (§6.8)', () => {
 
 describe('etiquetas delatoras en el renderer (riesgo §6)', () => {
   const dir = new URL('../../src/render/svg/drawers/', import.meta.url);
-  const src = readdirSync(dir)
+  const src = readdirSync(dir, { recursive: true, encoding: 'utf8' })
+    .filter((name) => name.endsWith('.ts'))
     .map((name) => readFileSync(new URL(name, dir), 'utf8'))
     .join('\n');
   const classAfter = (text: string): string | null => {

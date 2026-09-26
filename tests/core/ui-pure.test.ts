@@ -10,7 +10,7 @@ describe('router', () => {
   it('parseHash', () => {
     expect(parseHash('#/fuel')).toEqual({ kind: 'lab', id: 'fuel' });
     expect(parseHash('#/lab/fuel')).toEqual({ kind: 'lab', id: 'fuel' });
-    expect(parseHash('#/four-stroke')).toEqual({ kind: 'lab', id: 'four-stroke' });
+    expect(parseHash('#/four-stroke')).toEqual({ kind: 'lab', id: 'four-stroke-dohc' });
     expect(parseHash('#/stage/fuel-quiz-1')).toEqual({ kind: 'stage', id: 'fuel-quiz-1' });
     expect(parseHash('#/')).toEqual({ kind: 'home', id: null });
     expect(parseHash('')).toEqual({ kind: 'home', id: null });

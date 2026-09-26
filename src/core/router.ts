@@ -32,6 +32,15 @@ export interface Router {
   destroy(): void;
 }
 
+/** Rutas viejas que redirigen a la variante moderna (A11). */
+export const LAB_ALIASES: Readonly<Record<string, string>> = {
+  'four-stroke': 'four-stroke-dohc',
+};
+
+export function resolveLabAlias(id: string): string {
+  return LAB_ALIASES[id] ?? id;
+}
+
 /** Parsea el hash de la URL. */
 export function parseHash(hash: string | null): Route {
   const h = (hash ?? '').trim();
@@ -40,7 +49,7 @@ export function parseHash(hash: string | null): Route {
   }
   const labMatch = /^#\/lab\/([\w-]+)$/.exec(h);
   if (labMatch?.[1]) {
-    return { kind: 'lab', id: labMatch[1] };
+    return { kind: 'lab', id: resolveLabAlias(labMatch[1]) };
   }
   const stageMatch = /^#\/stage\/([\w-]+)$/.exec(h);
   if (stageMatch?.[1]) {
@@ -49,7 +58,7 @@ export function parseHash(hash: string | null): Route {
   // Compatibilidad: #/<id> redirige a lab
   const compMatch = /^#\/([\w-]+)$/.exec(h);
   if (compMatch?.[1] && compMatch[1] !== 'lab' && compMatch[1] !== 'stage') {
-    return { kind: 'lab', id: compMatch[1] };
+    return { kind: 'lab', id: resolveLabAlias(compMatch[1]) };
   }
   return { kind: 'home', id: null };
 }

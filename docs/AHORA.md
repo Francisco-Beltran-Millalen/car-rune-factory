@@ -68,8 +68,8 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ✅ |
 | A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ✅ |
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ✅ |
-| A10 | Plan del vehículo (planificador): `plans/2026-09-26-vehiculo.md` **v3** | A7 | ⏳ plan escrito, espera aprobación del usuario |
-| A11 | Ciclo de 4 tiempos y distribución (spec + plan listos) | A10 | ⏳ |
+| A10 | Plan del vehículo (planificador): `plans/2026-09-26-vehiculo.md` **v3** | A7 | ✅ aprobado 2026-09-26 |
+| A11 | Ciclo de 4 tiempos y distribución (spec + plan listos) | A10 | ✅ |
 | A12 | Encendido: platinos y COP (spec + plan listos) | A10 | ⏳ |
 | A13 | Refrigeración (spec + plan listos) | A10 | ⏳ |
 | A14 | Lubricación (spec + plan listos) | A10 | ⏳ |
@@ -107,9 +107,79 @@ Turbo y diésel: sin plan hasta que el usuario diga si entran.
 
 **Planes (2026-09-26)**: el agente planificador escribió la spec
 (`docs/modules/<id>.md`) y el plan (`docs/plans/2026-09-26-<id>.md`) de
-todos los sistemas, A11–A25, y alineó el plan del vehículo (v3). El agente
-que implementa sólo implementa (`FICHAS.md` → "Cómo se lee"). Falta que el
-usuario apruebe el plan del vehículo para empezar A11.
+todos los sistemas, A11–A25, y alineó el plan del vehículo (v3). El usuario
+aprobó el plan del vehículo el 2026-09-26; A11 ya está implementada (ver el
+CERRADO de abajo). Sigue A12, en orden.
+
+## CERRADO 2026-09-26 — A11 Ciclo de 4 tiempos y distribución
+
+Plan: `plans/2026-09-26-four-stroke.md`; spec: `modules/four-stroke.md` (con
+las cuentas del gas y la distribución). El usuario aprobó el plan del vehículo
+(v3) y se implementó A11 en orden. `npm run check` verde (**251** tests).
+
+- **Bus de señales** (`src/sim/signals/{bus,stubs}.ts`): `createLabBus` con
+  dueño único (§28), latencia de un paso, `sameStep` para la fase, stubs de la
+  tabla del plan del vehículo §5.3 (incluye `air.massFlow` del carburador) y
+  `createPhaseStub`. El controlador `labBus` va primero en el circuito.
+- **Mecanismo sin red**: `compileCircuit` con 0 nodos ya convergía; su test
+  quedó en `tests/sim/nodal.test.ts` (red vacía, 1 iteración). `VISUAL_TYPE`
+  se movió de `fuel/circuit.ts` a `src/sim/elements/visual.ts` y entró en
+  `ELEMENT_TYPES`; `FUEL_TYPES` desapareció (el combustible usa el registro
+  compartido). `typescript-eslint` sigue pidiendo TS < 6.1: no hay migración.
+- **Física** (`sim/engine/geometry.ts` + `four-stroke/{constants,gas,timing,
+  mechanism}.ts`): subpasos de ≤ 1°; el calor va en la forma integral de
+  `dp = −n·p·dV/V + (n−1)/V·dQ·1e-5` (calor al volumen medio) porque con la
+  forma diferencial el subpaso de 1° no cumplía §11.15 (daba 4,9 % a 6000 rpm;
+  ahora 0,09 %). El pistón sigue al **cigüeñal** y las válvulas/combustión a la
+  **leva**: así el choque de §5.7 da los números de la spec (1 diente 0,2 mm
+  de margen; 2 dientes −1,7 mm en los dos sentidos).
+- **Números medidos** a 3000 rpm: a fondo 25° → 581 J y 67,2 bar de pico
+  (spec: 585/66); 0° → 493 (503); 40° → 554 (555); sin chispa → −1,7 J (−6);
+  prueba de compresión sana → 13,2 bar manométricos (13,4); `kLeak` 8 → 5,1
+  (≈5,5). Ningún rango de §11 necesitó tocar constantes.
+- **Ajustes de implementación, anotados**: `state.compression` guarda bar
+  manométricos (el pico absoluto menos 1,013); `state` suma `viewWork` y
+  `cycleCount` (aditivos, para lecturas y el P-V); el torque es instantáneo
+  (oscila y cruza por cero, como el P-V). El test 8 (choque) vive en
+  `tests/four-stroke/model.test.ts`: necesita el gas, no sólo `timing.ts`.
+- **Fuera de la lista de archivos de A11** (§12, anotado): `eslint.config.js`
+  extiende las listas de pureza/capas y la excepción de `type` a
+  `constants/gas/timing/mechanism` (§33); `src/core/router.ts` gana
+  `LAB_ALIASES` (`four-stroke` → `four-stroke-dohc`) con tests en
+  `tests/game/router.test.ts` y `tests/core/ui-pure.test.ts`;
+  `tests/game/quiz.test.ts` lee los drawers recursivamente (hay subcarpeta
+  `engine/`); `tests/sim/{nodal,elements}.test.ts` cubren 0 nodos y el tipo
+  `visual`. Docs: `CONTRATOS.md` §4.11 (bus) y la lista de §4.10,
+  `solver.md` §6 (fila `visual`) y la mención a `ELEMENT_TYPES` en `fuel.md`.
+- **Módulo**: `four-stroke-ohv` (varillas y balancines, tensor de resorte) y
+  `four-stroke-dohc` (dos árboles, tensor hidráulico, correa opcional) con
+  `fourStrokeDef`, catálogo §26 por variante, contenido, narración y presets;
+  drawers nuevos en `render/svg/drawers/engine/` (corte del cilindro, tren de
+  distribución con inset del chavetero, P-V y barras de compresión) y
+  `four-stroke.css`. Tests: `tests/four-stroke/*` (gas 7, timing 5, model 11,
+  contenido 13) y `tests/sim/signals.test.ts` (8).
+
+**Checklist de Firefox** (`npm run dev`) — la del plan §6:
+1. `#/lab/four-stroke-dohc`: a 120 rpm (preset "Cámara lenta") se ven los 4
+   tiempos en orden, el nombre cambia en PMS/PMI, las válvulas abren y cierran
+   donde dice la spec §5 y el cruce se resalta con `showOverlap`.
+2. El P-V dibuja el lazo: con chispa, un lazo con área; sin chispa, casi una
+   línea (ida y vuelta).
+3. "Prueba de compresión" llena las 4 barras entre 12,5 y 14 bar; con anillos
+   gastados en el 3 la barra 3 queda baja.
+4. "Chavetero ovalado": en el inset se ve el piñón con juego sobre el eje; al
+   subir la carga, la marca de la leva se separa de la referencia y se ve el
+   golpeteo.
+5. "Perno flojo": el chavetero se abre solo hasta que la chaveta se corta; la
+   marca de la leva se va quedando atrás.
+6. "Saltaron dos dientes": aparece el aviso de choque y la compresión de un
+   cilindro cae.
+7. Tensor hidráulico con presión 0,2: la cadena se comba y hay ruido; con 3 bar
+   se tensa.
+8. `#/lab/four-stroke-ohv` dibuja varillas y balancines; `rocker.lash` baja la
+   alzada y hace tic-tic.
+9. `#/lab/four-stroke` redirige a la versión DOHC. El combustible y el quiz
+   siguen funcionando; F12 sin errores.
 
 ## CERRADO 2026-09-26 — A7 Presenter + renderer SVG genérico
 

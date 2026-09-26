@@ -1,5 +1,8 @@
 // Lista de módulos disponibles, en orden. Agregar un módulo = importarlo aquí.
 import type { ModuleDescriptor } from '../core/types.ts';
 import fuel from './fuel/index.ts';
+import { fourStrokeDohc, fourStrokeOhv } from './four-stroke/index.ts';
 
-export const modules: readonly ModuleDescriptor[] = [fuel].sort((a, b) => a.order - b.order);
+export const modules: readonly ModuleDescriptor[] = [fuel, fourStrokeOhv, fourStrokeDohc].sort(
+  (a, b) => a.order - b.order,
+);

@@ -142,7 +142,8 @@ type ElementFactory = (params: Readonly<Record<string, number>>, fluid: Fluid) =
 interface ElementTypeInfo { create: ElementFactory; joint?: boolean; multiple?: boolean }
 // restrictor, checkValve, leak, volume, tee, electricPump, reliefRegulator,
 // orifice, tank, pressureSource, battery, resistor, switch (el resistor lo
-// pide el juguete de A5; no estaba en la tabla de P23 §8.2).
+// pide el juguete de A5; no estaba en la tabla de P23 §8.2) y visual (A7: la
+// pieza sólo dibujable, sin puertos ni flujos; se movió a `sim/elements/` en A11).
 
 // Circuito (A5):
 compileCircuit<S extends CircuitState>(options: CompileOptions<S>): CompiledCircuit<S>
@@ -165,6 +166,41 @@ interface ControllerContext { dt; read(probe): number; params; faults; elements;
 // A6 agrega `engineCore` y `stubs`; el combustible, `ecuFuel`, `alternator` y
 // `fuelSupply`.
 ```
+
+### 4.11 Bus de señales de laboratorio — `src/sim/signals/` (A11)
+
+```ts
+// src/sim/signals/bus.ts
+export interface SignalBus {
+  get(id: string): number;                        // paso anterior (o el mismo si sameStep)
+  set(owner: string, id: string, value: number): void;  // valida el dueño (§28)
+  commit(): void;                                 // lo escrito pasa a ser lo que se lee
+  snapshot(): Readonly<Record<string, number>>;
+}
+export interface LabBus extends SignalBus {
+  bindParams(params: Readonly<ParamRecord>): void;
+  step(dt: number): void;                         // avanza los stubs con estado
+}
+export function createLabBus(options: {
+  owner: string;
+  publishes: readonly string[];
+  stubs: Readonly<Record<string, StubSource>>;    // número | (params) => number | StubState
+  sameStep?: readonly string[];                   // señales de fase (plan del vehículo §5.2)
+  strict?: boolean;                               // get de una señal desconocida lanza (tests)
+}): LabBus;
+export function createLabBusController(id: string, bus: LabBus): ControllerDef;
+
+// src/sim/signals/stubs.ts — tabla del plan del vehículo §5.3
+export const SIGNAL_STUBS: Readonly<Record<string, StubSource>>;
+export function createPhaseStub(): PhaseStub;     // engine.crankAngle/camAngle desde rpm
+export function createSignalStubs(overrides?): Record<string, StubSource>;
+```
+
+El módulo pone el controlador `labBus` **primero**: en cada paso hace
+`commit()` y después `step(dt)`, así las señales publicadas se leen con un paso
+de retraso (las `sameStep`, apenas se escriben). A6 no migra el combustible:
+sigue con su `FuelSignals`; A15 arma el bus del vehículo con varios dueños
+sobre este mismo contrato.
 
 ## Shell de la UI
 

@@ -1,0 +1,271 @@
+/* Estilos de los drawers del ciclo de 4 tiempos (A11). Colores sólo por
+   variables CSS (§9), para que el tema oscuro funcione. */
+
+/* --- Corte del cilindro --- */
+.cyl-head {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.cyl-port {
+  fill: var(--part);
+  stroke: var(--part-stroke);
+  stroke-width: 1.2;
+}
+.cyl-wall {
+  fill: var(--metal-dark);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.crankcase {
+  fill: var(--part);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.cyl-gas {
+  fill: var(--mixture);
+  opacity: 0.25;
+}
+.cyl-hit {
+  fill: transparent;
+  stroke: none;
+}
+.piston-body {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.piston-ring {
+  stroke: var(--metal-dark);
+  stroke-width: 3;
+}
+.rod {
+  stroke: var(--metal-dark);
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.crank-disc {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.crank-mark {
+  stroke: var(--muted);
+  stroke-width: 3;
+}
+.crank-pin {
+  fill: var(--part-stroke);
+  stroke: var(--metal-dark);
+  stroke-width: 1;
+}
+.plug-body {
+  fill: var(--part);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.valve-stem {
+  stroke: var(--metal-dark);
+  stroke-width: 4;
+}
+.valve-head {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.valve-overlap .valve-head {
+  fill: var(--accent);
+}
+.valve-hit .valve-head {
+  fill: var(--bad);
+  stroke: var(--bad);
+}
+.spark-flash {
+  fill: var(--burn);
+  opacity: 0;
+  pointer-events: none;
+}
+.pushrod {
+  stroke: var(--metal-dark);
+  stroke-width: 3;
+}
+.rocker-arm {
+  stroke: var(--metal-dark);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.rocker-pivot {
+  fill: var(--part-stroke);
+}
+.cam-base {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.2;
+}
+.cam-lobe {
+  fill: var(--metal-dark);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.stroke-name {
+  font-size: 26px;
+  font-weight: 600;
+  fill: var(--accent);
+  text-transform: capitalize;
+}
+
+/* --- Distribución --- */
+.sprocket-body {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.sprocket-tooth {
+  stroke: var(--part-stroke);
+  stroke-width: 3;
+}
+.chain-path {
+  fill: none;
+  stroke: var(--metal-dark);
+  stroke-width: 7;
+}
+.chain-link {
+  fill: var(--muted);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.belt-path {
+  fill: none;
+  stroke: var(--part-stroke);
+  stroke-width: 12;
+  opacity: 0.85;
+}
+.belt-tooth {
+  stroke: var(--part-stroke);
+  stroke-width: 3;
+}
+.crank-bolt {
+  fill: var(--metal-dark);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.crank-key {
+  fill: var(--accent);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.cam-mark {
+  stroke: var(--accent);
+  stroke-width: 4;
+}
+.cam-mark.sheared {
+  stroke: var(--bad);
+}
+.cam-ref {
+  fill: var(--bad);
+  stroke: none;
+}
+.shoe {
+  fill: var(--part);
+  stroke: var(--part-stroke);
+  stroke-width: 1.2;
+}
+.guide.broken {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotate(24deg);
+  opacity: 0.6;
+}
+.plunger {
+  stroke: var(--metal-dark);
+  stroke-width: 5;
+}
+.inset-box {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+.inset-shaft {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.inset-slot {
+  fill: var(--accent);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.inset-hub {
+  fill: none;
+  stroke: var(--metal-dark);
+  stroke-width: 5;
+}
+.inset-mark {
+  stroke: var(--metal-dark);
+  stroke-width: 3;
+}
+
+/* --- P-V y compresión --- */
+.panel-box {
+  fill: var(--panel);
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.axis {
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+.grid-line {
+  stroke: var(--line);
+  stroke-width: 0.5;
+  opacity: 0.5;
+}
+.pv-trace {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.pv-dot {
+  fill: var(--burn);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.green-band {
+  fill: var(--ok);
+  opacity: 0.16;
+}
+.bar-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.bar-fill {
+  fill: var(--ok);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.bar-fill.low {
+  fill: var(--bad);
+}
+
+/* Resaltado (hover, selección, quiz): el renderer agrega la clase al
+   `[data-part]`; acá se pinta el trazo de la pieza. */
+[data-part]:hover :is(.cyl-head, .cyl-port, .cyl-wall, .piston-body, .valve-head, .valve-stem, .rod, .crank-disc, .crank-pin, .plug-body, .sprocket-body, .chain-path, .belt-path, .shoe, .inset-shaft, .inset-slot, .inset-hub, .cam-base, .cam-lobe, .pushrod, .rocker-arm) {
+  stroke: var(--accent);
+}
+:is(.selected, .correct, .wrong, .target) :is(.cyl-head, .cyl-port, .cyl-wall, .piston-body, .valve-head, .valve-stem, .rod, .crank-disc, .crank-pin, .plug-body, .sprocket-body, .chain-path, .belt-path, .shoe, .inset-shaft, .inset-slot, .inset-hub, .cam-base, .cam-lobe, .pushrod, .rocker-arm) {
+  stroke-width: 3;
+}
+.selected :is(.cyl-head, .cyl-port, .cyl-wall, .piston-body, .valve-head, .valve-stem, .rod, .crank-disc, .crank-pin, .plug-body, .sprocket-body, .chain-path, .belt-path, .shoe, .inset-shaft, .inset-slot, .inset-hub, .cam-base, .cam-lobe, .pushrod, .rocker-arm) {
+  stroke: var(--accent);
+}
+.correct :is(.cyl-head, .cyl-port, .cyl-wall, .piston-body, .valve-head, .valve-stem, .rod, .crank-disc, .crank-pin, .plug-body, .sprocket-body, .chain-path, .belt-path, .shoe, .inset-shaft, .inset-slot, .inset-hub, .cam-base, .cam-lobe, .pushrod, .rocker-arm) {
+  stroke: var(--ok);
+}
+.wrong :is(.cyl-head, .cyl-port, .cyl-wall, .piston-body, .valve-head, .valve-stem, .rod, .crank-disc, .crank-pin, .plug-body, .sprocket-body, .chain-path, .belt-path, .shoe, .inset-shaft, .inset-slot, .inset-hub, .cam-base, .cam-lobe, .pushrod, .rocker-arm) {
+  stroke: var(--bad);
+}
+.target :is(.cyl-head, .cyl-port, .cyl-wall, .piston-body, .valve-head, .valve-stem, .rod, .crank-disc, .crank-pin, .plug-body, .sprocket-body, .chain-path, .belt-path, .shoe, .inset-shaft, .inset-slot, .inset-hub, .cam-base, .cam-lobe, .pushrod, .rocker-arm) {
+  stroke: var(--accent);
+  stroke-dasharray: 6 4;
+}

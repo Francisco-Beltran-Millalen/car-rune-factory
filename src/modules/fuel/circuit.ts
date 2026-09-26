@@ -12,8 +12,7 @@ import type {
 } from '../../sim/circuit/types.ts';
 import type { ControllerFactory } from '../../sim/controllers/index.ts';
 import { createEngineCore } from '../../sim/controllers/engineCore.ts';
-import { noCommit, noEval } from '../../sim/elements/common.ts';
-import { ELEMENT_TYPES, type ElementTypeInfo } from '../../sim/elements/index.ts';
+import { ELEMENT_TYPES } from '../../sim/elements/index.ts';
 import { createAlternator, createEcuFuel, createFuelSupply, type FuelSignals } from './controllers.ts';
 import {
   DEFAULT_FAULTS,
@@ -28,17 +27,6 @@ import {
 } from './reference-model.ts';
 
 const KINJ = K.injFlow3bar / Math.sqrt(3);
-
-/** Piezas sólo visuales (A7): no tienen elemento ni puertos, no van al solver. */
-const VISUAL_TYPE: ElementTypeInfo = {
-  create: () => ({ ports: [], params: {}, control: {}, state: {}, eval: noEval, commit: noCommit }),
-};
-
-/** Tipos del módulo: los del solver más la pieza visual. */
-export const FUEL_TYPES: Readonly<Record<string, ElementTypeInfo>> = {
-  ...ELEMENT_TYPES,
-  visual: VISUAL_TYPE,
-};
 
 /**
  * Circuito del combustible. El colador va en la aspiración (entre el tanque y
@@ -180,7 +168,7 @@ function buildFuelCircuit(overrides: FuelOverrides = {}): FuelBuild {
   };
   const circuit = compileCircuit<FuelState>({
     def: FUEL_DEF,
-    types: FUEL_TYPES,
+    types: ELEMENT_TYPES,
     controllerTypes,
     bindings: FUEL_BINDINGS,
     init: { tankLevel: overrides.tankLevel },

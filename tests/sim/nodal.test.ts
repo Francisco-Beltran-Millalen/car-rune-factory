@@ -133,6 +133,14 @@ function run(s: Solver, seconds: number): void {
 }
 
 describe('nodal — createSolver (§8.1)', () => {
+  it('red vacía (0 nodos) converge en 1 iteración', () => {
+    const solver = createSolver({ nodeCount: 0, elements: [] });
+    const res = solver.step(DT);
+    expect(res.ok).toBe(true);
+    expect(res.iterations).toBe(1);
+    expect(solver.stats.failures).toBe(0);
+  });
+
   it('divisor de tensión: fuente por elemento y tierra por ground', () => {
     const source = voltageSource(10);
     const solver = createSolver({
