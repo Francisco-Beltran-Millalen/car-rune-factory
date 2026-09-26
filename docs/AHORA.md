@@ -4,6 +4,29 @@ Trabajo vivo entre sesiones (≤500 líneas). Lo cerrado se recorta y queda en
 git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 `plans/2026-09-22-plan-maestro.md`.
 
+## PARA RETOMAR (escrito al cerrar la sesión del 2026-09-26)
+
+- **Estado**: A11–A14 y V1 (conexiones visuales) cerradas y commiteadas en
+  `main` (último: `7533045`). `npm run check` verde, 373 tests.
+- **Revisión del usuario**: miró los laboratorios después de V1 y dijo
+  "está mejor". No se recorrieron punto por punto las checklists de A14 ni
+  de V1 (abajo): conviene hacerlo al empezar, antes de A16, y anotar aquí lo
+  que siga mal.
+- **Lo que el chequeo automático no ve** (candidatos si algo se ve raro):
+  etiquetas encima de un tubo; trazos que un drawer dibuja por su cuenta
+  (cables de alta del distribuidor, arnés de inyectores, manguera de
+  vacío, correa de la bomba de agua); el manómetro de `lubrication-gauge`
+  no tiene tubo a la galería (es un instrumento `visual`).
+- **Siguiente tarea: A16 — Carburador** (`FICHAS.md`). Además de su ficha,
+  vale la convención de conexiones del Contexto común: su drawer exporta
+  geometría, los enlaces usan `via` y la aceptación incluye
+  `tests/render/layout.test.ts` + revisar la hoja de `npm run layout`.
+  Después: A15 (vehículo), que ya tiene anotado mover los `via`.
+- **Pendiente aparte** (sin fecha): el fix del feedback del quiz (sección
+  siguiente).
+- **Cómo mirar un layout sin navegador**: `npm run layout` y
+  `rsvg-convert layout-sheets/<id>.svg -o <id>.png`.
+
 ## PENDIENTE — FIX 2026-09-25 (encontrado por el usuario) — el feedback del quiz usa tiempo simulado
 
 En las etapas del quiz, al bajar la velocidad con el timebar (p. ej. 0.05×) el
@@ -159,6 +182,8 @@ varias mangueras y diagramas que no tienen conexión unas con otras").
 - **Lo que el chequeo no ve** (se mira en Firefox): etiquetas sobre tubos y
   trazos que un drawer dibuja por su cuenta (cables de alta del
   distribuidor, arnés de inyectores, manguera de vacío).
+- **Revisión del usuario (2026-09-26)**: "está mejor". Falta recorrer la
+  checklist punto por punto (ver PARA RETOMAR).
 - **Fases siguientes**: la convención y la aceptación quedaron en
   `FICHAS.md` (Contexto común); A15 (ficha y plan del vehículo) desplaza
   `via` y corre el chequeo sobre el vehículo compuesto.
@@ -468,410 +493,11 @@ las cuentas del gas y la distribución). El usuario aprobó el plan del vehícul
 9. `#/lab/four-stroke` redirige a la versión DOHC. El combustible y el quiz
    siguen funcionando; F12 sin errores.
 
-## CERRADO 2026-09-26 — A7 Presenter + renderer SVG genérico
+## Historial recortado
 
-Plan: `plans/2026-09-26-renderer-svg.md`. El laboratorio del combustible ya no
-usa `legacyRenderer` ni `fuel/view.ts`: lo dibuja un renderer genérico desde el
-`CircuitDef` y lo anima un presenter desde canales con nombre.
-
-- `src/presenter/present.ts`: `presentCircuit` (esquema → `VisualState`),
-  `presentModel` (desde un `Model`) y `visibleFaultSet` (falla activa y
-  `visibility:'always'` o revelada por id §26 o clave plana). `VisualState` y
-  `PresentScheme` quedaron en `core/types.ts`.
-- `src/render/svg/`: `createSvgRenderer` con capas (tubos/fondo/partículas/
-  piezas/efectos), un drawer por tipo visual (`part.visual ?? part.type`),
-  pipes por `route` o ruta automática por puertos, `createFlow` por enlace,
-  `applyUi` (oculta `.part-label` y tooltip), `highlight` y clic/hover como el
-  legacy. `src/render/legacy/` y `src/modules/fuel/view.ts` borrados.
-- `fuel/circuit.ts` es ahora también el layout: posiciones, `visual`, rutas y
-  metadatos de trazo (`owner`, `pipeClass`, `flowClass`, `scale`, `spacing`,
-  `radius`, `width`, `opacity`); `FUEL_TYPES` agrega el elemento no-op `visual`
-  para las piezas sólo dibujables (`ecu`, `checkValve`, `injectorWires`,
-  `returnLine`). `fuel/present.ts` (nuevo) tiene el esquema de canales.
-- `core/types.ts` y `sim/circuit/types.ts`: campos aditivos para `circuit`,
-  `present` y `visual` (Tareas de core anotadas; `createView?` quedó opcional
-  para `_demo`). Perfiles de lint actualizados: `present` es puro y de módulo;
-  `src/render/svg/**` admite no-ops de contrato.
-- `FUEL_FAULTS` suma `visibility` (tabla de P23 §4.6): el filtro de indicios ya
-  existe y se prueba; en el laboratorio se ven todos (revela las claves planas).
-- Tests nuevos (7): `tests/presenter/present.test.ts` (canales, NaN→0,
-  `visibleFaultSet` y el esquema del fuel desde un estado conocido, con la
-  suciedad y el goteo tapados sin revelar) y `tests/presenter/route.test.ts`
-  (ruta automática). `content.test` y `quiz.test` ahora leen el circuito y los
-  drawers en vez de `view.ts`. `npm run check` verde (**206** tests).
-
-**Checklist de Firefox** (`npm run dev`) — es la del combustible de abajo,
-punto por punto; además:
-1. `#/lab/fuel` debe verse y comportarse **igual que antes**: partículas
-   (eléctricas y de combustible), aguja del manómetro, rotor, diafragma,
-   spray 1-3-4-2, suciedad del filtro, goteos, manguera suelta, etiqueta del
-   motor, llave y relé animados, tema oscuro.
-2. Clic en cada pieza → ficha y contorno; hover → nombre; el borde se resalta
-   también en las tuberías (alimentación, retorno) y en el arnés.
-3. `#/stage/fuel-quiz-1` y `#/stage/fuel-quiz-2`: siguen jugables y **sin
-   etiquetas de nombre**; el cable del inyector no acierta preguntas de
-   inyector.
-4. F12 sin errores; con la consola, `window.__sim.renderer` existe y
-   `window.__sim.model.state.pRail` responde.
-
-## CERRADO 2026-09-26 — A6b Síntomas del combustible
-
-Calibradas las tres fallas que no daban síntoma (ARCHITECTURE §14), con las
-constantes de `reference-model.ts` (`K`) compartidas por la referencia y el
-compilado, así que la paridad se mantiene. Tabla completa y cuentas en
-`fuel.md` §9d; la ficha de A6b se retiró de `FICHAS.md` (su contenido quedó
-en `fuel.md`).
-
-- `strainer.clog`: `strainerClogFactor` 150 → **2500** (`kStrainer ≈ 1e-2` a
-  1.0, igual que el filtro a 1.0). A fondo 6000 rpm: `pRail` 1,66, mezcla
-  0,71, `misfire`; en ralentí sigue `running` (2,37 bar).
-- `relay.state = 'intermittent'`: corte 0,3 s / cada 2 s → **1,2 s / cada 3 s**.
-  A fondo, 5 cortes en 15 s: `pRail` mín 1,40, mezcla mín 0,73 y sale de
-  `running` (tironeo). En ralentí casi no se nota (0,6 L/h y `C` = 5 mL/bar):
-  es físico y se ve en el relé/partículas/narración.
-- `pump.wear`: `wearP` 0,5 → **0,7**. Al 80 % a fondo `pRail` 1,77, mezcla
-  0,77, `misfire`; al 50 % sigue `running` (2,84 · 0,97); en ralentí sostiene.
-- Divergencia del **aire implícito resuelta**: la referencia resuelve
-  `q = Qm(1−Δp/Pm)(1−aire)` como el elemento; ratio 0,2065 vs 0,2067 (antes
-  0,2000 vs 0,2067). `pPumpOut` alineado (boca de salida, sin el colador).
-- Divergencia del **riel sin `max(0,·)` justificada**: el solver deja llegar
-  a `pMan` (donde el goteo al múltiple deja de fluir); la referencia clampa
-  en 0 y es la simplificación. Fuzz de A6b: mínimo −0,04, cota −0,7.
-- Tests nuevos: 6 en `tests/fuel/symptoms.test.ts` (uno por falla, escenario
-  contacto → arranque → ralentí → fondo, en las dos implementaciones) y 3
-  escenarios en `parity.test.ts` (colador 1.0 en ralentí, colador 0.8 y bomba
-  0.8 a fondo); suite completa **199**. Se re-midió la tabla de §9b;
-  `npm run check` verde.
-- Nota para A3: su tabla §1 (medida con el modelo viejo) vuelve a cambiar en
-  las filas de colador, bomba y relé; hay que re-medirla, como ya pide el
-  plan.
-
-**Checklist de Firefox** (`npm run dev` → `#/lab/fuel`):
-1. Sano: contacto → 2 s de cebado → arranque → marcha; a fondo 6000 rpm la
-   mezcla se queda en ~100 % y el motor sigue en marcha.
-2. Fallas → **Colador tapado 1.0**: en ralentí anda (aguja ~2,4); a fondo la
-   presión cae a ~1,7, la mezcla a ~71 % y el motor pasa a "Falla (mezcla)".
-   Baja el acelerador y se recupera.
-3. Fallas → **Relé de bomba Intermitente**: a fondo, cada ~3 s el relé abre
-   1,2 s (el brazo se mueve, la corriente/partículas de la bomba paran), la
-   presión cae a ~1,4 y el motor tironea (la mezcla baja a ~73 %). En ralentí
-   apenas se nota: no es un bug.
-4. Fallas → **Bomba gastada 0.8**: en ralentí anda; a fondo caen presión
-   (~1,8) y mezcla (~77 %) y el motor tironea. Al 0.5 ya no se nota tanto.
-5. "Reparar todo" (⟲ de fallas) y comprobar que a fondo vuelve a ~3 bar.
-6. `#/stage/fuel-quiz-1` y `#/stage/fuel-quiz-2` siguen jugables (sin
-   cambios: el quiz no usa estas fallas).
-7. F12 sin errores.
-
-## CERRADO 2026-09-25 — A6 Combustible sobre el solver (paridad con la referencia)
-
-- `src/modules/fuel/circuit.ts`: `CircuitDef` `fuel-return` (batería, llave,
-  relé, estanque, colador en la aspiración, bomba, línea, filtro, riel con
-  `volume`, 4 inyectores, múltiple, regulador, manguera) + `compileFuelCircuit`
-  y `createCompiledFuelModel(overrides)` con la misma forma que la referencia
-  (`params`, `faults`, `seed`, `tankLevel`; `refill`/`setTank` por `ModelActions`).
-- `src/sim/controllers/{engineCore,stubs}.ts`: cerebro único del motor (§14.1)
-  con `inputs` ideales (§29) y señales compartidas; sirve para A10 sin cambios.
-  `src/modules/fuel/controllers.ts`: `ecuFuel` (cebado, relé, inyección por
-  ángulo, mezcla, fugas, regulador), `alternator` y `fuelSupply`.
-- `src/modules/fuel/faults.ts`: catálogo §26 con los 8 ids de P23 §4.6.
-  `FaultCatalogEntry` en `core/types.ts` y `faultCatalog` en el descriptor.
-  `model.ts` → `reference-model.ts`; el descriptor usa el compilado.
-- Cambios fuera de la lista de archivos de A6, anotados: `sim/circuit/compile.ts`
-  usa los objetos `params`/`faults` que le da el módulo (así el modelo tipado
-  se expone sin cast); `eslint.config.js` deja que un módulo importe `sim/**`
-  (`fuel/circuit.ts` usa `compileCircuit` y `ELEMENT_TYPES`) y extiende la
-  excepción de `type` (vs `interface`) a `reference-model.ts`.
-- **Puente eléctrico**: llave y relé quedan siempre cerrados; el alternador
-  pone `battery.control.v = relayOn ? v : 0` (= `pumpV` de la referencia).
-  Evita el escalón de conductancia de 1e7 que dejaba al solver sin converger.
-- **Solver (§4 de `solver.md`)**: relajación **por nodo** cuando su paso de
-  Newton cambia de signo (ciclo `−2·Δp` de dos nodos sin capacitancia unidos
-  por un restrictor saturando) + paso que no cruza el 0; tope `maxDelta` 1e6.
-  Sin esto los transitorios de relé daban `failures > 0`. Benchmark: 22–25 ms
-  por 1000 pasos (40–45 k pasos/s), ~10 % más que antes.
-- Tests (+27, **191** en total): suite de §9 parametrizada (referencia y
-  compilado), paridad de 10 escenarios (§9b) con `pRail` ≤ 0,05 bar y caudales
-  ≤ 3 % y `failures === 0`, catálogo de fallas, fuzz reducido del compilado
-  (200 × 1000, timeout 30 s). `npm run check` verde.
-- Divergencias medidas y documentadas en `fuel.md` §9c (aire implícito:
-  ratio 0,2067 vs 0,2000; riel sin `max(0,·)`: mínimo −0,0133); A6b las
-  cierra (CERRADO de arriba).
-- **Checklist de Firefox pendiente** (`npm run dev`): el laboratorio del
-  combustible y las etapas 1 y 2 del quiz deben verse y comportarse igual que
-  antes (el renderer sigue siendo el legacy; sólo cambió el modelo por dentro).
-  1. `#/lab/fuel`: llave en Contacto → cebado de 2 s y manómetro ~3 bar;
-     Arranque → Marcha; sliders, fallas (filtro, manguera, regulador, relé,
-     fugas) y los 5 presets responden; lecturas y sparklines se mueven;
-     narración; clic en una pieza → ficha; tema oscuro legible.
-  2. `#/stage/fuel-quiz-1` y `#/stage/fuel-quiz-2`: preguntas, feedback,
-     puntaje, estrellas, candado y guardado (recargar conserva el progreso).
-  3. F12 sin errores; en la consola `window.__sim.mode.hud()` y
-     `window.__sim.save.get()` responden.
-
-## CERRADO 2026-09-25 — A5 Elementos + circuito + controladores base
-
-- `src/sim/elements/`: 13 tipos (`restrictor`, `checkValve`, `leak`, `volume`,
-  `tee`, `electricPump`, `reliefRegulator`, `orifice`, `tank`,
-  `pressureSource`, `battery`, `resistor`, `switch`), registro `ELEMENT_TYPES`
-  con `joint` (tank/tee: sus puertos son un nodo interno) y `multiple` (tee).
-  Helpers de regularización en `common.ts` (`√` suavizada, `softRelu`,
-  `noCommit`/`noEval` con comentario para el lint).
-- **`resistor` es nuevo respecto de §8.2**: la aceptación de A5 pide el
-  juguete "batería-switch-resistencia" y la tabla del plan sólo traía el
-  `switch`. Documentado en `solver.md` §6 y `CONTRATOS.md` §4.10.
-- `src/sim/circuit/`: `types.ts`, `parts.ts`, `validate.ts` y `compile.ts`.
-  Union-find de puertos (joint incluido), nodos fijos por `def.fixed`,
-  sondas `{node}`/`{element,probe}`, `bindings` params/faults → `control`,
-  `init` (tankLevel), `actions`, `seed`, y un `Model` que corre bindings →
-  controladores (leen el paso anterior, §25) → solver → publicación de sondas
-  y estado de controladores. `reset()` re-inicializa todo y deja `time = 0`.
-- `src/sim/controllers/{base,index}.ts`: contrato `ControllerDef`
-  (`probes`, `state` publicado, `update(ctx)` con `read/params/faults/elements/rng`)
-  y `createControllers`. `ecuFuel`/`engineCore`/`stubs` son de A6.
-- `validateCircuit` cubre los 5 problemas de §8.4 (puerto inexistente,
-  dominio, fluido, >1 conexión salvo tee, sin conectar como aviso) más
-  duplicados, sonda y fijo inválidos, y controlador desconocido.
-- Tests (+23, **164** en total): `tests/sim/elements.test.ts` (ley + jacobiano
-  contra diferencias finitas con tolerancia 1e-9 + 1e-4·|fd|, ε de
-  regularización respetado) y `tests/sim/circuit.test.ts` (validate por caso,
-  juguete eléctrico 12,6 V/10,03 Ω = 1,2562 A, lazo bomba-restrictor-tanque
-  contra raíz cerrada con la misma ley, binding de `filterClog`, retraso de un
-  paso del controlador, nodos `joint` y reset).
-- `npm run check` verde: typecheck, lint 0 warnings, knip, 164 tests y build.
-  **Sin checklist de Firefox** (A5 no es visual, lo dice su ficha).
-- Docs: `solver.md` §6–§8 (biblioteca y circuito) y `CONTRATOS.md` §4.10.
-
-## CERRADO 2026-09-25 — A4 Solver nodal + linalg
-
-- `src/sim/solver/{types,linalg,nodal}.ts`: contrato del solver y de los
-  elementos (§24, P23 §8.2), `solveDense` (pivoteo parcial; `false` bajo
-  `1e-14`) y `createSolver` (Newton implícito, `gmin`, amortiguación ±1,
-  nodos fijos con `reaction`). Puros (§1) y sin azar.
-- Signo del balance nodal: el residuo es `F_i = −Σ flow[p] + Ĉ·(x−x_prev)/dt`
-  (flujos que **salen** del nodo) y el jacobiano lleva el mismo signo. El test
-  RC (63 % en τ) fue el que destapó el problema al implementarlo al revés.
-- Decisiones de tipos que la ficha dejaba a A4 (anotadas también en
-  `solver.md`/`CONTRATOS.md` §4.9):
-  - `ElementDef.fixed?(out)`: el propio elemento declara su nodo Dirichlet
-    (lo pide `pressureSource` en §8.2); `ground` + `setFixed/free` siguen
-    siendo el mecanismo general.
-  - `commit(pot, dt, reaction)`: tercer argumento con la reacción del nodo de
-    cada puerto, porque el `tank` de §8.2 integra el nivel con
-    `−reaction`.
-  - `reaction(node)` = flujo neto que sale del nodo fijo; incluye el término
-    capacitivo si el nodo lo tiene.
-- Tests `tests/sim/linalg.test.ts` y `tests/sim/nodal.test.ts` (+18: divisor,
-  fuente dinámica, reacciones, RC, RL, dos restrictores en serie contra la
-  fórmula, nodo flotante con gmin, `setFixed/free`, paso que no converge
-  revierte, eval con NaN no contamina, benchmark).
-- **Benchmark** (20 nodos, 18 incógnitas, 1000 pasos de 1 ms): 18–22 ms por
-  1000 pasos (~0,02 ms/paso, 44 000–55 000 pasos/s) en i7-7700HQ / Node 26;
-  con la suite completa en paralelo, 28 ms. Muy por encima del presupuesto de
-  4000 pasos/s (4×). Anotado en `docs/modules/solver.md` §5; sin umbral en el
-  test.
-- Docs: `docs/modules/solver.md` (nuevo) y sección 4.9 "Solver nodal" en
-  `CONTRATOS.md`. `gmin` cumple lo que pedía P25: la singularidad de linalg se
-  prueba aparte y el nodo flotante no produce NaN.
-- `npm run check` verde: typecheck, lint 0 warnings, knip, **141 tests** y
-  build. **Sin checklist de Firefox** (A4 no es visual, lo dice su ficha).
-
-## CERRADO 2026-09-25 — limpieza post-TS y revisión del plan de A3
-
-- Paneles (`core/ui/controls.ts`, `core/ui/faults.ts`): `emit` tipado como
-  `(intent: Intent) => void`. Se quitaron el genérico `I extends IntentLike`,
-  los 2 casts `emit as Emit` y los 2 `eslint-disable` que TS2 dejó "para TS5"
-  y que TS5 no limpió. `IntentLike` borrado de `core/types.ts` (sin uso).
-  Quedan **3** `as` frontera en `src/` (`dom.ts`, `shell.ts`, `controls.ts`).
-- `ARCHITECTURE.md`: §2 decía que `params`/`faults` los escriben "los
-  controles de la UI" (choca con §20: sólo el modo); rutas `.js` → `.ts` en
-  §3/§17; pipeline con intents → modo, y router `#/lab/<id>` / `#/stage/<id>`.
-- `AHORA.md`: Fase 1 y TypeScript pasan a CERRADO; se recortaron los CERRADO
-  de TS0–TS4 (en git y en el informe); se quitó "worktrees + merge" de la
-  Fase 1, que contradecía `AGENTS.md` regla 8.
-- Revisión de A3 contra el código, con simulación de cada falla:
-  `plans/2026-09-25-a3-revision.md`. Hallazgo principal: el diagrama muestra
-  manómetro, retorno, corriente y suciedad del filtro sin herramientas, así
-  que E2 se resolvería mirando la pantalla.
-- `npm run check` verde: typecheck, lint 0 warnings, knip, 123 tests y build.
-  Sin cambio de comportamiento: no hace falta revisar en Firefox.
-
-## CERRADO 2026-09-25 — TS5 cierre de TypeScript
-
-- `src/core/shell.js`, `src/render/legacy/index.js` y `src/main.js` → `.ts`;
-  `index.html` apunta a `/src/main.ts`. `shell.mount` recibe la unión discriminada
-  `{ kind: 'lab'; module } | { kind: 'stage'; module; stage; attempt }` (§8.6) y
-  `window.__sim` queda declarado con `declare global` (hook de depuración).
-- Configuración: `allowJs` fuera del `tsconfig.json`; `vite.config.ts` con sólo
-  `.test.ts` y el checker linteando `src/**/*.ts`; `knip.json` en `.ts`; el bloque
-  de transición de ESLint reducido a `eslint.config.js`.
-  `git ls-files 'src/**/*.js' 'tests/**/*.js'` → vacío.
-- Docs: `ARCHITECTURE.md` §1 (model.ts), §7 (unión de strings, sin enum), §18
-  (tipos en TS) y leyes §31–§33 + rationale TypeScript + Vite; `CONTRATOS.md` con
-  las firmas en TS y punteros al código; `NORTE.md`, `README.md` de docs y
-  `AGENTS.md` (cierre con `npm run check`); rutas `.js` de los docs vivos a `.ts`.
-- Fronteras `as` (D8) que quedaban en `src/` al cerrar TS5 — 5 (hoy 3, ver la limpieza de arriba):
-  - `core/dom.ts`: `v as EventListener` (attrs `on*` del helper `h`).
-  - `core/shell.ts`: `t as Theme` (valor de `localStorage`, validado con `THEMES`).
-  - `core/ui/controls.ts`: `emit as Emit` (los constructores de intents vienen de
-    JS en el llamado) y `partialModel as AnyModel` (fallback de `disabledWhen`).
-  - `core/ui/faults.ts`: `emit as Emit` (ídem).
-  - No cuentan los alias de import (`stages as campaignStages`) ni `as const`.
-- `npm run check` verde: typecheck, lint 0 warnings, knip, **123 tests** y build.
-
-**Checklist de cierre TS5 en Firefox** (para el usuario, con `npm run dev`):
-1. Portada con "Etapas" y "Laboratorio", igual que antes.
-2. Laboratorio del combustible: llave on → cebado de la bomba; arranque; sliders,
-   fallas y presets funcionan; lecturas y sparklines se mueven; narración; clic
-   en una pieza → ficha; tema oscuro legible.
-3. Etapas de quiz 1 y 2: preguntas, feedback, puntaje, estrellas, guardado
-   (recargar la página conserva el progreso), candado de la etapa 2.
-4. F12 sin errores. Con el dev corriendo, meter a mano un error de tipos en un
-   `.ts` → aparece el overlay del checker; sacarlo → desaparece.
-
-**Verificado por el usuario en Firefox (2026-09-25): funciona sin errores.**
-Informe completo de la migración (qué se hizo y qué errores aparecieron):
-`docs/informes/2026-09-25-migracion-typescript.md`.
-
-## CERRADO 2026-09-24 — A2 Quiz E1, HUD, guardado y campaña
-
-- `src/game/save.js`: `crf.save.v1` versionado, storage inyectable (localStorage/Map/memoria);
-  corrupto, con forma rara o que lanza → defaults y se juega sin persistir (§27). Sanea entradas.
-- `src/game/campaign.js` + `src/game/stages/fuel-quiz-1.js` (sólo `find`, 8 piezas) y
-  `fuel-quiz-2.js` (`find`/`name`/`purpose`, todas). Desbloqueo por `unlockAfter`.
-- `src/game/modes/quiz.js`: preguntas con semilla por etapa (D10); inyectores 1..4 como un solo
-  concepto; distractores de todo el módulo; `purpose` descarta los `why` que nombran la pieza.
-  Puntaje = aciertos×10 + 5 por acierto consecutivo extra (la fórmula no estaba fijada en el
-  plan); estrellas ≥90/≥70/≥50 %; `recordAnswer` por pieza y `recordStage` al cerrar; `onReset`
-  reinicia la partida y deja el motor en marcha. Etapa vacía cierra una vez y se registra.
-- `src/ui/hud.js`: pinta el HudModel 6.7 (stats, prompt + choices, tools, actions, suspects,
-  log) y emite `answer`/`useTool`/`removeTool`/`markSuspect` y las acciones del modo.
-- `src/core/shell.js`: portada con "Etapas" (candado, estrellas y mejor puntaje) + "Laboratorio";
-  ruta `#/stage/<id>` con desbloqueo; semilla `seed ^ intento` en cada reintento; retry/quit/
-  nextStage desde el HUD; aplica los eventos `highlight` del modo.
-- `fuel/view.js`: `part-label` en las 13 etiquetas de **nombre**; los valores (Apagado, 12,6 V,
-  rpm, litros, tag del motor, números de inyector) no lo llevan.
-- Contrato: `ModeEvent` suma `highlight` (`{partIds, style}`) en `CONTRATOS.md` §6.3. Lo pide el
-  plan §6 y el modo es puro (§21): el shell es quien llama al renderer.
-- Fuera de la lista de archivos de A2 (§12, anotado): `render/legacy/index.js` (limpia los 4
-  estilos de highlight antes de aplicar uno, y sólo hace toggle de deselección con `infoPanel`,
-  o sea en el lab) y `styles.css` (HUD, portada y `.correct/.wrong/.target`).
-- Tests: 109 en verde (+32: quiz con semilla, distractores, puntaje/racha, estrellas, save con
-  memoria/Map/corrupto/roto, campaña, etiquetas). `npm run build` en verde.
-- Diferido a A6/A7 (identidad por tipo §23): `recordAnswer` usa el `partId` como clave de
-  maestría (los inyectores suman por instancia).
-- Conocido: el feedback del quiz dura 1 s de tiempo **simulado**; a 0.05× se estira (contrato
-  `update(simDt)`).
-
-**Revisar en Firefox** (`npm run dev`):
-1. Portada: "Etapas" con la 1 jugable y la 2 con candado; "Laboratorio" con la tarjeta de
-   combustible. Abrir a mano `#/stage/fuel-quiz-1`.
-2. Etapa 1: no se leen nombres en el diagrama (nada de "Bomba", "Filtro", "Regulador"…); sí los
-   valores (12,6 V, litros, rpm, tag del motor). El motor se ve en marcha desde el arranque.
-3. Responder un `find`: acierto → pieza en verde y HUD "¡Correcto! · Aciertos/Puntos"; error →
-   la tocada en rojo y el texto dice cuál era. La pregunta avanza sola tras ~1 s.
-4. `name`: la pieza objetivo queda con contorno azul punteado y hay 4 botones de nombre.
-   `purpose`: el HUD muestra la función entre comillas y 4 nombres.
-5. Clic repetido en la misma pieza en un `find` debe responder igual (ya no hace falta el
-   segundo clic).
-6. Terminar: estrellas, "Reintentar", "Siguiente etapa" y "Volver al taller". Reintentar cambia
-   las preguntas; "Siguiente" abre la etapa 2; volver muestra la etapa 1 con estrellas y mejor
-   puntaje en la portada.
-7. ⟲ reinicia la partida (pregunta 1, 0 aciertos) y deja el motor andando. Pausa y velocidad
-   funcionan.
-8. F12 sin errores; en la consola `window.__sim.mode.hud()` y `window.__sim.save.get()`
-   responden. Repetir el quiz completo mejora el récord de la portada.
-
-## FIX 2026-09-24 — los cables de los inyectores son una pieza propia
-
-Lo notó el usuario jugando el quiz: el cable ECU→inyector llevaba `part: injectorN`
-(`view.js:76`), así que tooltip, ficha y clic del quiz decían "Inyector N". Ahora los 4 cables
-son `injectorWires` ("Arnés de los inyectores", `content.js`), con ficha y fallas propias; el
-inyector sigue siendo sólo su cuerpo. Como el arnés no tiene `.part-body`, en `fuel.css` se
-agregaron sus reglas de resaltado (`.signal-wire.selected/.target/.correct/.wrong`). En el
-quiz, clicar el cable ya no acierta una pregunta de inyector, y en la etapa 2 el arnés puede
-ser una pregunta más (`parts:'all'`). Docs: `modules/fuel.md` §1. Tests: 110 en verde (+1: el
-arnés no se agrupa con los inyectores).
-
-**Revisar en Firefox** (`#/lab/fuel` y `#/stage/fuel-quiz-2`):
-1. Hover sobre un cable ECU→inyector → tooltip "Arnés de los inyectores"; clic → su ficha
-   ("¿Qué es? / ¿Para qué sirve? / ¿Cómo funciona?"). El cuerpo del inyector sigue siendo
-   "Inyector N".
-2. En el quiz, pregunta de inyector: clic en el cable → incorrecto; clic en el cuerpo (o su
-   número) → correcto.
-3. En la etapa 2 el arnés puede aparecer como pregunta u opción; si toca `purpose`, el texto
-   no lo nombra.
-
-## CERRADO 2026-09-24 — revisión: NaN, reset con overrides, ⟲ y preset
-
-Plan: `plans/2026-09-24-fix-revision-robustez.md`.
-- `clamp(NaN)` → `min` (`core/math.js`, tocado como arreglo de revisión §12).
-  Antes, `throttle = NaN` o `filterClog = NaN` dejaba `pRail = NaN` para siempre.
-- `labMode` rechaza `setParam`/`setFault` con NaN/Infinity o con otro tipo.
-- `createFuelModel().reset()` vuelve a los overrides de creación.
-- `labMode.onReset()` reinicia la sesión y olvida `activePreset`.
-- Tests: 77 en verde (+4: NaN en el modelo, overrides en reset, validación de
-  intents, onReset; los 4 fallan sin el arreglo). `npm run build` en verde.
-
-**Revisar en Firefox** (`npm run dev` → `#/lab/fuel`):
-1. Clic en un caso de "Casos para probar" → aparece su nota. Clic en ⟲ → la
-   nota desaparece, fallas en 0 y llave en "Apagado".
-2. Mover sliders de fallas y controles → responden igual que antes.
-3. F12, sin errores. En la consola:
-   `window.__sim.mode.handle({type:'setParam', key:'throttle', value:NaN})`
-   y luego `window.__sim.model.params.throttle` → sigue siendo el valor anterior.
-
-## FIX 2026-09-23 — triángulos cafés entre las tuberías (bug de T4)
-
-Lo reportó el usuario al probar. Las tuberías con codo se rellenaban como
-polígonos: `.fluid-fuel { fill }` le gana al atributo `fill="none"` de
-`svg.pipe()`. Corregido con `.pipe .pipe-fluid, .pipe .pipe-wall { fill: none }`
-en `styles.css`. Trampa anotada en `CONTRATOS.md` (vista). **Revisar**: ya
-no deben verse triángulos en la alimentación ni en el retorno; el líquido del
-estanque sigue relleno.
-
-## REVISIÓN 2026-09-23 — A0 + A1 (segundo agente)
-
-Resultado: bien encaminado. Leyes y contratos copiados, cero escrituras a
-`params`/`faults` fuera de modos, 54 tests originales intactos + 19 nuevos.
-Corregido en la revisión:
-- **`[hidden]` no ocultaba**: `.ctl { display: grid }` le ganaba al
-  atributo. Regla global `[hidden] { display: none !important }` en
-  `styles.css`.
-- **`hoverPart` en cada `pointermove`**, con re-sincronización de paneles:
-  ahora sólo se emite al cambiar de pieza, y el hover no dispara `syncAll`.
-- **`placePart`**: el contrato decía `{ type }` (choca con `intent.type`);
-  el código ya usaba `partType`. Se corrigió el doc y el plan (el error era
-  del plan).
-- **⟲ borraría la falla escondida del diagnóstico**: el shell ahora llama
-  `mode.onReset()` si existe. A3 debe implementarlo (plan §7).
-- Pendiente conocido para A2/A3: el shell pasa `rng: null, save: null` al
-  modo, y `narration: 'hints'` todavía se trata como `'full'`.
-
-## CERRADO 2026-09-23 — A1 sesión, intents, labMode, legacyRenderer
-
-- `src/game/{types,intents,session}.js`: tipos JSDoc, catálogo de intents y constructores puros, sesión desacoplada del shell con soporte para driver `raf` y `external`.
-- `src/game/modes/lab.js`: máquina de estados del laboratorio que centraliza la aplicación de `setParam`, `setFault`, `resetFaults`, `applyPreset` y `action`. Único escritor en `params`/`faults`.
-- `src/render/legacy/index.js`: adaptador `legacyRenderer` sobre `module.createView` con soporte para delegación de clics (`selectPart`), hover (`hoverPart`), `highlight` y ocultamiento de `.part-label` cuando `labels: false`.
-- `src/core/router.js`: `parseHash` devuelve `{ kind: 'lab'|'stage'|'home', id }` con compatibilidad y redirección para URLs antiguas `#/<id>`.
-- `src/core/ui/*`: `controls.js` y `faults.js` migrados para emitir intents vía `emit(intent)` en lugar de mutar `model.params` / `model.faults` directamente. Métodos `setVisible()` agregados a controles, fallas y lecturas. `timebar.js` suma `setMaxScale()`.
-- `src/core/shell.js`: composición según contrato A1: sesión + modo + legacyRenderer + paneles DOM con intents.
-- `src/modules/fuel/index.js`: exporta `defaultParams` y `defaultFaults`.
-- Tests: 73 tests en verde (los 54 tests existentes + 19 tests nuevos en `tests/game/` cubriendo sesión, intents, labMode y router). `npm run build` en verde.
-- Invariante comprobada: cero escrituras a `model.params[...] =` fuera de `src/game/modes/` y constructores de modelo.
-
-## CERRADO 2026-09-23 — A0 docs de arquitectura de juego
-
-- `docs/ARCHITECTURE.md`: enmienda a §17 (Phaser en A8) y leyes §19–§30
-  (capas, intents, modo puro, renderer y VisualState, catálogo por tipo,
-  solver, controladores, ids §26, guardado v1, dueño único de señales, stubs
-  ideales, no mezclar fluidos). 134 líneas (≤ 200).
-- `docs/CONTRATOS.md`: sección "Contratos de juego" agregada con contratos
-  6.1–6.8 (Session, Intents, ModeUi/Mode, Renderer, VisualState, faultCatalog,
-  HUD, Etapas y Save v1).
-- `docs/NORTE.md` y `docs/SISTEMAS.md` verificados con respecto al plan
-  `plans/2026-09-23-arquitectura-juego.md`.
-
+Los CERRADO/FIX/REVISIÓN anteriores a A11 (A0–A7, A6b, TS5, fixes del
+2026-09-23/24) se recortaron el 2026-09-26 para respetar el límite de
+líneas; están en git (`git log -p -- docs/AHORA.md`, antes de `7533045`).
 
 ## Checklist detallada del combustible (opcional, usuario, Firefox)
 
