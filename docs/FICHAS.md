@@ -8,21 +8,33 @@ Reemplaza a las fichas de `plans/2026-09-25-simulacion-antes-que-juego.md`
 
 1. `AGENTS.md`, `ARCHITECTURE.md`, `AHORA.md` y `CONTRATOS.md` (siempre).
 2. La sección **Contexto común** de este archivo.
-3. **Tu ficha** y nada más que lo que tu ficha nombre, con la sección
-   exacta. Si una sección de un plan viejo no está nombrada, no se lee.
+3. **Tu ficha**. Cada ficha nombra **dos documentos**, en este orden: la
+   **spec** del sistema (`docs/modules/<id>.md`: la física, las fallas, la
+   vista y los tests con rangos) y el **plan** de implementación
+   (`docs/plans/2026-09-26-<id>.md`: archivos, pasos, decisiones y la
+   checklist de Firefox). Los dos los escribió el agente planificador y ya
+   están revisados. **No se lee nada más** salvo el código que nombre el
+   plan.
 
-Si una ficha choca con un plan viejo, **manda la ficha**. Si falta algo, se
-pregunta al usuario o se anota en el CERRADO; no se improvisa. En los planes
+**Reparto de trabajo** (2026-09-26, pedido del usuario): el agente
+planificador escribe todos los planes y specs; **el agente que implementa
+no diseña ni escribe planes**. Si algo del plan falta, no cuadra con el
+código o un rango de test es imposible con la física de la spec, se
+pregunta al usuario o se anota en el CERRADO con la cuenta; no se
+improvisa. Ajustar una constante para que un rango cuadre sí está
+permitido (ARCHITECTURE §14): se documenta en la spec.
+
+Si una ficha choca con un plan viejo, **manda la ficha**. En los planes
 viejos, las rutas `.js` se leen como `.ts`.
 
 Abreviaturas: **P23** = `plans/2026-09-23-arquitectura-juego.md`.
 
-**No leer en ninguna tarea del bloque S**: el plan maestro (salvo lo que
-nombre una ficha), la hoja de ruta, `2026-09-24-motor-y-juice.md`,
-`2026-09-25-a3-revision.md`, y en P23 las
-§4.6–§7 (juego), §8.6–§8.7 (Phaser, armado) y §12–§13. Tampoco
-`2026-09-25-simulacion-antes-que-juego.md`, `2026-09-26-alcance-auto-completo.md`
-ni `2026-09-26-sistemas-genericos.md`: lo vigente de esos tres ya está aquí.
+**No leer en ninguna tarea**: el plan maestro, la hoja de ruta,
+`2026-09-24-motor-y-juice.md`, `2026-09-25-a3-revision.md`,
+`2026-09-25-simulacion-antes-que-juego.md`,
+`2026-09-26-alcance-auto-completo.md`, `2026-09-26-sistemas-genericos.md`
+y P23 (salvo la sección exacta que nombre un plan). Lo vigente de todos
+ellos ya está en las specs, los planes nuevos y aquí.
 
 ---
 
@@ -43,256 +55,183 @@ ni `2026-09-26-sistemas-genericos.md`: lo vigente de esos tres ya está aquí.
      misma bobina);
    - si la física es otra, es un **sistema hermano** que publica las mismas
      señales (el carburador y la inyección publican `fuel.mixture`).
-
-   La tabla de épocas está en `SISTEMAS.md` → "Variantes por época".
-4. **Cada spec de sistema** (`docs/modules/<id>.md`) tiene una sección
-   **Arquetipo y variantes**: qué comparte el arquetipo, qué piezas se
-   intercambian, qué variantes se implementan y cuáles quedan registradas.
-   Por defecto se implementan **la más antigua y la más común**. Las
-   intermedias, sólo si salen combinando piezas ya hechas.
-5. **Carrocería y chasis**: por ahora nada. Cuando lleguen, primero como
-   inspección visual (óxido, perforación, deformación). La soldadura es un
-   minijuego muy a futuro (`HORIZONTE_JUEGO.md`).
+   Cada variante implementada es **su propio descriptor y su propia ruta**
+   (`ignition-points`, `ignition-cop`), generados por el mismo código; la
+   ruta vieja sin sufijo redirige a la moderna.
+4. Cada spec tiene su sección **Arquetipo y variantes**: qué se implementa
+   (por defecto la más antigua y la más común) y qué queda registrado.
+5. **Carrocería y chasis**: sólo inspección visual (A25). La soldadura es
+   un minijuego muy a futuro (`HORIZONTE_JUEGO.md`).
 6. **Un agente a la vez, en orden, todo en `main`.** Cada tarea cierra con
    `npm run check` en verde, un bloque CERRADO en `AHORA.md` (con la
-   checklist de Firefox para el usuario) y un commit.
+   checklist de Firefox del plan) y un commit.
 7. Al empezar cada tarea: `npm view typescript-eslint peerDependencies`. Si
    acepta TS 7, se avisa en `AHORA.md` (la migración es una tarea aparte).
 
----
+### Convenciones de todos los sistemas (las fija el plan del vehículo)
 
-## A10 — Plan del vehículo (sin código)
-
-**Qué es.** Diseñar cómo se juntan los sistemas en un vehículo y cómo se ve
-eso en el laboratorio, **antes** de A11–A16, para que cada sistema nazca con
-sus señales, buses, stubs y variantes definidos.
-
-- **Leer**: P23 §14 completa (sistemas entrelazados, `VehicleDef`,
-  `compileVehicle`, requisitos 14.4); P23 §8.3 (contrato de controlador);
-  `SISTEMAS.md` completo; `src/sim/controllers/engineCore.ts`;
-  ARCHITECTURE §11, §25, §28 y §29.
-- **No leer**: plan maestro §11 (el "orquestador que copia señales" lo
-  reemplaza `compileVehicle`).
-- **Entrega**: `docs/plans/AAAA-MM-DD-vehiculo.md`, **fácil de leer**, con
-  revisión adversaria de un subagente sin contexto triada en el mismo plan,
-  y las fichas de A11–A16 y A15 **actualizadas aquí** en `FICHAS.md` con lo
-  que el plan decida. Si hace falta enmendar §11 de ARCHITECTURE, se
-  propone.
-
-El plan tiene que resolver, uno por uno:
-
-1. **Los requisitos de P23 §14.4** (contrato de controlador de vehículo,
-   buses, `compileVehicle`, `engineCore` único, `ModeContext` de varios
-   sistemas, fluidos).
-2. **Tabla de arquetipos**: por sistema, qué variantes hay, cuáles son
-   piezas intercambiables y cuáles sistemas hermanos, con el criterio del
-   Contexto común (3).
-3. **`VehicleDef` con una variante por sistema.** La forma de P23 §14.2 ya
-   sirve (`systems: [{ id: 'ignition', circuit: 'cop-4' }]`); falta
-   fijar que cada vehículo elige una variante por sistema y que es genérico
-   ("años 70", "años 2000"), no un auto real.
-4. **Tabla de dueños de señales (§28)**, incluyendo las que hoy no tienen
-   dueño claro:
-   - **Admisión**: `throttle`, `intake.map`, `air.flow`. Hoy `engineCore`
-     lee `throttle` y calcula `pMan` (`engineCore.ts:105`). Los necesitan
-     el carburador (mariposa y venturi), el avance por vacío del
-     distribuidor y el servo de frenos.
-   - **Fase del motor**: `engine.crankAngle` y `engine.camAngle`. Hoy
-     `crankAngle` lo escribe `engineCore`; decidir si pasa a `four-stroke`.
-     Hacen falta los dos porque un chavetero ovalado atrasa la leva respecto
-     del cigüeñal: con **distribuidor** (movido por la leva) se atrasan las
-     válvulas **y** la chispa; con **sensor en el cigüeñal** la chispa sigue
-     bien y sólo se atrasan las válvulas.
-   - `lubrication.pressure` (la lee el tensor hidráulico de la
-     distribución) y las señales eléctricas (`electrical.crankVoltage`,
-     bus de 12 V).
-5. **El laboratorio del vehículo**: varios sistemas a la vez con sus flujos;
-   las señales compartidas a la vista con su dueño; una falla en un sistema
-   muestra su efecto en otro (batería débil → bomba de bencina y bobinas se
-   resienten a la vez); los stubs (§29) se ven como stubs.
-6. **Cómo se muestran las variantes** en el laboratorio de un sistema: una
-   ruta por variante o un selector que recompila el circuito.
-7. **Tamaño del solver** por componente conexa (riesgo de P23 §14.2), medido
-   con el benchmark de A4.
-8. **Dónde encaja la carrocería**: un modelo por elementos, fuera del
-   solver. Sólo se ubica, sin detalle.
-
-- **Aceptación**: el usuario aprueba el plan.
+- **Señal de una tarea posterior**: se usa su stub de
+  `plans/2026-09-26-vehiculo.md` §5.3 hasta que llega el dueño (p. ej. A20
+  lee `wheel.speed*` de A21; A22 lee `steering.angle` de A23; A23 lee
+  `wheel.pressure*` de A24). No se inventan stubs.
+- **Señales §28**: la tabla de dueños está en
+  `plans/2026-09-26-vehiculo.md` §6 (y desde A15 en `CONTRATOS.md` §4.11).
+  Cada spec dice en su §12 qué publica y qué lee.
+- **Bus de laboratorio**: cada laboratorio lee lo que no produce desde
+  `createLabBus` (`src/sim/signals/`, lo crea A11) con stubs ideales y
+  dinámicos (§29).
+- **Mecanismos** (4 tiempos, tren motriz, suspensión, ruedas): un
+  `ControllerDef` con integrador propio, compilado con `compileCircuit`
+  sobre un `CircuitDef` sin elementos de red (sólo piezas `visual`).
+- **Elementos nuevos** van a `src/sim/elements/`, con test de ley y
+  jacobiano en `tests/sim/elements.test.ts` y su fila en `solver.md` §6.
+  Los crea la primera tarea que los necesita (lo dice su plan) y los
+  siguientes los reusan.
+- **Drawers** nuevos en `src/render/svg/drawers/<sistema>/`; geometría una
+  vez, `update` sólo muta atributos (§9); colores por variables CSS.
+- **Límite del solver**: ±1 bar (o 1 V, 1 °C) por iteración y 25
+  iteraciones: una entrada que salte mucho en un paso se limita en su
+  controlador (frenos lo hacen explícito).
 
 ---
 
-## A11 — Ciclo de 4 tiempos (con la distribución)
+## A10 — Plan del vehículo (planificador; sin implementador)
 
-**Qué es.** El mecanismo del motor: pistón, biela, cigüeñal, válvulas, árbol
-de levas y **distribución**. Es un mecanismo, no una red: **no usa el
-solver**. Necesita su propia vista (corte del cilindro + diagrama P-V),
-fuera del catálogo de drawers de redes. Publica `engine.compression` y el
-ángulo de leva (según decida A10).
-
-- **Arquetipo y variantes** (params de este módulo): accionamiento por
-  cadena, correa o engranajes; OHV (varillas y balancines), SOHC o DOHC;
-  tensor hidráulico (lee `lubrication.pressure`, stub ideal en el
-  laboratorio) o de resorte.
-- **Fallas de la distribución** (ya descritas en `four-stroke.md`): perno
-  del cigüeñal flojo → chavetero ovalado → chaveta cortada; tensor débil,
-  guía rota, cadena estirada. El chavetero ovalado es una falla real que vio
-  el usuario: tiene que verse en el laboratorio el juego entre el piñón y
-  el eje.
-- **Ids §26**: los de hoy (`ringWear`, `burntExhaustValve`,
-  `camTimingOffset`, `noSpark`) no siguen el formato `<partId>.<falla>` y
-  se convierten. `camTimingOffset` pasa a ser un control del laboratorio o
-  `timingChain.skippedTeeth`, no una causa.
-
-- **El plan del vehículo (A10) fija**: en el vehículo es dueño de
-  `engine.crankAngle`, `engine.camAngle` y `engine.compression`; su tensor
-  hidráulico lee `lubrication.pressure` (stub ideal en su laboratorio); es un
-  **mecanismo** (sin solver) y define el inset para el laboratorio del
-  vehículo; variantes como piezas: cadena/correa/engranajes y OHV/SOHC/DOHC.
-- **Leer**: `docs/modules/four-stroke.md`; el plan del vehículo (A10);
-  `SISTEMAS.md` ("Motor" y "Variantes por época"); `docs/modules/fuel.md`
-  como ejemplo del nivel de detalle.
-- **Pasos**:
-  1. Spec en `four-stroke.md` al nivel de `fuel.md`: piezas, params,
-     fallas con ids §26, física con unidades, estado, lecturas, narración,
-     presets, tests con rangos y la sección Arquetipo y variantes.
-  2. Plan en `docs/plans/AAAA-MM-DD-four-stroke.md`, fácil de leer.
-  3. Código: `src/modules/four-stroke/**`, `tests/four-stroke/**`.
-  4. Checklist de Firefox en `AHORA.md`.
-- **Aceptación**: la que fije su plan + la checklist del laboratorio.
+El plan está escrito (`plans/2026-09-26-vehiculo.md`, **v3**: alineado con
+las specs de todos los sistemas). **Falta la aprobación del usuario.** Al
+aprobarlo se cierra con un commit y empieza A11. Ningún agente
+implementador tiene que hacer nada en A10.
 
 ---
+
+## A11 — Ciclo de 4 tiempos y distribución
+
+- **Spec**: `docs/modules/four-stroke.md`.
+- **Plan**: `docs/plans/2026-09-26-four-stroke.md`.
+- **Estrena**: el bus de laboratorio (`src/sim/signals/`), el stub de fase,
+  `src/sim/engine/geometry.ts` y los mecanismos sobre `compileCircuit`.
+- **Aceptación**: los tests de la spec §11 y la checklist del plan §6
+  (incluye el chavetero ovalado que vio el usuario).
 
 ## A12 — Encendido (platinos y COP)
 
-**Qué es.** Un arquetipo con **una sola bobina** (primario RL, energía
-`½·L·i²`, ruptura en la bujía) y tres piezas intercambiables:
-
-| Pieza | Antigua | Moderna |
-|---|---|---|
-| Corte del primario | platinos + condensador | transistor (igniter) |
-| Reparto de la alta | distribuidor con rotor y tapa | una bobina por cilindro (COP) |
-| Avance | contrapesos (rpm) + cápsula de vacío (`intake.map`) | ECU |
-
-Se implementan **platinos con distribuidor** y **COP**. El electrónico con
-distribuidor y el DIS se implementan si salen combinando esas piezas; si no,
-quedan registrados en la spec. El distribuidor lee `engine.camAngle` y el
-sensor de cigüeñal lee `engine.crankAngle` (señales de A10).
-
-- **Solver**: faltan **capacitor e inductancia** en `src/sim/elements/`
-  (hoy sólo existen dentro de los tests de A4); se agregan con tests
-  analíticos. El circuito de platinos con condensador oscila en kHz: el
-  plan decide si el paso de 1 ms alcanza, o si hace falta un subpaso o un
-  modelo promediado.
-
-- **El plan del vehículo (A10) fija**: publica `ignition.spark`; el
-  distribuidor lee `engine.camAngle` y el sensor de cigüeñal
-  `engine.crankAngle`; cuelga del bus `12v` del solver; en `vehicle-70`
-  provee el bus (batería y llave); platinos+distribuidor y COP como piezas.
-- **Leer**: `docs/modules/ignition.md`; el plan del vehículo (A10);
-  `SISTEMAS.md` ("Motor", "Eléctrico" y "Variantes por época");
-  `docs/modules/solver.md`; `docs/modules/fuel.md` como ejemplo.
-- **Pasos**: spec → plan `docs/plans/AAAA-MM-DD-ignition.md` → código
-  (`src/modules/ignition/**`, `src/sim/elements/**`, tests) → checklist.
-- **Aceptación**: la que fije su plan + la checklist del laboratorio, con
-  las dos variantes.
-
----
+- **Spec**: `docs/modules/ignition.md`.
+- **Plan**: `docs/plans/2026-09-26-ignition.md`.
+- **Estrena**: el elemento `currentLoad`. **No** agrega capacitor ni
+  inductancia (la spec §1 explica por qué).
+- **Aceptación**: tests de la spec §11 y checklist del plan §5, con las
+  dos variantes.
 
 ## A13 — Refrigeración
 
-**Qué es.** Bomba de agua, termostato, radiador, ventilador, calefactor,
-depósito de expansión y tapa a presión. Fluido `coolant` (§30). El plan
-decide si se agrega un **dominio térmico** al solver (temperatura como
-potencial, calor como flujo, encaja en el esquema nodal) o un modelo aparte.
-
-- **Arquetipo y variantes**: un solo arquetipo. Se documentan en la spec las
-  diferencias de época (ventilador mecánico con embrague viscoso o
-  eléctrico con termocontacto).
-- **El plan del vehículo (A10) fija**: publica `engine.coolantTemp`; lee
-  `engine.rpm` y `engine.load`; el ventilador eléctrico cuelga del bus `12v`.
-- **Leer**: `docs/modules/cooling.md`; el plan del vehículo (A10);
-  `SISTEMAS.md`; `docs/modules/solver.md`; `docs/modules/fuel.md` como
-  ejemplo.
-- **Pasos**: spec → plan → código → checklist (igual que A11).
-- **Aceptación**: la que fije su plan + la checklist del laboratorio.
-
----
+- **Spec**: `docs/modules/cooling.md`.
+- **Plan**: `docs/plans/2026-09-26-cooling.md`.
+- **Estrena**: el dominio `thermal` del solver, `heatSource`,
+  `thermalConductance`, `advection`, `heatCapacity`, `centrifugalPump`,
+  `variableOrifice`, `CircuitDef.initial` y `solver.setPotential`.
+- **Aceptación**: tests de la spec §11 y checklist del plan §6.
 
 ## A14 — Lubricación
 
-**Qué es.** Cárter, bomba de engranajes, válvula de alivio, filtro con
-bypass, galerías, cojinetes y luz de presión. Hidráulica con el solver,
-fluido `oil`, viscosidad según la temperatura (`engine.coolantTemp` u
-`oilTemp`). Publica `lubrication.pressure` (la lee el tensor de A11).
-
-- **Arquetipo y variantes**: un solo arquetipo; se documentan las
-  diferencias de época (filtro de cartucho o enroscable, manómetro o sólo
-  luz).
-- **El plan del vehículo (A10) fija**: publica `lubrication.pressure`; lee
-  `engine.rpm` y `engine.coolantTemp` (viscosidad); la luz de presión cuelga
-  del bus `12v`.
-- **Leer**: `docs/modules/lubrication.md`; el plan del vehículo (A10);
-  `SISTEMAS.md`; `docs/modules/solver.md`; `docs/modules/fuel.md` como
-  ejemplo.
-- **Pasos**: spec → plan → código → checklist (igual que A11).
-- **Aceptación**: la que fije su plan + la checklist del laboratorio.
-
----
+- **Spec**: `docs/modules/lubrication.md`.
+- **Plan**: `docs/plans/2026-09-26-lubrication.md`.
+- **Estrena**: `displacementPump`, `linearRestrictor` y el control `drain`
+  del `tank`.
+- **Aceptación**: tests de la spec §11 y checklist del plan §6.
 
 ## A16 — Carburador
 
-**Qué es.** La alimentación de los autos antiguos. Es un **sistema hermano**
-de `fuel` (física distinta: depresión en un venturi en vez de presión en
-un riel) y publica la misma `fuel.mixture` (§28), para que `engineCore` y
-los demás sistemas no sepan cuál está montado.
-
-- **Piezas**: bomba de bencina mecánica (movida por la leva, lee
-  `engine.rpm`), cuba con flotador y aguja, surtidores de ralentí y
-  principal, venturi, mariposa, estrangulador (choke) y bomba de
-  aceleración. Fluidos `fuel` y `air` (§30).
-- **Fallas típicas a considerar**: flotador pegado (se ahoga o se seca),
-  surtidor tapado, estrangulador pegado, bomba de aceleración sin
-  diafragma (tironeo al acelerar), bomba mecánica gastada.
-- **El plan del vehículo (A10) fija**: es el dueño de `fuel.mixture` en
-  `vehicle-70` (mismo contrato que `fuel`); la bomba mecánica se mueve con el
-  motor; lee `intake.map`.
-- **Leer**: el plan del vehículo (A10); `SISTEMAS.md` ("Motor" y
-  "Variantes por época"); `docs/modules/fuel.md` (como ejemplo y para las
-  señales que comparten); `docs/modules/solver.md`.
-- **Pasos**: spec nueva `docs/modules/carburetor.md` → plan → código
-  (`src/modules/carburetor/**`, tests) → checklist.
-- **Aceptación**: la que fije su plan + la checklist del laboratorio del
-  carburador.
-
----
+- **Spec**: `docs/modules/carburetor.md`.
+- **Plan**: `docs/plans/2026-09-26-carburetor.md`.
+- **Estrena**: `flowSource`.
+- **Aceptación**: tests de la spec §11 y checklist del plan §5.
 
 ## A15 — Laboratorio del vehículo
 
-**Qué es.** Implementar lo que diseñó A10: `compileVehicle`, `engineCore`
-con entradas reales y la vista del vehículo. Se arman **dos vehículos
-genéricos**: uno antiguo (carburador + platinos) y uno moderno (inyección +
-COP), para que se vea que el resto del auto no cambia al cambiar la
-variante.
+- **Plan**: `docs/plans/2026-09-26-vehiculo.md` (v3), secciones §3–§10 y
+  §12. Las specs de A11–A14 y A16 (§12 de cada una) dicen qué publica y qué
+  lee cada sistema.
+- **Qué es**: `compileVehicle`, el bus del vehículo con dueños validados,
+  `engineCore` con entradas reales (§4.8), los dos vehículos genéricos
+  (`vehicle-70` y `vehicle-2000`, §8), el panel de señales, el elemento
+  `breach` y el benchmark commiteado.
+- **Aceptación**: la del plan §15 + la checklist en Firefox (una falla de
+  un sistema se ve en otro, en los dos vehículos).
+- **Al cerrar**: preguntar al usuario el orden del bloque S2 (A17–A25) y si
+  abre la puerta del bloque G.
 
-- **Leer**: el plan del vehículo (A10).
-- **El plan del vehículo (A10) fija**: `compileVehicle` con prefijos
-  `sistema:pieza`, buses con un proveedor, `SignalBus` con dueño único y
-  fases same-step, hoisting de `engineCore` y transformación del layout; los
-  dos vehículos y su proveedor del bus; panel de señales
-  (`ModeUi.signals`); elemento `breach` de cruce de fluidos; benchmark
-  commiteado con umbral de 4 000 pasos/s.
-- **Aceptación**: la que fije el plan de A10 + la checklist en Firefox (una
-  falla de un sistema se ve en otro, en los dos vehículos).
-- **Al cerrar**: preguntar al usuario el orden del bloque S2 y si abre la
-  puerta del bloque G.
+---
+
+## Bloque S2 — resto del auto (después de A15; el orden lo elige el usuario)
+
+Orden sugerido por dependencias: A17 → A18 → A19 → A20 → A21 → A22 → A23 →
+A24 → A25. Cada ficha dice qué necesita antes.
+
+## A17 — Eléctrico: batería, arranque y carga
+
+- **Spec**: `docs/modules/electrical.md` · **Plan**:
+  `docs/plans/2026-09-26-electrical.md`.
+- **Necesita**: A15. Pasa a ser el proveedor del bus `12v` en los dos
+  vehículos.
+
+## A18 — Admisión
+
+- **Spec**: `docs/modules/intake.md` · **Plan**:
+  `docs/plans/2026-09-26-intake.md`.
+- **Necesita**: A15. Crea el bus `vacuum` y retira lo provisional de
+  `engineCore`.
+
+## A19 — Escape
+
+- **Spec**: `docs/modules/exhaust.md` · **Plan**:
+  `docs/plans/2026-09-26-exhaust.md`.
+- **Necesita**: A15 y A18. Agrega el fluido `exhaust` y el lazo cerrado de
+  la ECU en el vehículo moderno.
+
+## A20 — Frenos
+
+- **Spec**: `docs/modules/brakes.md` · **Plan**:
+  `docs/plans/2026-09-26-brakes.md`.
+- **Necesita**: A15 y **A18** (usa `gasOrifice` y el servo cuelga del bus
+  de vacío).
+
+## A21 — Tren motriz
+
+- **Spec**: `docs/modules/drivetrain.md` · **Plan**:
+  `docs/plans/2026-09-26-drivetrain.md`.
+- **Necesita**: A15. Cambia `engineCore` (rpm dinámicas, torque).
+
+## A22 — Suspensión
+
+- **Spec**: `docs/modules/suspension.md` · **Plan**:
+  `docs/plans/2026-09-26-suspension.md`.
+- **Necesita**: A15 (mejor después de A21).
+
+## A23 — Dirección
+
+- **Spec**: `docs/modules/steering.md` · **Plan**:
+  `docs/plans/2026-09-26-steering.md`.
+- **Necesita**: A15 (mejor después de A22).
+
+## A24 — Ruedas y neumáticos
+
+- **Spec**: `docs/modules/wheels.md` · **Plan**:
+  `docs/plans/2026-09-26-wheels.md`.
+- **Necesita**: A15 (mejor después de A22 y A23).
+
+## A25 — Carrocería y chasis: inspección
+
+- **Spec**: `docs/modules/body.md` · **Plan**:
+  `docs/plans/2026-09-26-body.md`.
+- **Necesita**: A15.
 
 ---
 
 ## Sin ficha todavía
 
-- **Bloque S2 — resto del auto** (después de A15): eléctrico (carga con
-  dínamo o alternador, arranque, fusibles), frenos, tren motriz, suspensión,
-  dirección y ruedas, e inspección visual de carrocería. Catálogo en
-  `SISTEMAS.md`. La ficha se escribe aquí cuando le toque.
+- **Turbo y diésel** (💭 en `SISTEMAS.md`): sin plan hasta que el usuario
+  diga si entran en el alcance (son combustión interna de la época, pero no
+  estaban en lo conversado).
 - **Bloque G — juego** (A3, G1, A8, D-motor, A9): en espera de la puerta.
-  Sus fichas se escriben aquí cuando el usuario abra la puerta.
+  Sus fichas y planes los escribe el planificador cuando el usuario abra la
+  puerta.

@@ -37,3 +37,10 @@ Reglas para cualquier agente/asistente que trabaje en este repo.
    salvo que el usuario lo pida: hay una sola persona trabajando y el
    proyecto está empezando. Incluye las pruebas desechables (se borran
    después en un commit propio).
+9. **Planificar e implementar son dos roles.** El agente planificador
+   escribe las specs (`docs/modules/<id>.md`) y los planes de todas las
+   tareas antes de pasarlas. El agente que implementa **no diseña ni
+   escribe planes**: sigue la ficha, la spec y el plan; si algo falta o no
+   cuadra, pregunta al usuario o lo anota en el CERRADO con la evidencia.
+   Ajustar una constante para que un rango de test cuadre (§14) sí es parte
+   de implementar.

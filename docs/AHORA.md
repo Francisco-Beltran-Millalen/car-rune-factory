@@ -68,18 +68,30 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ✅ |
 | A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ✅ |
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ✅ |
-| A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ arquetipos por sistema y señales nuevas (`FICHAS.md`)** | A7 | ⏳ plan v2, espera aprobación |
-| A11 | Ciclo de 4 tiempos: spec → plan → código (plan 2026-09-25 §3.5) | A10 | ⏳ |
-| A12 | Encendido | A10 | ⏳ |
-| A13 | Refrigeración | A10 | ⏳ |
-| A14 | Lubricación | A10 | ⏳ |
-| A16 | Carburador: sistema hermano de `fuel`, publica `fuel.mixture` (`FICHAS.md`) | A10 | ⏳ |
-| A15 | Laboratorio del vehículo (sistemas relacionados), con un vehículo antiguo y uno moderno | A11–A14, A16 | ⏳ |
+| A10 | Plan del vehículo (planificador): `plans/2026-09-26-vehiculo.md` **v3** | A7 | ⏳ plan escrito, espera aprobación del usuario |
+| A11 | Ciclo de 4 tiempos y distribución (spec + plan listos) | A10 | ⏳ |
+| A12 | Encendido: platinos y COP (spec + plan listos) | A10 | ⏳ |
+| A13 | Refrigeración (spec + plan listos) | A10 | ⏳ |
+| A14 | Lubricación (spec + plan listos) | A10 | ⏳ |
+| A16 | Carburador (spec + plan listos) | A10 | ⏳ |
+| A15 | Laboratorio del vehículo: `vehicle-70` y `vehicle-2000` (plan del vehículo) | A11–A14, A16 | ⏳ |
 
 **Bloque S2 — resto del auto** (después de A15; el usuario elige el orden al
-cerrar A15): eléctrico (carga y arranque), frenos, tren motriz, suspensión,
-dirección y ruedas, e inspección visual de carrocería. Sin fichas todavía
-(`FICHAS.md`).
+cerrar A15). Spec y plan listos para todos (`FICHAS.md`):
+
+| # | Tarea | Depende de | Estado |
+|---|---|---|---|
+| A17 | Eléctrico: batería, arranque y carga (dínamo y alternador) | A15 | ⏳ |
+| A18 | Admisión (carburador y EFI; bus de vacío) | A15 | ⏳ |
+| A19 | Escape (catalizador, sonda, lazo cerrado) | A18 | ⏳ |
+| A20 | Frenos (clásicos y con ABS) | A18 | ⏳ |
+| A21 | Tren motriz (RWD y FWD; rpm dinámicas) | A15 | ⏳ |
+| A22 | Suspensión (clásica y moderna) | A15 (mejor tras A21) | ⏳ |
+| A23 | Dirección (caja y cremallera asistida) | A15 (mejor tras A22) | ⏳ |
+| A24 | Ruedas y neumáticos | A15 (mejor tras A22–A23) | ⏳ |
+| A25 | Carrocería y chasis: inspección | A15 | ⏳ |
+
+Turbo y diésel: sin plan hasta que el usuario diga si entran.
 
 **Puerta:** el bloque G empieza sólo cuando el usuario lo escriba aquí.
 
@@ -93,11 +105,11 @@ dirección y ruedas, e inspección visual de carrocería. Sin fichas todavía
 | D-motor | Decisión del usuario; afecta al juego, el laboratorio sigue en SVG | A8 | ⏸ |
 | A9 | Armar circuitos E4 (plan propio) | D-motor | ⏸ |
 
-**A10 en revisión**: el plan del vehículo está en
-`plans/2026-09-26-vehiculo.md` (v2, con la revisión adversaria triada en su
-§14 y una guía para el agente revisor al inicio) y las fichas de
-A11–A16/A15 ya quedaron actualizadas en `FICHAS.md`. El usuario lo revisará
-con otro agente; al aprobarlo se cierra con commit y sigue A11.
+**Planes (2026-09-26)**: el agente planificador escribió la spec
+(`docs/modules/<id>.md`) y el plan (`docs/plans/2026-09-26-<id>.md`) de
+todos los sistemas, A11–A25, y alineó el plan del vehículo (v3). El agente
+que implementa sólo implementa (`FICHAS.md` → "Cómo se lee"). Falta que el
+usuario apruebe el plan del vehículo para empezar A11.
 
 ## CERRADO 2026-09-26 — A7 Presenter + renderer SVG genérico
 

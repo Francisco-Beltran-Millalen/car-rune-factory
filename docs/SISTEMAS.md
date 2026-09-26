@@ -6,67 +6,71 @@ Catálogo de a dónde apuntar, no compromiso de orden. La prioridad real vive en
 
 ## Motor
 
-- **Alimentación de combustible** ⏳ `fuel` — estanque, bomba eléctrica,
+- **Alimentación de combustible** ✅ `fuel` (inyección; A6–A7) — estanque, bomba eléctrica,
   colador, válvula check, filtro, riel, 4 inyectores, regulador con
   referencia de vacío, retorno. Spec completa en `modules/fuel.md`.
-- **Ciclo de 4 tiempos** ⏳ `four-stroke` — pistón, biela, cigüeñal,
-  válvulas, árbol de levas, distribución 2:1, diagrama P-V.
-  `modules/four-stroke.md`.
+- **Ciclo de 4 tiempos** ⏳ A11 `four-stroke-ohv` / `four-stroke-dohc` —
+  pistón, biela, cigüeñal, válvulas, árbol de levas, distribución 2:1,
+  diagrama P-V. `modules/four-stroke.md`.
 - **Distribución** ⏳ (dentro de `four-stroke`) — piñón del cigüeñal,
   chaveta, cadena/correa/engranajes, tensor, guías, piñón de leva; OHV,
   SOHC, DOHC. Fallas: chaveta cortada, tensor débil, guía rota, cadena
   estirada.
-- **Encendido** ⏳ `ignition` — batería, ECU, sensor de cigüeñal 60-2,
-  transistor, bobina COP, bujía, osciloscopio. `modules/ignition.md`.
-- **Refrigeración** ⏳ `cooling` — bomba de agua, termostato, radiador,
+- **Encendido** ⏳ A12 `ignition-points` / `ignition-cop` — platinos,
+  condensador y distribuidor; o ECU, sensor 60-2, igniter y COP; bujías y
+  osciloscopio. `modules/ignition.md`.
+- **Refrigeración** ⏳ A13 `cooling-viscous` / `cooling-electric` — bomba de agua, termostato, radiador,
   ventilador, calefactor, depósito de expansión, tapa a presión.
   `modules/cooling.md`.
-- **Lubricación** ⏳ `lubrication` — cárter, bomba de engranajes, válvula de
+- **Lubricación** ⏳ A14 `lubrication-gauge` / `lubrication-lamp` — cárter, bomba de engranajes, válvula de
   alivio, filtro con bypass, galerías, cojinetes, luz de presión.
   `modules/lubrication.md`.
-- **Carburador** ⏳ A16 `carburetor` — cuba, flotador, surtidores de ralentí y principal,
+- **Carburador** ⏳ A16 `carburetor` (`modules/carburetor.md`) — cuba, flotador, surtidores de ralentí y principal,
   estrangulador (choke), bomba de aceleración, bomba de bencina mecánica.
   Variante antigua de la alimentación.
-- **Admisión / mariposa / MAP** 💭 — hoy se representa sólo como `pMan` en
-  combustible y como presión de admisión en 4 tiempos.
-- **Escape / catalizador / sonda lambda** 💭 — cerraría el lazo de mezcla con
-  el módulo de combustible.
+- **Admisión** ⏳ A18 `intake-carb` / `intake-efi` — filtro, MAF,
+  mariposa, IAC, múltiple (bus de vacío), PCV, vacuómetro.
+  `modules/intake.md`.
+- **Escape** ⏳ A19 `exhaust-simple` / `exhaust-cat` — múltiple,
+  catalizador, sondas, silenciador, analizador de gases; cierra el lazo de
+  mezcla con la ECU. `modules/exhaust.md`.
 - **Turbo** 💭
 - **Diésel common-rail** 💭 — contraste con la inyección de bencina.
 
 ## Eléctrico
 
-- **Carga** 💭 — dínamo (los más viejos), alternador con regulador externo
-  o interno. Hoy es `+1.4 V` fijo con el motor en marcha.
-- **Arranque (motor de partida)** 💭 — solenoide, piñón Bendix.
-- **Distribución eléctrica** 💭 — fusibles, relés, masas, luces.
+- **Batería, arranque y carga** ⏳ A17 `electrical-dynamo` /
+  `electrical-alternator` — batería, masas, partidor, dínamo o alternador,
+  regulador, fusibles, relés y consumos. `modules/electrical.md`.
 
 ## Tren motriz
 
-- **Embrague** 💭 — disco, prensa, collarín, accionamiento por cable o
-  hidráulico.
-- **Caja de cambios** 💭 — manual y automática (convertidor de par).
-- **Disposición de la tracción** 💭 — trasera (cardán, crucetas, puente
-  rígido), delantera (semiejes, homocinéticas), 4x4 (caja de transferencia).
-- **Diferencial** 💭
+- **Embrague, caja manual, diferencial y ejes** ⏳ A21 `drivetrain-rwd` /
+  `drivetrain-fwd` — embrague (cable o hidráulico), caja de 5 con
+  sincronizadores, cardán con crucetas y puente rígido, o semiejes con
+  homocinéticas; el auto que acelera. `modules/drivetrain.md`.
+- **Automática (convertidor de par)** y **4x4** 💭 — registradas en la spec
+  del tren motriz, sin plan.
 
 ## Frenos, suspensión, dirección y ruedas
 
-- **Frenos hidráulicos** 💭 — bomba de freno, servo de vacío, líneas, disco
-  y tambor, cálipers, cilindros de rueda, freno de mano, ABS (desde los 90).
-- **Suspensión** 💭 — eje rígido con ballestas, McPherson, doble horquilla,
-  barra de torsión; amortiguadores, espirales, rótulas, bujes, bandejas.
-  Modelo cuasiestático (carga, juego, geometría, desgaste), sin manejo.
-- **Dirección** 💭 — caja de bolas recirculantes o cremallera, asistencia
-  hidráulica, terminales, alineación (convergencia, caída, avance).
-- **Ruedas y neumáticos** 💭 — llanta, neumático (presión, desgaste por
-  zona, fecha), rodamientos, balanceo, pernos.
+- **Frenos hidráulicos** ⏳ A20 `brakes-classic` / `brakes-abs` — servo,
+  cilindro maestro doble, disco y tambor, repartidora, ABS, temperatura.
+  `modules/brakes.md`.
+- **Suspensión** ⏳ A22 `suspension-classic` / `suspension-modern` — doble
+  horquilla y ballestas, o McPherson y eje torsional; cuarto de auto por
+  esquina, geometría, ruidos. `modules/suspension.md`.
+- **Dirección** ⏳ A23 `steering-box` / `steering-rack` — caja de bolas
+  manual o cremallera con asistencia hidráulica; juego y convergencia.
+  `modules/steering.md`.
+- **Ruedas y neumáticos** ⏳ A24 `wheels` — presión, desgaste por zona,
+  edad, balanceo, llanta, rodamiento, pernos. `modules/wheels.md`.
 
 ## Chasis y carrocería
 
-- **Estructura** 💭 — chasis de largueros (body-on-frame) o monocasco.
-- **Inspección visual** 💭 — óxido, perforación y deformación como pistas
-  del diagnóstico. No es una red: va fuera del solver, con plan propio.
+- **Inspección de carrocería y chasis** ⏳ A25 `body-frame` /
+  `body-unibody` — zonas con óxido, masilla y abolladuras, herramientas de
+  inspección y revisión técnica, fuera del solver. `modules/body.md`.
 - **Soldadura** 💭 — minijuego muy a futuro (`HORIZONTE_JUEGO.md`).
   Enderezado y pintura quedan como ideas sin fecha.
 
