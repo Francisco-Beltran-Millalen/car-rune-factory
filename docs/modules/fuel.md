@@ -159,3 +159,42 @@ límite y no tironea. El preset "Tironea al acelerar en subida" usa **0.9**.
 
 ## 10. Presets
 "Arranque normal", "Tironea al acelerar en subida" (filtro 0.9), "Ralentí rico" (manguera suelta), "Cuesta partir en la mañana" (inyector goteando + pierde la presión residual), "Me quedé sin bencina" (estanque 0.5 L + consumo acelerado).
+
+## 9c. A6 — el compilado sobre el solver: paridad y divergencias
+
+Desde A6 el descriptor usa `createCompiledFuelModel()` (`src/modules/fuel/circuit.ts`),
+compilado con `compileCircuit` (CONTRATOS 4.10). El modelo a mano queda como
+**referencia** (`reference-model.ts`) y la suite de §9 corre contra los dos
+(`describe.each`), más `tests/fuel/parity.test.ts` (10 escenarios de la tabla
+de §9b: `pRail` ≤ 0,05 bar y caudales ≤ 3 % + 0,01 L/h en régimen,
+`failures === 0`).
+
+Circuito (`fuel-return`): batería con `r = 0,001 Ω` → llave → relé → bomba
+(eléctrico), y estanque (nodo fijo) → colador → bomba → línea → filtro → riel
+(compliancia 0,005) → 4 inyectores → múltiple (`pressureSource` con el vacío).
+El colador va en la aspiración (P25 §3.3). El regulador devuelve al estanque y
+su referencia es un `pressureSource` que la ECU pone en `pMan` o en 0 según la
+manguera (`vacuumHose`). Sin `checkValve`: la bomba ya bloquea el retroceso y
+su transición de 0,02 bar rompería la paridad.
+
+**Puente eléctrico**: llave y relé quedan **siempre cerrados** en el circuito;
+el corte lo hace `battery.control.v = relayOn ? v : 0` (alternador), que es
+exactamente `pumpV = relayOn ? v : 0` de la referencia. Así el solver no ve un
+escalón de conductancia de 1e7 (que lo dejaba sin converger).
+
+**Divergencias medidas** (para A6b):
+- **Aire de la bomba**: el elemento resuelve `q = Qm(1−Δp/Pm)(1−aire)` dentro
+  del balance implícito, así que el aire también reduce la caída resistiva; la
+  referencia escala el caudal ya resuelto. Con `tankLevel = 0,2`:
+  `qPump` relativo **0,2067 vs 0,2000** (test 9 usa rangos por implementación).
+- **Riel sin `max(0,·)`**: la referencia clampa `pRail ≥ 0`; el solver no, así
+  que con el múltiple en vacío el riel puede quedar hasta `pMan` (fuzz: mínimo
+  medido −0,0133; cota usada −0,7 en el fuzz del compilado). El clamp físico
+  (venteo) es A6b.
+- Guarda de la bomba en `V ≤ 0` (no `V < 0,5`): la rama normal ya es suave y
+  segura por εP, y así no hay escalón de corriente al conmutar.
+- El fuzz del compilado es reducido (200 × 1000 pasos); el tiempo medido se
+  anota en `solver.md`. La relajación por nodo del solver (que destrabó los
+  transitorios) está en `solver.md` §4.
+
+

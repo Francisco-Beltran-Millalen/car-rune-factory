@@ -1,7 +1,7 @@
 // Controles, fallas, lecturas y presets declarativos (§8).
 
 import type { ControlSpec, FaultSpec, Preset, ReadoutSpec } from '../../core/types.ts';
-import type { FuelModel, FuelState } from './model.ts';
+import type { FuelModel, FuelState } from './reference-model.ts';
 
 export const controls: readonly ControlSpec<FuelModel>[] = [
   {

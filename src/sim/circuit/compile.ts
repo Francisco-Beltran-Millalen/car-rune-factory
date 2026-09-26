@@ -119,8 +119,10 @@ export function compileCircuit<S extends CircuitState = CircuitState>(
 
   const initialParams: ParamRecord = { ...(def.params ?? {}), ...(options.params ?? {}) };
   const initialFaults: ParamRecord = { ...(def.faults ?? {}), ...(options.faults ?? {}) };
-  const params: ParamRecord = { ...initialParams };
-  const faults: ParamRecord = { ...initialFaults };
+  // Si el módulo entrega sus objetos tipados, el compilador los usa como
+  // propios (así `createCompiledFuelModel` los expone sin cast); si no, copia.
+  const params: ParamRecord = options.params ?? { ...(def.params ?? {}) };
+  const faults: ParamRecord = options.faults ?? { ...(def.faults ?? {}) };
 
   const controllerDefs = def.controllers ?? [];
   const controllerTypes = options.controllerTypes ?? {};

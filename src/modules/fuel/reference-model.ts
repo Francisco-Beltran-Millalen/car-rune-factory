@@ -116,7 +116,8 @@ export const K = {
 const FIRING_OFFSETS = [0, 540, 180, 360]; // inyectores 1..4 con orden 1-3-4-2
 const KINJ = K.injFlow3bar / Math.sqrt(3);
 
-function initialState(overrides: FuelOverrides): FuelState {
+/** Estado inicial del combustible (lo comparten la referencia y el compilado). */
+export function createInitialFuelState(overrides: FuelOverrides = {}): FuelState {
   return {
     engineState: 'off',
     relayOn: false,
@@ -150,7 +151,7 @@ export function createFuelModel(overrides: FuelOverrides = {}): FuelModel {
   const initialFaults: FuelFaults = { ...DEFAULT_FAULTS, ...overrides.faults };
   const params: FuelParams = { ...initialParams };
   const faults: FuelFaults = { ...initialFaults };
-  const state: FuelState = initialState(overrides);
+  const state: FuelState = createInitialFuelState(overrides);
   let rng: Rng = createRng(overrides.seed ?? 12345);
   let prevKey: IgnitionKey = 'off';
   let goodMixTime = 0;
@@ -187,7 +188,7 @@ export function createFuelModel(overrides: FuelOverrides = {}): FuelModel {
     badMixTime = 0;
     relayCut = 0;
     injAvgExpected = 0;
-    Object.assign(state, initialState(overrides));
+    Object.assign(state, createInitialFuelState(overrides));
   }
 
   function step(dt: number): void {

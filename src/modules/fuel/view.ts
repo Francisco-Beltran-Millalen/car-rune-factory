@@ -5,7 +5,7 @@ import { clamp, expSmooth, wrap } from '../../core/math.ts';
 import { createFlow, type Flow } from '../../core/particles.ts';
 import { el, group, pipe, label, gaugeSvg, roundedPathD } from '../../core/svg.ts';
 import type { View, ViewContext } from '../../core/types.ts';
-import type { EngineState, FuelModel, IgnitionKey } from './model.ts';
+import type { EngineState, FuelModel, IgnitionKey } from './reference-model.ts';
 
 const PX_PER_LH = 4.6; // escala visual de este módulo (fuel.md §7)
 const INJ_X = [760, 860, 960, 1060];

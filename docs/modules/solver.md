@@ -68,7 +68,13 @@ prellena `flow` y `jac` con ceros antes de cada llamada.
      `reaction(node)`.
    - **Jacobiano** `J_ij = Σ −∂flow[p]/∂x_j + δ_ij(Ĉ_i/dt + gmin)`.
    - Sólo los nodos libres son incógnitas. Se resuelve `J·Δx = −F`.
-   - **Amortiguación**: `|Δx| ≤ 1` bar (o 1 V) por iteración.
+   - **Amortiguación por nodo** (A6): si el paso de un nodo cambia de signo
+     respecto de la iteración anterior, ese nodo está oscilando (caso típico:
+     dos nodos sin capacitancia unidos por un restrictor saturando, donde
+     Newton da exactamente `−2·Δp` y vuelve al punto espejo). A ese nodo se
+     le media el paso (mínimo `1/1024`) y el resto sigue a paso completo.
+     Además el paso no cruza el 0 del nodo y se limita a `|Δx| ≤ 1` bar
+     (o 1 V) por iteración, como pide §8.1.
    - **Converge** cuando `max|Δx| < 1e-7` y, por nodo,
      `|F_i| < 1e-6 + 1e-6·Σ|flujos del nodo|`.
 4. Si no converge: se revierte a `xStart`, `stats.failures++` y `ok: false`.
@@ -87,14 +93,15 @@ capacitancias activas). `tests/sim/nodal.test.ts`, con `dt = 1 ms`:
 
 | corrida | ms / 1000 pasos | pasos/s |
 |---|---|---|
-| 1 | 18,2 | 54 900 |
-| 2 | 22,5 | 44 400 |
-| 3 | 19,6 | 51 000 |
+| 1 | 22,1 | 45 200 |
+| 2 | 24,6 | 40 700 |
+| 3 | 24,8 | 40 400 |
 
 Máquina: Intel i7-7700HQ, Node 26. Corriendo toda la suite en paralelo se
-midieron 28–50 ms. El presupuesto de 4× tiempo real = 4000 pasos/s queda
-holgado (>8×). No hay umbral en el test: imprime y listo; si un día baja del
+midieron 45–50 ms. El presupuesto de 4× tiempo real = 4000 pasos/s queda
+holgado (>10×). No hay umbral en el test: imprime y listo; si un día baja del
 presupuesto, se anota y se decide (bajar `maxScale` o optimizar, P23 §10).
+La relajación por nodo (A6) costó ~10 % sobre el benchmark anterior.
 
 ## 6. Biblioteca de elementos — `src/sim/elements/`
 
@@ -110,7 +117,7 @@ puertos son un nodo interno) y `multiple` (un puerto admite varias conexiones).
 | `leak` | a (hidr, a atm) | `q = k·s·√(p⁺)`; `k` | `severity` | `leak` |
 | `volume` | a (hidr) | sólo `capacitance = c·3600`; `c` (L/bar) | — | — |
 | `tee` | a, b, c (hidr) | nudo: sin flujos (`joint`, `multiple`) | — | — |
-| `electricPump` | e+, e-, in, out | `q = Qm(V)(1−Δp/Pm)⁺(1−air)`, `I = (1.5+5.5·Δp⁺/(Pm+εP))·vf`, guarda `V<0.5` → `q=0`, `I=V/1Ω`; `qMax`, `pMax`, `vNominal`, `wearQ`, `wearP`, `epsP`, `windingR`, `minV` | `air`, `wear` | `wear` |
+| `electricPump` | e+, e-, in, out | `q = Qm(V)(1−Δp/Pm)⁺(1−air)`, `I = (1.5+5.5·Δp⁺/(Pm+εP))·vf`; para `V ≤ 0` no bombea y la bobina es `R`; `qMax`, `pMax`, `vNominal`, `wearQ`, `wearP`, `epsP`, `windingR` | `air`, `wear` | `wear` |
 | `reliefRegulator` | in, ret, ref | `q = k·softRelu(p_in−p_ref−set)`; `k`, `set`, `smooth` | `set`, `noReturn` | `state` |
 | `orifice` | in, out (hidr) | abierto `k·√(Δp⁺)`, cerrado `leakCoeff·s·√(Δp⁺)`; `k`, `leakCoeff` | `open`, `leak` | `leak` |
 | `tank` | out, ret (hidr) | nodo fijo 0 bar (`joint`); `commit` integra `level −= neto/3600·dt·(fast?100:1)`; `capacity`, `pickupLow` | `fast` | — |

@@ -22,7 +22,6 @@ interface PumpConstants {
   wearP: number;
   epsP: number;
   windingR: number;
-  minV: number;
 }
 
 interface PumpOutput {
@@ -36,8 +35,10 @@ interface PumpOutput {
 
 /** Curva de la bomba y sus derivadas; `dp = p_out − p_in`, `v = e+ − e−`. */
 function pumpOutput(dp: number, v: number, wear: number, airF: number, c: PumpConstants): PumpOutput {
-  if (v < c.minV) {
-    // Guarda obligatoria: sin tensión la bobina es resistiva y no hay bombeo.
+  if (v <= 0) {
+    // Sin tensión no hay bombeo; la bobina queda como resistencia pura.
+    // (Para V > 0 se usa la curva normal, que ya es suave y segura por εP;
+    // así no hay escalón de corriente al conmutar el relé.)
     const diDv = 1 / c.windingR;
     return { q: 0, i: v / c.windingR, dqDv: 0, dqDdp: 0, diDv, diDdp: 0 };
   }
@@ -73,7 +74,6 @@ export function createElectricPump(
     wearP: controlNumber(params['wearP'], 0.5),
     epsP: controlNumber(params['epsP'], 0.01),
     windingR: controlNumber(params['windingR'], 1),
-    minV: controlNumber(params['minV'], 0.5),
   };
   const def: ElementDef = {
     ports: [

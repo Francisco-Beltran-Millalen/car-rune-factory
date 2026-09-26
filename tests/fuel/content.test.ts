@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Narration } from '../../src/core/types.ts';
 import { parts } from '../../src/modules/fuel/content.ts';
-import { DEFAULT_FAULTS, DEFAULT_PARAMS, createFuelModel, type FuelModel } from '../../src/modules/fuel/model.ts';
+import { DEFAULT_FAULTS, DEFAULT_PARAMS, createFuelModel, type FuelModel } from '../../src/modules/fuel/reference-model.ts';
 import { createNarrator } from '../../src/modules/fuel/narrate.ts';
 import { controls, faults, presets, readouts } from '../../src/modules/fuel/specs.ts';
 

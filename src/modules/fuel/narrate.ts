@@ -2,7 +2,7 @@
 
 import { fmt } from '../../core/format.ts';
 import type { Narration } from '../../core/types.ts';
-import type { FuelModel } from './model.ts';
+import type { FuelModel } from './reference-model.ts';
 
 /** Memoria mínima para detectar que la presión residual cae (motor apagado). */
 function createPressureWatch(): (m: FuelModel) => number {

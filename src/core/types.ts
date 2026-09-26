@@ -65,6 +65,29 @@ export interface FaultSpec {
   options?: readonly ControlOption[];
 }
 
+export interface FaultRepair {
+  action: string;
+  cost: number;
+  minutes: number;
+}
+
+/**
+ * Falla del catálogo del módulo (§26, P23 §4.6): id estable `<parte>.<falla>`
+ * y la clave plana del modelo. `visibility`, `repair` y `symptoms` son datos
+ * de juego (A3); el catálogo de A6 sólo trae lo que la física necesita.
+ */
+export interface FaultCatalogEntry {
+  id: string;
+  modelKey: string;
+  part: string;
+  kind: FaultSpec['kind'];
+  healthy: ParamValue;
+  label?: string;
+  visibility?: 'always' | 'inspect' | 'never';
+  repair?: FaultRepair;
+  symptoms?: readonly string[];
+}
+
 export interface ReadoutSpec<S extends object = object> {
   id: string;
   label: string;
@@ -110,6 +133,8 @@ export interface ModuleDescriptor<M extends AnyModel = AnyModel> {
   defaultFaults: Readonly<M['faults']>;
   controls: readonly ControlSpec<M>[];
   faults: readonly FaultSpec[];
+  /** Catálogo §26 de fallas con su clave plana (lo usa el juego, A3). */
+  faultCatalog?: readonly FaultCatalogEntry[];
   readouts: readonly ReadoutSpec<M['state']>[];
   parts: Readonly<Record<string, PartInfo>>;
   narrate(model: M): Narration[];

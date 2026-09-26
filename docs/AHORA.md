@@ -46,8 +46,8 @@ Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
 | TS0–TS5 | TypeScript estricto | — | ✅ |
 | A4 | Solver nodal + linalg (plan 2026-09-23 §8.1, fila A4) | — | ✅ |
 | A5 | Elementos + circuito (compile/validate) + controladores base (§8.2–§8.4) | A4 | ✅ |
-| A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ⏳ **siguiente** |
-| A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ⏳ |
+| A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ✅ |
+| A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ⏳ **siguiente** |
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ⏳ |
 | A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) | A7 | ⏳ |
 | A11 | Ciclo de 4 tiempos: spec → plan → código (plan 2026-09-25 §3.5) | A10 | ⏳ |
@@ -68,9 +68,54 @@ Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
 | D-motor | Decisión del usuario; afecta al juego, el laboratorio sigue en SVG | A8 | ⏸ |
 | A9 | Armar circuitos E4 (plan propio) | D-motor | ⏸ |
 
-**Siguiente paso: A6.** Su ficha está en `plans/2026-09-25-simulacion-antes-que-juego.md`
+**Siguiente paso: A6b.** Su ficha está en `plans/2026-09-25-simulacion-antes-que-juego.md`
 §6: dice qué leer, qué ignorar, qué archivos tocar y cómo se acepta. **Cada tarea
 del bloque S tiene su ficha ahí; léanla antes que cualquier otro plan.**
+
+## CERRADO 2026-09-25 — A6 Combustible sobre el solver (paridad con la referencia)
+
+- `src/modules/fuel/circuit.ts`: `CircuitDef` `fuel-return` (batería, llave,
+  relé, estanque, colador en la aspiración, bomba, línea, filtro, riel con
+  `volume`, 4 inyectores, múltiple, regulador, manguera) + `compileFuelCircuit`
+  y `createCompiledFuelModel(overrides)` con la misma forma que la referencia
+  (`params`, `faults`, `seed`, `tankLevel`; `refill`/`setTank` por `ModelActions`).
+- `src/sim/controllers/{engineCore,stubs}.ts`: cerebro único del motor (§14.1)
+  con `inputs` ideales (§29) y señales compartidas; sirve para A10 sin cambios.
+  `src/modules/fuel/controllers.ts`: `ecuFuel` (cebado, relé, inyección por
+  ángulo, mezcla, fugas, regulador), `alternator` y `fuelSupply`.
+- `src/modules/fuel/faults.ts`: catálogo §26 con los 8 ids de P23 §4.6.
+  `FaultCatalogEntry` en `core/types.ts` y `faultCatalog` en el descriptor.
+  `model.ts` → `reference-model.ts`; el descriptor usa el compilado.
+- Cambios fuera de la lista de archivos de A6, anotados: `sim/circuit/compile.ts`
+  usa los objetos `params`/`faults` que le da el módulo (así el modelo tipado
+  se expone sin cast); `eslint.config.js` deja que un módulo importe `sim/**`
+  (`fuel/circuit.ts` usa `compileCircuit` y `ELEMENT_TYPES`) y extiende la
+  excepción de `type` (vs `interface`) a `reference-model.ts`.
+- **Puente eléctrico**: llave y relé quedan siempre cerrados; el alternador
+  pone `battery.control.v = relayOn ? v : 0` (= `pumpV` de la referencia).
+  Evita el escalón de conductancia de 1e7 que dejaba al solver sin converger.
+- **Solver (§4 de `solver.md`)**: relajación **por nodo** cuando su paso de
+  Newton cambia de signo (ciclo `−2·Δp` de dos nodos sin capacitancia unidos
+  por un restrictor saturando) + paso que no cruza el 0; tope `maxDelta` 1e6.
+  Sin esto los transitorios de relé daban `failures > 0`. Benchmark: 22–25 ms
+  por 1000 pasos (40–45 k pasos/s), ~10 % más que antes.
+- Tests (+27, **191** en total): suite de §9 parametrizada (referencia y
+  compilado), paridad de 10 escenarios (§9b) con `pRail` ≤ 0,05 bar y caudales
+  ≤ 3 % y `failures === 0`, catálogo de fallas, fuzz reducido del compilado
+  (200 × 1000, timeout 30 s). `npm run check` verde.
+- Divergencias medidas y documentadas en `fuel.md` §9c (aire implícito:
+  ratio 0,2067 vs 0,2000; riel sin `max(0,·)`: mínimo −0,0133). Son de A6b.
+- **Checklist de Firefox pendiente** (`npm run dev`): el laboratorio del
+  combustible y las etapas 1 y 2 del quiz deben verse y comportarse igual que
+  antes (el renderer sigue siendo el legacy; sólo cambió el modelo por dentro).
+  1. `#/lab/fuel`: llave en Contacto → cebado de 2 s y manómetro ~3 bar;
+     Arranque → Marcha; sliders, fallas (filtro, manguera, regulador, relé,
+     fugas) y los 5 presets responden; lecturas y sparklines se mueven;
+     narración; clic en una pieza → ficha; tema oscuro legible.
+  2. `#/stage/fuel-quiz-1` y `#/stage/fuel-quiz-2`: preguntas, feedback,
+     puntaje, estrellas, candado y guardado (recargar conserva el progreso).
+  3. F12 sin errores; en la consola `window.__sim.mode.hud()` y
+     `window.__sim.save.get()` responden.
 
 ## CERRADO 2026-09-25 — A5 Elementos + circuito + controladores base
 

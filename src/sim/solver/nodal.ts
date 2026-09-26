@@ -16,6 +16,10 @@ const DEFAULT_MAX_DELTA = 1;
 const DEFAULT_TOLERANCE = 1e-7;
 const RESIDUAL_ABS = 1e-6;
 const RESIDUAL_REL = 1e-6;
+// Relajación por nodo: si el paso de Newton cambia de signo entre iteraciones,
+// ese nodo está oscilando (típico de dos nodos sin capacitancia unidos por un
+// restrictor saturando); se le media el paso y al resto no se lo frena.
+const RELAX_MIN = 1 / 1024;
 
 export function createSolver(options: SolverOptions): Solver {
   const { nodeCount, elements } = options;
@@ -26,6 +30,8 @@ export function createSolver(options: SolverOptions): Solver {
 
   const x = new Float64Array(nodeCount); // potencial en evaluación
   const xStart = new Float64Array(nodeCount); // potencial del último paso convergido
+  const relax = new Float64Array(nodeCount).fill(1); // amortiguación por nodo
+  const dxPrev = new Float64Array(nodeCount); // paso anterior por nodo
   const baseFixed = new Float64Array(nodeCount).fill(NaN); // Dirichlet explícito
   const fixed = new Float64Array(nodeCount).fill(NaN); // fijos efectivos del paso
   const reactions = new Float64Array(nodeCount); // flujo neto que sale de nodos fijos
@@ -169,16 +175,25 @@ export function createSolver(options: SolverOptions): Solver {
     return true;
   }
 
-  /** Aplica rhs (Δx) con tope ±maxDelta y devuelve max|Δx|; NaN si no es finito. */
+  /** Aplica Δx con relajación por nodo, tope ±maxDelta y sin cruzar el 0;
+   *  devuelve max|Δx| o NaN si no es finito. */
   function applyDelta(): number {
     let maxAbs = 0;
     for (let u = 0; u < freeCount; u++) {
+      const node = freeNodes[u] ?? 0;
       let d = rhs[u] ?? 0;
       if (!Number.isFinite(d)) return NaN;
+      const prev = dxPrev[node] ?? 0;
+      if (prev * d < 0) relax[node] = Math.max((relax[node] ?? 1) * 0.5, RELAX_MIN);
+      else relax[node] = Math.min(1, (relax[node] ?? 1) * 2);
+      d *= relax[node] ?? 1;
       if (d > maxDelta) d = maxDelta;
       else if (d < -maxDelta) d = -maxDelta;
-      const node = freeNodes[u] ?? 0;
-      x[node] = (x[node] ?? 0) + d;
+      const current = x[node] ?? 0;
+      // El paso no cruza el 0 del nodo (ciclo p → −p de un restrictor muerto).
+      if (current * (current + d) < 0) d = -current;
+      x[node] = current + d;
+      dxPrev[node] = rhs[u] ?? 0;
       const a = Math.abs(d);
       if (a > maxAbs) maxAbs = a;
     }

@@ -36,7 +36,14 @@ const PURE_BLOCKED = [
 ];
 
 const MODULE_BLOCKED = [
-  ...PURE_BLOCKED,
+  // Un módulo sí arma su física sobre `sim/**` (A5/A6: `fuel/circuit.ts` usa
+  // `compileCircuit` y `ELEMENT_TYPES`); sigue sin ver game/presenter/render/ui.
+  ...PHASER_BLOCKED,
+  ...DOM_CORE_BLOCKED,
+  pattern(
+    '(^|/)(game|presenter|render|ui)/',
+    '§1/§19: una capa no importa a las de su derecha',
+  ),
   pattern('^\\.\\./(?!\\.\\.)', '§11: un módulo no importa a otro módulo'),
 ];
 
@@ -244,8 +251,9 @@ export default tseslint.config(
   },
   // Los params/faults/state de un módulo van con `type`, no `interface`:
   // un alias de objeto sí es asignable a Record<string, …> (plan §8.1).
+  // `reference-model` es el nombre de A6 para el modelo de referencia.
   {
-    files: ['src/modules/*/model.{js,ts}'],
+    files: ['src/modules/*/{model,reference-model}.{js,ts}'],
     rules: { '@typescript-eslint/consistent-type-definitions': 'off' },
   },
 
