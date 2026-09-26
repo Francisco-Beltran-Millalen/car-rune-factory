@@ -2,7 +2,7 @@
 // La lista de leyes, puertos y fallas está en docs/modules/solver.md §7.
 
 import type { ElementDef, Fluid } from '../solver/types.ts';
-import { createBattery, createResistor, createSwitch } from './electric.ts';
+import { createBattery, createCurrentLoad, createJunction, createResistor, createSwitch } from './electric.ts';
 import {
   createElectricPump,
   createOrifice,
@@ -29,7 +29,9 @@ export interface ElementTypeInfo {
 export {
   createBattery,
   createCheckValve,
+  createCurrentLoad,
   createElectricPump,
+  createJunction,
   createLeak,
   createOrifice,
   createPressureSource,
@@ -59,5 +61,7 @@ export const ELEMENT_TYPES: Readonly<Record<string, ElementTypeInfo>> = {
   battery: { create: createBattery },
   resistor: { create: createResistor },
   switch: { create: createSwitch },
+  currentLoad: { create: createCurrentLoad },
+  junction: { create: createJunction, joint: true, multiple: true, },
   visual: VISUAL_TYPE,
 };

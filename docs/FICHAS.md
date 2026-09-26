@@ -95,15 +95,6 @@ ellos ya está en las specs, los planes nuevos y aquí.
 
 ---
 
-## A12 — Encendido (platinos y COP)
-
-- **Spec**: `docs/modules/ignition.md`.
-- **Plan**: `docs/plans/2026-09-26-ignition.md`.
-- **Estrena**: el elemento `currentLoad`. **No** agrega capacitor ni
-  inductancia (la spec §1 explica por qué).
-- **Aceptación**: tests de la spec §11 y checklist del plan §5, con las
-  dos variantes.
-
 ## A13 — Refrigeración
 
 - **Spec**: `docs/modules/cooling.md`.

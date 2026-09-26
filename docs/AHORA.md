@@ -70,7 +70,7 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ✅ |
 | A10 | Plan del vehículo (planificador): `plans/2026-09-26-vehiculo.md` **v3** | A7 | ✅ aprobado 2026-09-26 |
 | A11 | Ciclo de 4 tiempos y distribución (spec + plan listos) | A10 | ✅ |
-| A12 | Encendido: platinos y COP (spec + plan listos) | A10 | ⏳ |
+| A12 | Encendido: platinos y COP (spec + plan listos) | A10 | ✅ |
 | A13 | Refrigeración (spec + plan listos) | A10 | ⏳ |
 | A14 | Lubricación (spec + plan listos) | A10 | ⏳ |
 | A16 | Carburador (spec + plan listos) | A10 | ⏳ |
@@ -110,6 +110,70 @@ Turbo y diésel: sin plan hasta que el usuario diga si entran.
 todos los sistemas, A11–A25, y alineó el plan del vehículo (v3). El usuario
 aprobó el plan del vehículo el 2026-09-26; A11 ya está implementada (ver el
 CERRADO de abajo). Sigue A12, en orden.
+
+## CERRADO 2026-09-26 — A12 Encendido (platinos y COP)
+
+Plan: `plans/2026-09-26-ignition.md`; spec: `modules/ignition.md`. Dos
+descriptores del mismo código (`ignition-points`, `ignition-cop`) y la ruta
+vieja `#/lab/ignition` → `ignition-cop`. `npm run check` verde (**288**
+tests; +37).
+
+- **Elementos nuevos** (fuera de la lista del plan, §12 anotado):
+  `currentLoad` (`I = control.i·smoothstep(ΔV/1 V)`, C¹, en vez de la rampa de
+  0,05 V que pedía el plan: da el mismo objetivo sin esquinas para Newton) y
+  `junction` (nudo eléctrico `joint`/`multiple` de 6 puertos; hacía falta para
+  el `coilBus` y los empalmes y no estaba en la lista). Tests de ley +
+  jacobiano en `tests/sim/elements.test.ts`; filas en `solver.md` §6 y
+  `CONTRATOS.md` §4.10.
+- **Modelo por eventos** (`events.ts` puro + `core.ts`): cortes en `[θ, θ+Δθ)`
+  con desfases 0/540/180/360, avance de platinos (8 + centrífugo + vacío de
+  puerto) y mapa COP, corriente RL con tope de 8 A, `Vdisp = √(2ηE/Cs)` vs
+  `Vped = 2 + 2·gap·p + 4·rotorWorn`, arco, picado del condensador, chispa
+  perdida y códigos P0016/P0340. El consumo medio de cada bobina se le escribe
+  al `currentLoad` paso a paso (integral analítica del dwell partida por los
+  eventos).
+- **Decisiones de implementación, anotadas**: la sonda `coilV` se toma **antes
+  del balasto** (`ballast.a` en platinos, `coil1.a` en COP), porque el plan
+  §5.3 computa `R_t = R + balasto` (spec §5.3) y medir después del balasto
+  contaría dos veces su caída; `state.busCurrent` se muestra suavizado
+  (τ = 0,1 s, como un amperímetro) mientras el solver recibe el promedio exacto
+  del paso; con una falla sistémica (balasto/tapa en corto o sin sincronía) la
+  señal `ignition.spark` se fuerza a 0 en el acto (el test 6 pide 0 al soltar
+  la llave); `state` suma `syncRpm`, `pointsOpen` y `pulses` (aditivos, para
+  lecturas y el destello de las bujías).
+- **Circuito**: baja tensión con batería real (`r = 0,01 Ω`), llave, balasto
+  como `switch` de 1,5 Ω con binding del cortado y puente de arranque; en COP
+  `coilBus`/`groundBus` con `junction`. Sin compuerta por software de la
+  batería; el solver converge con `failures === 0` en los tres escenarios del
+  test 11. `validate` sólo deja avisos de puertos de nudo sin usar (esperado).
+- **Drawers nuevos** (`render/svg/drawers/ignition/`): `ballast`, `coil`
+  (única y COP), `sparkPlug`, `distributor` (leva, contactos, rotor, tapa,
+  contrapesos, cápsula y cables), `toothWheel` (60-2, sensores e igniter) y
+  `scope` (dos trazos analíticos). `ignition.css` con variables CSS.
+- **Core**: `eslint.config.js` extiende las listas de pureza/capas a
+  `events/core` y la excepción de `type` a `core` (§33); `src/core/router.ts`
+  suma el alias `ignition` con tests.
+- Tests: `tests/ignition/events.test.ts` (6), `core.test.ts` (15) y
+  `content.test.ts` (16), más el elemento y el alias.
+
+**Checklist de Firefox** (`npm run dev`) — la del plan §5:
+
+`#/lab/ignition-points`:
+1. En ralentí la leva abre y cierra los platinos, el rotor apunta al cilindro
+   que enciende y cada bujía destella en su turno (orden 1-3-4-2).
+2. El osciloscopio muestra la rampa de corriente y el pico de voltaje; en
+   cámara lenta se ve el arco.
+3. Al subir rpm los contrapesos se abren y el avance sube; en crucero
+   (mariposa 0,3) la cápsula de vacío adelanta más.
+4. "Arranca y se apaga al soltar la llave": en `start` hay chispa, en `run` no.
+5. "Falla en alta": a 6000 rpm a fondo las bujías fallan, en ralentí no.
+6. `camOffset = 10`: el avance baja 10°.
+
+`#/lab/ignition-cop`:
+7. La rueda 60-2 gira con su hueco; sin sensor no hay chispa y la ECU lo dice.
+8. `camOffset = 10`: la chispa no cambia pero aparece el código P0016.
+9. Bobina 2 muerta: la bujía 2 no destella.
+10. Combustible, 4 tiempos y quiz siguen funcionando; F12 sin errores.
 
 ## CERRADO 2026-09-26 — A11 Ciclo de 4 tiempos y distribución
 

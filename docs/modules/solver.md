@@ -125,6 +125,8 @@ puertos son un nodo interno) y `multiple` (un puerto admite varias conexiones).
 | `battery` | +, - (eléc) | `V = control.v − R·I`; `r` | `v` | — |
 | `resistor` | a, b (eléc) | `q = Δp/r` (el juguete de A5; no estaba en §8.2) | — | — |
 | `switch` | a, b (eléc) | `R_on`/`R_off` según `control.closed`; `rOn`, `rOff` | `closed` | — |
+| `currentLoad` | a, b (eléc) | carga de corriente media: `I = control.i·smoothstep(ΔV/1 V)` (C¹, sin escalones para Newton); `i` | `i` | — |
+| `junction` | a..f (eléc) | nudo eléctrico: todos los puertos son el mismo nodo (`joint`, `multiple`), sin flujos (A12) | — | — |
 | `visual` | — | pieza sólo dibujable: sin puertos, sin flujos (A7; vive en `visual.ts` desde A11) | — | — |
 
 Las sondas de elemento (`probes`) llevan `pot` del elemento; pueden cerrar

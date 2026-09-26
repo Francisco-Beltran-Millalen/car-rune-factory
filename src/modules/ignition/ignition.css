@@ -1,0 +1,118 @@
+/* Estilos de los drawers del encendido (A12). Colores por variables CSS. */
+
+.resistor-zig {
+  fill: none;
+  stroke: var(--metal-dark);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.open-cross {
+  stroke: var(--bad);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.coil-body {
+  fill: var(--part);
+}
+.coil-core {
+  fill: var(--metal-dark);
+}
+.coil-wind {
+  stroke: var(--fuel);
+  stroke-width: 2.5;
+}
+.coil-glow {
+  fill: var(--electric);
+  pointer-events: none;
+}
+.plug-ceramic {
+  fill: var(--part);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.plug-electrode {
+  stroke: var(--metal-dark);
+  stroke-width: 4;
+}
+.plug-ground {
+  fill: none;
+  stroke: var(--metal-dark);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+.dist-cap {
+  fill: var(--part);
+  stroke: var(--part-stroke);
+  stroke-width: 2;
+}
+.dist-terminal {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.dist-hub {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.rotor-arm {
+  stroke: var(--bad);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.cam-rider {
+  fill: var(--metal-dark);
+}
+.points-pit {
+  fill: var(--bad);
+  pointer-events: none;
+}
+.weight {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1;
+}
+.vac-rod {
+  stroke: var(--metal-dark);
+  stroke-width: 4;
+}
+.vac-line {
+  fill: none;
+  stroke: var(--vacuum);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.ht-wire {
+  fill: none;
+  stroke: var(--metal-dark);
+  stroke-width: 5;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+.wheel-body {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.wheel-tooth {
+  stroke: var(--metal-dark);
+  stroke-width: 3;
+}
+.sync-dot {
+  fill: var(--ok);
+}
+.scope-box {
+  fill: var(--panel);
+  stroke: var(--line);
+  stroke-width: 1.5;
+}
+.scope-trace {
+  fill: none;
+  stroke-width: 2.5;
+}
+.scope-i {
+  stroke: var(--electric);
+}
+.scope-v {
+  stroke: var(--bad);
+}

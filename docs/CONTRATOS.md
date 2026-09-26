@@ -142,8 +142,10 @@ type ElementFactory = (params: Readonly<Record<string, number>>, fluid: Fluid) =
 interface ElementTypeInfo { create: ElementFactory; joint?: boolean; multiple?: boolean }
 // restrictor, checkValve, leak, volume, tee, electricPump, reliefRegulator,
 // orifice, tank, pressureSource, battery, resistor, switch (el resistor lo
-// pide el juguete de A5; no estaba en la tabla de P23 §8.2) y visual (A7: la
-// pieza sólo dibujable, sin puertos ni flujos; se movió a `sim/elements/` en A11).
+// pide el juguete de A5; no estaba en la tabla de P23 §8.2), currentLoad (A12:
+// la carga de corriente media del primario de la bobina), junction (A12: nudo
+// eléctrico joint/multiple) y visual (A7: la pieza sólo dibujable, sin puertos
+// ni flujos; se movió a `sim/elements/` en A11).
 
 // Circuito (A5):
 compileCircuit<S extends CircuitState>(options: CompileOptions<S>): CompiledCircuit<S>

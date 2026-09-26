@@ -165,7 +165,7 @@ const PURE_FILES = [
   'src/sim/**',
   'src/game/**',
   'src/presenter/**',
-  'src/modules/*/{model,content,specs,narrate,faults,diagnosis,circuit,controllers,reference-model,present,constants,gas,timing,mechanism}.{js,ts}',
+  'src/modules/*/{model,content,specs,narrate,faults,diagnosis,circuit,controllers,reference-model,present,constants,gas,timing,mechanism,events,core}.{js,ts}',
 ];
 
 // Excepciones de 5.3, en la config y no inline: save es la frontera de E/S (§27)
@@ -253,9 +253,9 @@ export default tseslint.config(
   // Los params/faults/state de un módulo van con `type`, no `interface`:
   // un alias de objeto sí es asignable a Record<string, …> (plan §8.1).
   // `reference-model` es el nombre de A6 para el modelo de referencia;
-  // `mechanism` es el de A11 para el mecanismo de 4 tiempos.
+  // `mechanism` y `core` son los de A11/A12 para sus controladores.
   {
-    files: ['src/modules/*/{model,reference-model,mechanism}.{js,ts}'],
+    files: ['src/modules/*/{model,reference-model,mechanism,core}.{js,ts}'],
     rules: { '@typescript-eslint/consistent-type-definitions': 'off' },
   },
 
@@ -333,7 +333,7 @@ export default tseslint.config(
   },
   {
     files: [
-      'src/modules/*/{model,content,specs,narrate,faults,diagnosis,circuit,controllers,reference-model,present,constants,gas,timing,mechanism}.{js,ts}',
+      'src/modules/*/{model,content,specs,narrate,faults,diagnosis,circuit,controllers,reference-model,present,constants,gas,timing,mechanism,events,core}.{js,ts}',
     ],
     rules: {
       'no-restricted-imports': ['error', { patterns: MODULE_BLOCKED }],

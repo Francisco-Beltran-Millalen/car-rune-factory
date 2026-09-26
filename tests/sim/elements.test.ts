@@ -5,7 +5,9 @@ import {
   ELEMENT_TYPES,
   createBattery,
   createCheckValve,
+  createCurrentLoad,
   createElectricPump,
+  createJunction,
   createLeak,
   createOrifice,
   createPressureSource,
@@ -240,6 +242,26 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
     checkJacobian(resistor, [10, 0], 'resistor');
   });
 
+  it('currentLoad: I = control.i·ramp con jacobiano suave', () => {
+    const load = createCurrentLoad({});
+    load.control['i'] = 2;
+    expect(-(evaluate(load, [12, 0]).flow[0] ?? 0)).toBeCloseTo(2, 9);
+    expect(-(evaluate(load, [0.5, 0]).flow[0] ?? 0)).toBeCloseTo(1, 9);
+    expect(-(evaluate(load, [-1, 0]).flow[0] ?? 0)).toBeCloseTo(0, 12);
+    expect(load.probes?.['i']?.(new Float64Array([12, 0]))).toBeCloseTo(2, 9);
+    checkJacobian(load, [12, 0], 'currentLoad ΔV=12');
+    checkJacobian(load, [0.5, 0], 'currentLoad rampa');
+    checkJacobian(load, [1.5, 0.8], 'currentLoad ΔV=0,7');
+  });
+
+  it('junction: todos los puertos son un nodo sin flujos', () => {
+    const junction = createJunction();
+    expect(junction.ports).toHaveLength(6);
+    const out = evaluate(junction, [3, 3, 3, 3, 3, 3]);
+    for (const f of out.flow) expect(f).toBe(0);
+    for (const j of out.jac) expect(j).toBe(0);
+  });
+
   it('el registro tiene todos los tipos con fábrica', () => {
     const types = [
       'restrictor',
@@ -255,6 +277,8 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
       'battery',
       'resistor',
       'switch',
+      'currentLoad',
+      'junction',
       'visual',
     ];
     for (const type of types) {

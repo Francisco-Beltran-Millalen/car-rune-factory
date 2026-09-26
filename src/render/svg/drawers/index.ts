@@ -8,6 +8,10 @@ import { cylinderSectionDrawer } from './engine/cylinder.ts';
 import { pvDiagramDrawer } from './engine/pv.ts';
 import { timingDriveDrawer } from './engine/timing.ts';
 import { checkValveDrawer, pumpDrawer, strainerDrawer, tankDrawer } from './hydraulic.ts';
+import { ballastDrawer, coilDrawer, sparkPlugDrawer } from './ignition/coil.ts';
+import { distributorDrawer } from './ignition/distributor.ts';
+import { scopeDrawer } from './ignition/scope.ts';
+import { toothWheelDrawer } from './ignition/toothWheel.ts';
 import { filterDrawer, railDrawer } from './fuel-path.ts';
 import { injectorDrawer } from './injector.ts';
 import { manifoldDrawer, regulatorDrawer, vacuumHoseDrawer } from './intake.ts';
@@ -35,4 +39,11 @@ export const DRAWERS: Readonly<Record<string, DrawerFactory>> = {
   timingDrive: timingDriveDrawer,
   pvDiagram: pvDiagramDrawer,
   compressionBars: compressionBarsDrawer,
+  ballast: ballastDrawer,
+  coil: coilDrawer,
+  coilCop: coilDrawer,
+  sparkPlug: sparkPlugDrawer,
+  distributor: distributorDrawer,
+  toothWheel: toothWheelDrawer,
+  scope: scopeDrawer,
 };

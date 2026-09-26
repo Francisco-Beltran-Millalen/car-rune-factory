@@ -15,10 +15,12 @@ describe('router (rutas nuevas A1)', () => {
     expect(parseHash('#/fuel')).toEqual({ kind: 'lab', id: 'fuel' });
     expect(parseHash('#/otro')).toEqual({ kind: 'lab', id: 'otro' });
 
-    // Alias de A11: la ruta vieja redirige a la variante moderna
+    // Alias de A11/A12: la ruta vieja redirige a la variante moderna
     expect(parseHash('#/four-stroke')).toEqual({ kind: 'lab', id: 'four-stroke-dohc' });
     expect(parseHash('#/lab/four-stroke')).toEqual({ kind: 'lab', id: 'four-stroke-dohc' });
     expect(parseHash('#/lab/four-stroke-ohv')).toEqual({ kind: 'lab', id: 'four-stroke-ohv' });
+    expect(parseHash('#/ignition')).toEqual({ kind: 'lab', id: 'ignition-cop' });
+    expect(parseHash('#/lab/ignition-points')).toEqual({ kind: 'lab', id: 'ignition-points' });
 
     // Portada y vacíos
     expect(parseHash('#/')).toEqual({ kind: 'home', id: null });

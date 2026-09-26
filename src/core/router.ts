@@ -32,9 +32,10 @@ export interface Router {
   destroy(): void;
 }
 
-/** Rutas viejas que redirigen a la variante moderna (A11). */
+/** Rutas viejas que redirigen a la variante moderna (A11/A12). */
 export const LAB_ALIASES: Readonly<Record<string, string>> = {
   'four-stroke': 'four-stroke-dohc',
+  ignition: 'ignition-cop',
 };
 
 export function resolveLabAlias(id: string): string {
