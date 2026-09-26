@@ -143,6 +143,11 @@ fuera del catálogo de drawers de redes. Publica `engine.compression` y el
   se convierten. `camTimingOffset` pasa a ser un control del laboratorio o
   `timingChain.skippedTeeth`, no una causa.
 
+- **El plan del vehículo (A10) fija**: en el vehículo es dueño de
+  `engine.crankAngle`, `engine.camAngle` y `engine.compression`; su tensor
+  hidráulico lee `lubrication.pressure` (stub ideal en su laboratorio); es un
+  **mecanismo** (sin solver) y define el inset para el laboratorio del
+  vehículo; variantes como piezas: cadena/correa/engranajes y OHV/SOHC/DOHC.
 - **Leer**: `docs/modules/four-stroke.md`; el plan del vehículo (A10);
   `SISTEMAS.md` ("Motor" y "Variantes por época"); `docs/modules/fuel.md`
   como ejemplo del nivel de detalle.
@@ -179,6 +184,10 @@ sensor de cigüeñal lee `engine.crankAngle` (señales de A10).
   plan decide si el paso de 1 ms alcanza, o si hace falta un subpaso o un
   modelo promediado.
 
+- **El plan del vehículo (A10) fija**: publica `ignition.spark`; el
+  distribuidor lee `engine.camAngle` y el sensor de cigüeñal
+  `engine.crankAngle`; cuelga del bus `12v` del solver; en `vehicle-70`
+  provee el bus (batería y llave); platinos+distribuidor y COP como piezas.
 - **Leer**: `docs/modules/ignition.md`; el plan del vehículo (A10);
   `SISTEMAS.md` ("Motor", "Eléctrico" y "Variantes por época");
   `docs/modules/solver.md`; `docs/modules/fuel.md` como ejemplo.
@@ -199,6 +208,8 @@ potencial, calor como flujo, encaja en el esquema nodal) o un modelo aparte.
 - **Arquetipo y variantes**: un solo arquetipo. Se documentan en la spec las
   diferencias de época (ventilador mecánico con embrague viscoso o
   eléctrico con termocontacto).
+- **El plan del vehículo (A10) fija**: publica `engine.coolantTemp`; lee
+  `engine.rpm` y `engine.load`; el ventilador eléctrico cuelga del bus `12v`.
 - **Leer**: `docs/modules/cooling.md`; el plan del vehículo (A10);
   `SISTEMAS.md`; `docs/modules/solver.md`; `docs/modules/fuel.md` como
   ejemplo.
@@ -217,6 +228,9 @@ fluido `oil`, viscosidad según la temperatura (`engine.coolantTemp` u
 - **Arquetipo y variantes**: un solo arquetipo; se documentan las
   diferencias de época (filtro de cartucho o enroscable, manómetro o sólo
   luz).
+- **El plan del vehículo (A10) fija**: publica `lubrication.pressure`; lee
+  `engine.rpm` y `engine.coolantTemp` (viscosidad); la luz de presión cuelga
+  del bus `12v`.
 - **Leer**: `docs/modules/lubrication.md`; el plan del vehículo (A10);
   `SISTEMAS.md`; `docs/modules/solver.md`; `docs/modules/fuel.md` como
   ejemplo.
@@ -239,6 +253,9 @@ los demás sistemas no sepan cuál está montado.
 - **Fallas típicas a considerar**: flotador pegado (se ahoga o se seca),
   surtidor tapado, estrangulador pegado, bomba de aceleración sin
   diafragma (tironeo al acelerar), bomba mecánica gastada.
+- **El plan del vehículo (A10) fija**: es el dueño de `fuel.mixture` en
+  `vehicle-70` (mismo contrato que `fuel`); la bomba mecánica se mueve con el
+  motor; lee `intake.map`.
 - **Leer**: el plan del vehículo (A10); `SISTEMAS.md` ("Motor" y
   "Variantes por época"); `docs/modules/fuel.md` (como ejemplo y para las
   señales que comparten); `docs/modules/solver.md`.
@@ -258,6 +275,12 @@ COP), para que se vea que el resto del auto no cambia al cambiar la
 variante.
 
 - **Leer**: el plan del vehículo (A10).
+- **El plan del vehículo (A10) fija**: `compileVehicle` con prefijos
+  `sistema:pieza`, buses con un proveedor, `SignalBus` con dueño único y
+  fases same-step, hoisting de `engineCore` y transformación del layout; los
+  dos vehículos y su proveedor del bus; panel de señales
+  (`ModeUi.signals`); elemento `breach` de cruce de fluidos; benchmark
+  commiteado con umbral de 4 000 pasos/s.
 - **Aceptación**: la que fije el plan de A10 + la checklist en Firefox (una
   falla de un sistema se ve en otro, en los dos vehículos).
 - **Al cerrar**: preguntar al usuario el orden del bloque S2 y si abre la

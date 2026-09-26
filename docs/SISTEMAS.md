@@ -122,19 +122,22 @@ falla**, y eso es una pista de diagnóstico muy valiosa:
 `●` acople fuerte (comparten red), `○` acople por señal o calor, `·` se
 tocan sólo a través del motor o por una falla, `—` nunca.
 
-| | Comb. | Aire | Encend. | Motor | Refrig. | Lubric. | Eléctr. | Escape | Transm. | Frenos | Direc. |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| **Combustible** | | ○ vacío ref. | — | ○ mezcla | — | · dilución | ● bomba/relé | ○ lambda | — | — | — |
-| **Admisión/aire** | ○ | | — | ○ aire | — | — | ○ sensores | — | — | ○ servo de vacío | — |
-| **Encendido** | — | — | | ○ chispa | — | — | ● bobinas | — | — | — | — |
-| **Motor (4T)** | ○ | ○ | ○ | | ○ calor + correa | ○ engranaje, tensor | ○ arranque/alternador | ○ gases | ○ embrague | · vacío (vía admisión) | ○ correa |
-| **Refrigeración** | — | — | — | ○ | | · culata/enfriador | ● ventilador | — | · enfriador ATF | — | — |
-| **Lubricación** | · | — | — | ○ | · | | ○ sensor presión | — | — | — | — |
-| **Eléctrico** | ● | ○ | ● | ○ | ● | ○ | | ○ sonda | ○ TCU (automáticas) | ○ ABS | ○ EPS |
-| **Escape** | ○ | — | — | ○ | — | — | ○ | | — | — | — |
-| **Transmisión** | — | — | — | ○ | · | — | ○ TCU | — | | — | — |
-| **Frenos** | — | ○ | — | · vacío | — | — | ○ | — | — | | — |
-| **Dirección** | — | — | — | ○ | — | — | ○ | — | — | — | |
+| | Comb. | Aire | Encend. | Motor | Refrig. | Lubric. | Eléctr. | Escape | Transm. | Frenos | Direc. | Susp. | Ruedas | Carroc. |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **Combustible** | | ○ vacío ref. | — | ○ mezcla | — | · dilución | ● bomba/relé | ○ lambda | — | — | — | — | — | — |
+| **Admisión/aire** | ○ | | — | ○ aire | — | — | ○ sensores | — | — | ○ servo de vacío | — | — | — | — |
+| **Encendido** | — | — | | ○ chispa | — | — | ● bobinas | — | — | — | — | — | — | — |
+| **Motor (4T)** | ○ | ○ | ○ | | ○ calor + correa | ○ engranaje, tensor | ○ arranque/alternador | ○ gases | ○ embrague | · vacío (vía admisión) | ○ correa | · soporte | ○ giro | ○ se monta |
+| **Refrigeración** | — | — | — | ○ | | · culata/enfriador | ● ventilador | — | · enfriador ATF | — | — | — | — | ○ frente |
+| **Lubricación** | · | — | — | ○ | · | | ○ sensor presión | — | — | — | — | — | — | — |
+| **Eléctrico** | ● | ○ | ● | ○ | ● | ○ | | ○ sonda | ○ TCU (automáticas) | ○ ABS | ○ EPS | ○ sensores | ○ ABS | ○ luces |
+| **Escape** | ○ | — | — | ○ | — | — | ○ | | — | — | — | · soportes | — | ○ salida |
+| **Transmisión** | — | — | — | ○ | · | — | ○ TCU | — | | — | — | ○ palieres | ● palieres | · túnel |
+| **Frenos** | — | ○ | — | · vacío | — | — | ○ | — | — | | ○ geometría | · geometría | ● | — |
+| **Dirección** | — | — | — | ○ | — | — | ○ | — | — | ○ geometría | | · terminales | ● | — |
+| **Suspensión** | — | — | — | · | — | — | ○ sensores | · soportes | ○ palieres | · geometría | · terminales | | ● | ○ anclajes |
+| **Ruedas** | — | — | — | ○ giro | — | — | ○ ABS | — | ● palieres | ● | ● | ● | | — |
+| **Carrocería** | — | — | — | ○ | ○ | — | ○ | ○ | · | — | — | ○ | — | |
 
 **Sistemas que nunca se tocan directamente** (la matriz con `—`), por
 ejemplo:
@@ -144,8 +147,8 @@ ejemplo:
 
 (La matriz es de **contacto**: úsala para descartar, pero un generador de
 casos también debe seguir las celdas `·`, porque ahí están las pistas falsas
-útiles.) La matriz todavía no incluye suspensión, ruedas ni carrocería;
-se completa en A10.
+útiles.) La matriz incluye suspensión, ruedas y carrocería desde A10; el
+bloque S2 afina sus acoples mecánicos y de geometría.
 
 Esto es útil para el juego: un síntoma de frenos **no** sirve de pista para
 el encendido. Los descartes también enseñan.

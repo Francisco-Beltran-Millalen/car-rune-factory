@@ -68,7 +68,7 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ✅ |
 | A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ✅ |
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ✅ |
-| A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ arquetipos por sistema y señales nuevas (`FICHAS.md`)** | A7 | ⏳ |
+| A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ arquetipos por sistema y señales nuevas (`FICHAS.md`)** | A7 | ⏳ plan v2, espera aprobación |
 | A11 | Ciclo de 4 tiempos: spec → plan → código (plan 2026-09-25 §3.5) | A10 | ⏳ |
 | A12 | Encendido | A10 | ⏳ |
 | A13 | Refrigeración | A10 | ⏳ |
@@ -93,7 +93,11 @@ dirección y ruedas, e inspección visual de carrocería. Sin fichas todavía
 | D-motor | Decisión del usuario; afecta al juego, el laboratorio sigue en SVG | A8 | ⏸ |
 | A9 | Armar circuitos E4 (plan propio) | D-motor | ⏸ |
 
-**Siguiente paso: A10**, ficha en `docs/FICHAS.md#a10--plan-del-vehículo-sin-código`.
+**A10 en revisión**: el plan del vehículo está en
+`plans/2026-09-26-vehiculo.md` (v2, con la revisión adversaria triada en su
+§14 y una guía para el agente revisor al inicio) y las fichas de
+A11–A16/A15 ya quedaron actualizadas en `FICHAS.md`. El usuario lo revisará
+con otro agente; al aprobarlo se cierra con commit y sigue A11.
 
 ## CERRADO 2026-09-26 — A7 Presenter + renderer SVG genérico
 
