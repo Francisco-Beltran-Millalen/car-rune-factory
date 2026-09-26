@@ -147,16 +147,12 @@ describe.each(IMPLEMENTATIONS)('fuel model (%s) — §9', (name, create) => {
     }
     expect(low.state.pickupAir).toBeGreaterThan(0.7);
     const ratio = low.state.qPump / full.state.qPump;
-    if (name === 'compilado') {
-      // El solver resuelve q = Qm(1−Δp/Pm)(1−aire) de forma implícita, así que
-      // el aire también reduce la caída resistiva; la referencia escala el
-      // caudal ya resuelto. Diferencia medida: 0,2067 vs 0,2000 (se anota en
-      // fuel.md; la reconciliación es A6b).
-      expect(ratio).toBeGreaterThan(0.19);
-      expect(ratio).toBeLessThan(0.215);
-    } else {
-      expect(ratio).toBeCloseTo(1 - low.state.pickupAir, 2);
-    }
+    // Las dos implementaciones resuelven q = Qm(1−Δp/Pm)(1−aire) de forma
+    // implícita (A6b): el ratio queda ~2,6 % sobre 1−aire porque el aire
+    // también reduce la caída resistiva (§9d de fuel.md).
+    expect(ratio).toBeGreaterThan(0.19);
+    expect(ratio).toBeLessThan(0.215);
+    expect(low.state.pickupAir).toBeCloseTo(0.8, 2);
   });
 
   it(
@@ -198,9 +194,9 @@ describe.each(IMPLEMENTATIONS)('fuel model (%s) — §9', (name, create) => {
       for (const [name, v] of Object.entries(m.state) as [string, unknown][]) {
         if (typeof v === 'number') expect(Number.isFinite(v), `${name} en caso ${k}`).toBe(true);
       }
-      // La referencia clampa pRail ≥ 0; el solver no tiene ese clamp y el riel
-      // puede quedar a la presión del múltiple (≥ −0,65 bar). Se anota en
-      // fuel.md; el clamp físico (válvula de venteo) es A6b.
+      // La referencia clampa pRail ≥ 0; el solver no, y permite que el riel
+      // baje hasta la presión del múltiple (≥ −0,65 bar): ahí el goteo hacia
+      // el múltiple deja de fluir. A6b justifica al solver en fuel.md §9d.
       const floor = name === 'compilado' ? -0.7 : 0;
       expect(m.state.pRail).toBeGreaterThanOrEqual(floor);
       expect(m.state.pRail).toBeLessThanOrEqual(7.5);

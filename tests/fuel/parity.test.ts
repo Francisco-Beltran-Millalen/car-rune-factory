@@ -69,7 +69,10 @@ const SCENARIOS: readonly Scenario[] = [
     overrides: { params: { batteryV: 11 }, faults: { pumpWear: 1 } },
     setup: FULL,
   },
+  { name: 'bomba 0.8 a fondo', overrides: { faults: { pumpWear: 0.8 } }, setup: FULL },
   { name: 'colador 1.0 a fondo', overrides: { faults: { strainerClog: 1 } }, setup: FULL },
+  { name: 'colador 0.8 a fondo', overrides: { faults: { strainerClog: 0.8 } }, setup: FULL },
+  { name: 'colador 1.0 en ralentí', overrides: { faults: { strainerClog: 1 } } },
 ];
 
 interface Measures {

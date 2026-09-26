@@ -88,8 +88,12 @@ export const K = {
   Pmax0: 6.5, // bar de cierre a 13.5 V
   vNominal: 13.5,
   kStrainer0: 4e-6, // bar/(L/h)²
+  strainerClogFactor: 2500, // a fondo con s=1 el colador estrangula como el filtro (fuel.md §9d)
   kLine0: 3e-6,
   kFilter0: 1e-5,
+  filterClogFactor: 1000,
+  wearQ: 0.7, // la bomba gastada pierde caudal…
+  wearP: 0.7, // …y presión de cierre: al 80 % ya no sostiene a fondo (fuel.md §9d)
   C: 0.005, // L/bar, compliancia de riel + mangueras
   kReg: 1000, // L/h por bar sobre el setpoint
   regSet: 3.0,
@@ -109,8 +113,8 @@ export const K = {
   leanRatio: 0.8, // λ ≈ 1.25: límite de falla por mezcla pobre (fuel.md §9b)
   richRatio: 1.35,
   injTau: 0.2,
-  relayCutTime: 0.3,
-  relayCutMeanInterval: 2,
+  relayCutTime: 1.2, // un corte de 0,3 s no se notaba a fondo (fuel.md §9d)
+  relayCutMeanInterval: 3,
 };
 
 const FIRING_OFFSETS = [0, 540, 180, 360]; // inyectores 1..4 con orden 1-3-4-2
@@ -237,24 +241,31 @@ export function createFuelModel(overrides: FuelOverrides = {}): FuelModel {
     // 3. Aire en la aspiración
     s.pickupAir = 1 - clamp(s.tankLevel / K.pickupLow, 0, 1);
 
-    // 4. Caudal de la bomba (forma cerrada)
+    // 4. Caudal de la bomba (forma cerrada). El aire de la aspiración entra en
+    // la ecuación, como en el elemento del solver: q = Qm(1−Δp/Pm)(1−aire).
     const wear = clamp(faults.pumpWear, 0, 1);
-    const Qm = K.Qmax0 * (1 - 0.7 * wear) * vf;
-    const Pm = K.Pmax0 * (1 - 0.5 * wear) * vf;
-    const kFilter = K.kFilter0 * (1 + 1000 * clamp(faults.filterClog, 0, 1));
-    const kSum = K.kStrainer0 * (1 + 150 * clamp(faults.strainerClog, 0, 1)) + K.kLine0 + kFilter;
+    const airF = 1 - s.pickupAir;
+    const Qm = K.Qmax0 * (1 - K.wearQ * wear) * vf;
+    const Pm = K.Pmax0 * (1 - K.wearP * wear) * vf;
+    const kFilter = K.kFilter0 * (1 + K.filterClogFactor * clamp(faults.filterClog, 0, 1));
+    const kStrainer = K.kStrainer0 * (1 + K.strainerClogFactor * clamp(faults.strainerClog, 0, 1));
+    const kSum = kStrainer + K.kLine0 + kFilter;
     let q = 0;
-    if (s.relayOn && Pm > 0.01) {
+    if (s.relayOn && Pm > 0.01 && airF > 0) {
       const c = Qm * (1 - s.pRail / Pm);
       if (c > 0) {
         const a = (Qm * kSum) / Pm;
-        q = (-1 + Math.sqrt(1 + 4 * a * c)) / (2 * a);
+        const A = a * airF;
+        q = (-1 + Math.sqrt(1 + 4 * A * c * airF)) / (2 * A);
       }
     }
-    s.qPump = q * (1 - s.pickupAir);
-    s.pPumpOut = s.relayOn ? s.pRail + kSum * s.qPump * s.qPump : s.pRail;
-    s.dpFilter = kFilter * s.qPump * s.qPump;
-    s.pumpCurrent = s.relayOn && Pm > 0.01 ? (1.5 + (5.5 * s.pPumpOut) / Pm) * vf : 0;
+    s.qPump = q;
+    // `pPumpOut` es la boca de salida de la bomba (sin la caída del colador,
+    // que está en la aspiración); la corriente usa el Δp completo.
+    const dpPump = s.pRail + kSum * q * q;
+    s.pPumpOut = s.relayOn ? s.pRail + (K.kLine0 + kFilter) * q * q : s.pRail;
+    s.dpFilter = kFilter * q * q;
+    s.pumpCurrent = s.relayOn && Pm > 0.01 ? (1.5 + (5.5 * dpPump) / Pm) * vf : 0;
 
     // 5. Vacío del múltiple
     const thr = clamp(params.throttle, 0, 1);

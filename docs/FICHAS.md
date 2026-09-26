@@ -19,7 +19,7 @@ Abreviaturas: **P23** = `plans/2026-09-23-arquitectura-juego.md`.
 
 **No leer en ninguna tarea del bloque S**: el plan maestro (salvo lo que
 nombre una ficha), la hoja de ruta, `2026-09-24-motor-y-juice.md`,
-`2026-09-25-a3-revision.md` (salvo las cifras que nombra A6b), y en P23 las
+`2026-09-25-a3-revision.md`, y en P23 las
 §4.6–§7 (juego), §8.6–§8.7 (Phaser, armado) y §12–§13. Tampoco
 `2026-09-25-simulacion-antes-que-juego.md`, `2026-09-26-alcance-auto-completo.md`
 ni `2026-09-26-sistemas-genericos.md`: lo vigente de esos tres ya está aquí.
@@ -58,34 +58,6 @@ ni `2026-09-26-sistemas-genericos.md`: lo vigente de esos tres ya está aquí.
    checklist de Firefox para el usuario) y un commit.
 7. Al empezar cada tarea: `npm view typescript-eslint peerDependencies`. Si
    acepta TS 7, se avisa en `AHORA.md` (la migración es una tarea aparte).
-
----
-
-## A6b — Síntomas del combustible
-
-**Qué es.** Tres fallas del combustible no producen su síntoma. Se calibran
-en el **modelo compilado** (el del solver). La referencia se ajusta igual o
-se deja congelada y se documenta la divergencia; lo decide el agente, con la
-cuenta en `fuel.md` (§14 de ARCHITECTURE).
-
-| Falla | Hoy | Tiene que pasar |
-|---|---|---|
-| `strainer.clog` | a 1,0 no hace nada (a fondo: pRail 3,02, `running`) | al menos falta de fuerza a fondo. El colador está en la aspiración (entre `tank` y `pump.in`) |
-| `relay.state = 'intermittent'` | 30 s en marcha sin salir de `running` (pRail mínimo 2,34) | un corte se nota: tironeo o apagón breve |
-| `pump.wear` | sólo a 1,0 da `misfire` a fondo | revisar la curva: una bomba al 80 % en la realidad ya se nota en subida |
-
-Además quedan dos divergencias de A6 medidas en `fuel.md` §9c: el aire
-implícito (0,2067 frente a 0,2000) y el riel sin `max(0,·)` (mínimo
-−0,0133). Se resuelven o se justifican aquí.
-
-- **Leer**: `docs/modules/fuel.md` completo; la tabla de la §1 de
-  `plans/2026-09-25-a3-revision.md` (**sólo las cifras**).
-- **Archivos**: `src/modules/fuel/**`, `tests/fuel/**`, `docs/modules/fuel.md`.
-- **Aceptación**: un test por falla que fija su síntoma (estado del motor y
-  lecturas) en el escenario "contacto → arranque → ralentí → fondo". La
-  paridad de A6 se actualiza donde cambie la física, con la cuenta.
-- **Firefox** (`#/lab/fuel`): cada falla, al máximo, produce el síntoma de
-  la tabla. Quiz 1 y 2 siguen jugables.
 
 ---
 

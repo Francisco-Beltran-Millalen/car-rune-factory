@@ -66,7 +66,7 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A4 | Solver nodal + linalg (plan 2026-09-23 §8.1, fila A4) | — | ✅ |
 | A5 | Elementos + circuito (compile/validate) + controladores base (§8.2–§8.4) | A4 | ✅ |
 | A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ✅ |
-| A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ⏳ **siguiente** |
+| A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ✅ |
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ⏳ |
 | A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ arquetipos por sistema y señales nuevas (`FICHAS.md`)** | A7 | ⏳ |
 | A11 | Ciclo de 4 tiempos: spec → plan → código (plan 2026-09-25 §3.5) | A10 | ⏳ |
@@ -93,7 +93,56 @@ dirección y ruedas, e inspección visual de carrocería. Sin fichas todavía
 | D-motor | Decisión del usuario; afecta al juego, el laboratorio sigue en SVG | A8 | ⏸ |
 | A9 | Armar circuitos E4 (plan propio) | D-motor | ⏸ |
 
-**Siguiente paso: A6b**, ficha en `docs/FICHAS.md#a6b--síntomas-del-combustible`.
+**Siguiente paso: A7**, ficha en `docs/FICHAS.md#a7--presenter--renderer-svg-del-laboratorio`.
+
+## CERRADO 2026-09-26 — A6b Síntomas del combustible
+
+Calibradas las tres fallas que no daban síntoma (ARCHITECTURE §14), con las
+constantes de `reference-model.ts` (`K`) compartidas por la referencia y el
+compilado, así que la paridad se mantiene. Tabla completa y cuentas en
+`fuel.md` §9d; la ficha de A6b se retiró de `FICHAS.md` (su contenido quedó
+en `fuel.md`).
+
+- `strainer.clog`: `strainerClogFactor` 150 → **2500** (`kStrainer ≈ 1e-2` a
+  1.0, igual que el filtro a 1.0). A fondo 6000 rpm: `pRail` 1,66, mezcla
+  0,71, `misfire`; en ralentí sigue `running` (2,37 bar).
+- `relay.state = 'intermittent'`: corte 0,3 s / cada 2 s → **1,2 s / cada 3 s**.
+  A fondo, 5 cortes en 15 s: `pRail` mín 1,40, mezcla mín 0,73 y sale de
+  `running` (tironeo). En ralentí casi no se nota (0,6 L/h y `C` = 5 mL/bar):
+  es físico y se ve en el relé/partículas/narración.
+- `pump.wear`: `wearP` 0,5 → **0,7**. Al 80 % a fondo `pRail` 1,77, mezcla
+  0,77, `misfire`; al 50 % sigue `running` (2,84 · 0,97); en ralentí sostiene.
+- Divergencia del **aire implícito resuelta**: la referencia resuelve
+  `q = Qm(1−Δp/Pm)(1−aire)` como el elemento; ratio 0,2065 vs 0,2067 (antes
+  0,2000 vs 0,2067). `pPumpOut` alineado (boca de salida, sin el colador).
+- Divergencia del **riel sin `max(0,·)` justificada**: el solver deja llegar
+  a `pMan` (donde el goteo al múltiple deja de fluir); la referencia clampa
+  en 0 y es la simplificación. Fuzz de A6b: mínimo −0,04, cota −0,7.
+- Tests nuevos: 6 en `tests/fuel/symptoms.test.ts` (uno por falla, escenario
+  contacto → arranque → ralentí → fondo, en las dos implementaciones) y 3
+  escenarios en `parity.test.ts` (colador 1.0 en ralentí, colador 0.8 y bomba
+  0.8 a fondo); suite completa **199**. Se re-midió la tabla de §9b;
+  `npm run check` verde.
+- Nota para A3: su tabla §1 (medida con el modelo viejo) vuelve a cambiar en
+  las filas de colador, bomba y relé; hay que re-medirla, como ya pide el
+  plan.
+
+**Checklist de Firefox** (`npm run dev` → `#/lab/fuel`):
+1. Sano: contacto → 2 s de cebado → arranque → marcha; a fondo 6000 rpm la
+   mezcla se queda en ~100 % y el motor sigue en marcha.
+2. Fallas → **Colador tapado 1.0**: en ralentí anda (aguja ~2,4); a fondo la
+   presión cae a ~1,7, la mezcla a ~71 % y el motor pasa a "Falla (mezcla)".
+   Baja el acelerador y se recupera.
+3. Fallas → **Relé de bomba Intermitente**: a fondo, cada ~3 s el relé abre
+   1,2 s (el brazo se mueve, la corriente/partículas de la bomba paran), la
+   presión cae a ~1,4 y el motor tironea (la mezcla baja a ~73 %). En ralentí
+   apenas se nota: no es un bug.
+4. Fallas → **Bomba gastada 0.8**: en ralentí anda; a fondo caen presión
+   (~1,8) y mezcla (~77 %) y el motor tironea. Al 0.5 ya no se nota tanto.
+5. "Reparar todo" (⟲ de fallas) y comprobar que a fondo vuelve a ~3 bar.
+6. `#/stage/fuel-quiz-1` y `#/stage/fuel-quiz-2` siguen jugables (sin
+   cambios: el quiz no usa estas fallas).
+7. F12 sin errores.
 
 ## CERRADO 2026-09-25 — A6 Combustible sobre el solver (paridad con la referencia)
 
@@ -127,7 +176,8 @@ dirección y ruedas, e inspección visual de carrocería. Sin fichas todavía
   ≤ 3 % y `failures === 0`, catálogo de fallas, fuzz reducido del compilado
   (200 × 1000, timeout 30 s). `npm run check` verde.
 - Divergencias medidas y documentadas en `fuel.md` §9c (aire implícito:
-  ratio 0,2067 vs 0,2000; riel sin `max(0,·)`: mínimo −0,0133). Son de A6b.
+  ratio 0,2067 vs 0,2000; riel sin `max(0,·)`: mínimo −0,0133); A6b las
+  cierra (CERRADO de arriba).
 - **Checklist de Firefox pendiente** (`npm run dev`): el laboratorio del
   combustible y las etapas 1 y 2 del quiz deben verse y comportarse igual que
   antes (el renderer sigue siendo el legacy; sólo cambió el modelo por dentro).

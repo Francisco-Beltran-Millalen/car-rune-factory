@@ -19,10 +19,10 @@ Acciones: `refill()` (estanque a 45 L), `setTank(L)`.
 ## 3. Fallas (`DEFAULT_FAULTS`, todas "sano" por defecto)
 | key | tipo | efecto en el modelo |
 |---|---|---|
-| `strainerClog` | 0–1 | `kStrainer *= 1 + 150·s` |
+| `strainerClog` | 0–1 | `kStrainer *= 1 + 2500·s` (a 1.0 estrangula como el filtro a 1.0) |
 | `filterClog` | 0–1 | `kFilter *= 1 + 1000·s` |
-| `pumpWear` | 0–1 | `Qmax *= 1 − 0.7·s`, `Pmax *= 1 − 0.5·s` |
-| `relay` | `'ok' \| 'intermittent' \| 'dead'` | `intermittent`: se corta 0.3 s a intervalos pseudoaleatorios (rng con semilla, en promedio cada 2 s); `dead`: nunca cierra |
+| `pumpWear` | 0–1 | `Qmax *= 1 − 0.7·s`, `Pmax *= 1 − 0.7·s` (al 80 % ya no sostiene a fondo) |
+| `relay` | `'ok' \| 'intermittent' \| 'dead'` | `intermittent`: se corta 1,2 s a intervalos pseudoaleatorios (rng con semilla, en promedio cada 3 s); `dead`: nunca cierra |
 | `regulator` | `'ok' \| 'stuckOpen' \| 'stuckClosed'` | `stuckOpen`: setpoint 0.8 bar; `stuckClosed`: sin retorno |
 | `vacuumHoseOff` | bool | la referencia del regulador pasa a 0 bar (atmósfera) |
 | `injectorLeak` | 0–1 | el inyector 2 gotea `0.6·s·√pRail` L/h continuamente hacia el múltiple |
@@ -40,11 +40,11 @@ Constantes: `Qmax0 = 120 L/h` (a 13.5 V, caudal libre), `Pmax0 = 6.5 bar` (cierr
    - Aplicar la falla `relay`.
 2. **Tensión de la bomba**: `V = batteryV + (running ? 1.4 : 0) − (cranking ? 2.0 : 0)`, y `vf = clamp(V / 13.5, 0, 1.1)`.
 3. **Aire en la aspiración**: `pickupAir = 1 − clamp(tankLevel / pickupLow, 0, 1)`. El caudal efectivo se multiplica por `(1 − pickupAir)`.
-4. **Caudal de la bomba (cerrado, sin iterar)**, con `K = kStrainer + kLine + kFilter`, `Qm = Qmax·vf`, `Pm = Pmax·vf`:
-   - `c = Qm·(1 − pRail/Pm)`. Si `c ≤ 0` o el relé está abierto → `qPump = 0` (la válvula check impide el retroceso).
-   - Si no: `a = Qm·K/Pm`, `qPump = (−1 + √(1 + 4ac)) / (2a)`, y luego `qPump *= (1 − pickupAir)`.
-   - `pPumpOut = pRail + K·qPump²` y `dpFilter = kFilter·qPump²`.
-   - `pumpCurrent = relé ? (1.5 + 5.5·pPumpOut/Pm)·vf : 0` (A).
+4. **Caudal de la bomba (cerrado, sin iterar)**, con `K = kStrainer + kLine + kFilter`, `Qm = Qmax·vf`, `Pm = Pmax·vf` y `aire = pickupAir`:
+   - Caudal: `qPump = Qm·(1 − (pRail + K·qPump²)/Pm)·(1 − aire)`. Si `aire = 1`, el relé está abierto o `pRail ≥ Pm` → `qPump = 0` (la válvula check impide el retroceso).
+   - Forma cerrada: `c = Qm·(1 − pRail/Pm)`, `a = Qm·K/Pm`, `A = a·(1 − aire)`, `qPump = (−1 + √(1 + 4·A·c·(1 − aire))) / (2A)`. El aire entra en la ecuación, como en el elemento del solver.
+   - `pPumpOut = pRail + (kLine + kFilter)·qPump²` es la boca de salida de la bomba, **sin** la caída del colador (que está en la aspiración); `dpFilter = kFilter·qPump²`.
+   - `pumpCurrent = relé ? (1.5 + 5.5·(pRail + K·qPump²)/Pm)·vf : 0` (A): la corriente usa el Δp completo, colador incluido.
 5. **Vacío del múltiple**: `pMan = motorGirando ? −0.65 + 0.65·throttle : 0` (bar relativos; ralentí ≈ −0.65, a fondo ≈ 0). `pRef = vacuumHoseOff ? 0 : pMan`.
 6. **Regulador**: `set = regulator==='stuckOpen' ? 0.8 : regSet`. `qReturn = regulator==='stuckClosed' ? 0 : kReg·max(0, pRail − (pRef + set))`. `regOpen = clamp(qReturn / 100, 0, 1)` (para la animación del diafragma).
 7. **Inyectores** (secuenciales, orden de encendido 1-3-4-2, desfase 0/180/360/540°):
@@ -64,8 +64,10 @@ Estabilidad: con `C = 0.005` y `kReg = 1000`, τ = C/kReg ≈ 18 ms. Con `dt = 1
 Comprobación a mano de las constantes (para que el agente de T3 parta con números coherentes):
 - Ralentí: la bomba entrega ~75 L/h y los inyectores piden ~0.6 L/h. El retorno es ~74 L/h y el regulador sobrepasa el setpoint en 74/1000 ≈ 0.07 bar → `pRail − pMan ≈ 3.07`.
 - A fondo a 6000 rpm: duty ≈ 0.62, así que se inyectan ≈ 29.5 L/h. La bomba entrega ~68 L/h → retorno ≈ 38 L/h.
-- Filtro tapado 1.0 a fondo: kFilter = 1e-2 → equilibrio con `pRail ≈ 1.45 bar`, mezcla ≈ 0.69 → misfire. En ralentí la bomba todavía entrega ~18 L/h, suficiente.
-- `pumpWear=1` + 11 V: Pmax ≈ 3 bar → `pRail ≈ 1.3`, mezcla ≈ 0.66 → misfire.
+- Filtro tapado 1.0 a fondo: kFilter = 1e-2 → equilibrio con `pRail ≈ 1.66 bar`, mezcla ≈ 0.71 → misfire. En ralentí la bomba todavía entrega ~18 L/h, suficiente.
+- Colador tapado 1.0: con `strainerClogFactor = 2500` su resistencia a 1.0 es `kStrainer ≈ 1e-2`, igual que el filtro a 1.0: a fondo `pRail ≈ 1.66`, mezcla ≈ 0.71 → misfire; en ralentí entrega ~18 L/h y anda.
+- `pumpWear=1` + 11 V: Pmax = 6.5·0.3·0.919 ≈ 1.8 bar → `pRail ≈ 0.93`, mezcla ≈ 0.56 → misfire.
+- `pumpWear=0.8` a fondo: Pm ≈ 2.0 bar → `pRail ≈ 1.77`, mezcla ≈ 0.77 → misfire; en ralentí sostiene (2.36 bar).
 - Inyector goteando 1.0 con el motor apagado: √p baja 0.0167/s → de 3 a 1 bar en ~44 s.
 
 ## 5. Estado (`state`), con unidades
@@ -112,7 +114,7 @@ Helper: `run(model, seconds)` avanza con `dt = 0.001`.
 7. `pumpWear=1` con batería 11 V a fondo → `engineState !== 'running'`.
 8. Motor apagado tras el cebado con `injectorLeak=1` → la presión baja a < 1 bar en ≤ 60 s. Sin fuga se mantiene > 2.5 durante 60 s.
 9. `tankLevel=0.2` → `pickupAir > 0.7` y `qPump` baja proporcionalmente.
-10. Robustez: 1000 combinaciones aleatorias (rng con semilla) de params y faults × 2 s → nunca `NaN`/`Infinity` y `pRail ∈ [0, 7.5]`.
+10. Robustez: 1000 combinaciones aleatorias (rng con semilla) de params y faults × 2 s → nunca `NaN`/`Infinity` y `pRail` entre −0,65 (la referencia clampa en 0; el solver llega hasta la presión del múltiple, §9d) y 7.5.
 11. Determinismo: dos modelos con la misma secuencia dan estados idénticos.
 
 Si algún rango no cuadra con las constantes, el agente **ajusta las constantes** (no los tests) y documenta el cambio en `docs/modules/fuel.md`.
@@ -129,30 +131,37 @@ Si algún rango no cuadra con las constantes, el agente **ajusta las constantes*
   τ = 0.2 s sobre el **mismo** patrón de pulsos. Así el ratio sólo refleja la
   presión (≈ √(Δp/3)) y no el ruido de los pulsos a bajas rpm.
 - El relé intermitente usa el rng con semilla (`overrides.seed`, 12345 por
-  defecto): corte de 0.3 s con probabilidad `dt/2` por paso.
+  defecto): corte de 1,2 s con probabilidad `dt/3` por paso. El corte de 0.3 s
+  de A6 no se notaba a fondo (§9d).
 
 Medido con `startEngine` → 3 s → promedio de 1 s (`dt = 1 ms`):
 
 | Caso | pRail | pRail−pMan | qPump | qInj | qReturn | mezcla | estado |
 |---|---|---|---|---|---|---|---|
-| Ralentí sano | 2.43 | 3.08 | 77.7 | 0.69 | 77.1 | 1.01 | running |
+| Ralentí sano | 2.43 | 3.08 | 77.7 | 0.6 | 77.1 | 1.01 | running |
 | A fondo 6000 rpm | 3.04 | 3.04 | 67.0 | 29.0 | 38.0 | 1.01 | running |
-| Filtro 1.0, ralentí | 2.37 | 3.02 | 18.4 | 0.68 | 17.7 | 1.00 | running |
-| Filtro 1.0, a fondo | 1.66 | 1.60 | 20.2 | 20.7 | 0 | 0.71 | misfire |
-| Filtro 0.8, a fondo | 1.85 | 1.80 | 21.7 | 22.1 | 0 | 0.76 | running (límite) |
-| Manguera de vacío suelta | 3.07 | 3.72 | 66.5 | 0.76 | 65.8 | 1.11 | running |
-| Regulador pegado cerrado | 6.68 | 7.34 | 1.0 | 1.07 | 0 | 1.56 | misfire (rica) |
-| Regulador pegado abierto | 0.24 | 0.89 | 87.4 | 0.33 | 87.2 | 0.54 | cranking: gira y no parte |
-| Bomba gastada + 11 V, a fondo | 1.31 | 1.29 | 18.8 | 18.8 | 0 | 0.65 | misfire |
-| Colador 1.0, a fondo | 3.02 | 3.02 | 45.3 | 28.9 | 16.5 | 1.00 | running |
+| Filtro 1.0, ralentí | 2.37 | 3.02 | 18.4 | 0.6 | 17.7 | 1.00 | running |
+| Filtro 1.0, a fondo | 1.66 | 1.60 | 20.2 | 20.6 | 0 | 0.71 | misfire |
+| Filtro 0.8, a fondo | 1.85 | 1.80 | 21.7 | 22.1 | 0 | 0.76 | misfire |
+| Colador 1.0, ralentí | 2.37 | 3.02 | 18.4 | 0.6 | 17.7 | 1.00 | running |
+| Colador 1.0, a fondo | 1.66 | 1.60 | 20.2 | 20.6 | 0 | 0.71 | misfire |
+| Colador 0.8, a fondo | 1.85 | 1.80 | 21.7 | 22.1 | 0 | 0.76 | misfire |
+| Colador 0.5, a fondo | 2.28 | 2.27 | 25.0 | 25.0 | 0 | 0.87 | running |
+| Bomba 0.5, a fondo | 2.84 | 2.85 | 28.1 | 28.1 | 0 | 0.97 | running |
+| Bomba 0.8, a fondo | 1.77 | 1.76 | 22.1 | 22.1 | 0 | 0.77 | misfire |
+| Bomba 0.8, ralentí | 2.36 | 3.01 | 11.1 | 0.6 | 10.5 | 1.00 | running |
+| Bomba 1.0 + 11 V, a fondo | 0.93 | 0.92 | 16.0 | 16.0 | 0 | 0.55 | misfire |
+| Manguera de vacío suelta | 3.07 | 3.72 | 66.5 | 0.7 | 65.7 | 1.11 | running |
+| Regulador pegado cerrado | 6.68 | 7.34 | 1.0 | 1.0 | 0 | 1.56 | misfire (rica) |
+| Regulador pegado abierto | 0.24 | 0.89 | 87.4 | 0.3 | 87.2 | 0.54 | cranking: gira y no parte |
 
 **Umbral de mezcla pobre 0.75 → 0.8.** Con el filtro tapado, la presión a
 fondo cae con una constante de tiempo de ~2 s (la pendiente neta de la curva
 bomba − inyectores es chica frente a la compliancia `C`). Con 0.75 el filtro
 al 90 % dejaba la mezcla en 0.776 y el motor nunca fallaba. 0.8 equivale a
-λ ≈ 1.25, cerca del límite real de falla por mezcla pobre. Los valores de la
-tabla se midieron con 0.75; sólo cambia la columna "estado" en las filas del
-filtro (0.8 → misfire).
+λ ≈ 1.25, cerca del límite real de falla por mezcla pobre. La tabla se
+re-midió en A6b con el umbral 0,8 y las constantes de §9d (filtro 0,8 a
+fondo → misfire; A6 había medido esa fila con 0.75).
 
 Consecuencia para los presets (§10): con filtro 0.8 el motor queda justo en el
 límite y no tironea. El preset "Tironea al acelerar en subida" usa **0.9**.
@@ -165,7 +174,7 @@ límite y no tironea. El preset "Tironea al acelerar en subida" usa **0.9**.
 Desde A6 el descriptor usa `createCompiledFuelModel()` (`src/modules/fuel/circuit.ts`),
 compilado con `compileCircuit` (CONTRATOS 4.10). El modelo a mano queda como
 **referencia** (`reference-model.ts`) y la suite de §9 corre contra los dos
-(`describe.each`), más `tests/fuel/parity.test.ts` (10 escenarios de la tabla
+(`describe.each`), más `tests/fuel/parity.test.ts` (13 escenarios de la tabla
 de §9b: `pRail` ≤ 0,05 bar y caudales ≤ 3 % + 0,01 L/h en régimen,
 `failures === 0`).
 
@@ -182,19 +191,55 @@ el corte lo hace `battery.control.v = relayOn ? v : 0` (alternador), que es
 exactamente `pumpV = relayOn ? v : 0` de la referencia. Así el solver no ve un
 escalón de conductancia de 1e7 (que lo dejaba sin converger).
 
-**Divergencias medidas** (para A6b):
-- **Aire de la bomba**: el elemento resuelve `q = Qm(1−Δp/Pm)(1−aire)` dentro
-  del balance implícito, así que el aire también reduce la caída resistiva; la
-  referencia escala el caudal ya resuelto. Con `tankLevel = 0,2`:
-  `qPump` relativo **0,2067 vs 0,2000** (test 9 usa rangos por implementación).
-- **Riel sin `max(0,·)`**: la referencia clampa `pRail ≥ 0`; el solver no, así
-  que con el múltiple en vacío el riel puede quedar hasta `pMan` (fuzz: mínimo
-  medido −0,0133; cota usada −0,7 en el fuzz del compilado). El clamp físico
-  (venteo) es A6b.
+**Divergencias medidas** (A6; estado final en §9d):
+- **Aire de la bomba**: resuelto en A6b. Las dos implementaciones resuelven
+  `q = Qm(1−Δp/Pm)(1−aire)` dentro del balance. Con `tankLevel = 0,2`:
+  `qPump` relativo **0,2065 (referencia) vs 0,2067 (compilado)**, 2,6 % sobre
+  `1−aire` porque el aire también reduce la caída resistiva.
+- **Riel sin `max(0,·)`**: justificado en A6b. La referencia clampa
+  `pRail ≥ 0`; el solver no, y con el múltiple en vacío el riel baja hasta
+  `pMan` (fuzz de A6b: mínimo medido −0,04; cota usada −0,7 en el fuzz del
+  compilado), que es donde el goteo hacia el múltiple deja de fluir. Sin
+  venteo ni fuga el riel sellado no debería llegar ahí: la simplificación es
+  la referencia.
+- **`pPumpOut`**: alineado en A6b. La referencia ahora define `pPumpOut` como
+  la boca de salida de la bomba (`pRail + (kLine + kFilter)·q²`), sin la caída
+  del colador de la aspiración, y usa el Δp completo para la corriente. Antes
+  difería en `kStrainer·q²` (0,02 bar con el colador sano, 1,3 bar al máximo).
 - Guarda de la bomba en `V ≤ 0` (no `V < 0,5`): la rama normal ya es suave y
   segura por εP, y así no hay escalón de corriente al conmutar.
 - El fuzz del compilado es reducido (200 × 1000 pasos); el tiempo medido se
   anota en `solver.md`. La relajación por nodo del solver (que destrabó los
   transitorios) está en `solver.md` §4.
+
+## 9d. A6b — síntomas calibrados
+
+Tres fallas no daban su síntoma con las constantes de A6 (ARCHITECTURE §14):
+`strainer.clog` no hacía nada, `relay.state = 'intermittent'` no se notaba y
+`pump.wear` sólo fallaba al 100 %. Se calibraron las constantes de
+`reference-model.ts` (`K`), compartidas por las dos implementaciones, así que
+la paridad se mantiene. Tests nuevos: `tests/fuel/symptoms.test.ts` (uno por
+falla, escenario contacto → arranque → ralentí → fondo) y tres escenarios más
+en `parity.test.ts`.
+
+| Falla | Constante | Antes | Ahora | Síntoma a fondo (medido) |
+|---|---|---|---|---|
+| `strainer.clog = 1` | `strainerClogFactor` | 150 | **2500** (`kStrainer ≈ 1e-2`) | pRail 1,66 · mezcla 0,71 · misfire; en ralentí running (2,37) |
+| `relay.state = 'intermittent'` | `relayCutTime` / `relayCutMeanInterval` | 0,3 s / 2 s | **1,2 s / 3 s** | 5 cortes en 15 s: pRail mín 1,40 · mezcla mín 0,73 y sale de running; en ralentí no se nota |
+| `pump.wear = 0,8` | `wearP` | 0,5 | **0,7** | pRail 1,77 · mezcla 0,77 · misfire; al 50 % sigue running (2,84 · 0,97) |
+
+- El colador a 1.0 queda con la misma resistencia que el filtro a 1.0 (los dos
+  `k ≈ 1e-2`): está en la boca de la aspiración, y su síntoma es el mismo ahogo
+  a fondo, no a ralentí.
+- El corte del relé de 0,3 s sólo bajaba `pRail` a 2,42 a fondo (mezcla 0,89):
+  con 1,2 s la presión llega a ~1,4 y el motor tironea. En ralentí tarda decenas
+  de segundos en notarse (los inyectores piden 0,6 L/h y `C = 0,005 L/bar`);
+  es físico, y en el laboratorio se ve en el relé, las partículas de la bomba
+  y la narración.
+- `pump.wear = 0,8` a fondo ya no sostiene: la bomba gastada pierde presión de
+  cierre (`Pm ≈ 2,0 bar`) antes que caudal. En ralentí sí sostiene.
+- Las dos divergencias de §9c quedaron cerradas: el aire se resuelve igual en
+  las dos implementaciones (0,2065 vs 0,2067), `pPumpOut` quedó alineado y el
+  riel sin clamp se justifica (llega hasta `pMan`, no más abajo).
 
 
