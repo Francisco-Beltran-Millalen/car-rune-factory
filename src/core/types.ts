@@ -1,6 +1,8 @@
 // Contratos del core en TypeScript (§31). Fuente de verdad de las firmas;
 // docs/CONTRATOS.md las explica.
 
+import type { CircuitDef } from '../sim/circuit/types.ts';
+
 export type ParamValue = number | boolean | string;
 export type ParamRecord = Record<string, ParamValue>;
 
@@ -36,6 +38,49 @@ export interface View {
   /** Opcional: efectos extra de resaltado (CONTRATOS 4.3). */
   highlight?(partId: string | null): void;
   destroy(): void;
+}
+
+/** Canales del presenter (A7): valores planos que animan los drawers. */
+export type VisualValue = number | string | boolean;
+
+export interface VisualLink {
+  /** Caudal con signo (L/h o A). */
+  flow: number;
+  /** Presión/tensión media del tramo (bar o V); 0 si no aplica. */
+  potential: number;
+  /** Fracción 0..1 de partículas dibujadas como aire. */
+  air: number;
+}
+
+/**
+ * Lo único que el renderer lee además del `CircuitDef` (CONTRATOS 6.5).
+ * Lo produce `src/presenter/`; los ids de `faultCues` son §26.
+ */
+export interface VisualState {
+  parts: Record<string, Record<string, VisualValue>>;
+  links: Record<string, VisualLink>;
+  global: Record<string, VisualValue>;
+  faultCues: readonly string[];
+}
+
+/** Contexto de un `PresentFn`: modelo de sólo lectura + fallas visibles. */
+export interface PresentContext {
+  readonly state: Readonly<Record<string, unknown>>;
+  readonly params: Readonly<Record<string, unknown>>;
+  readonly faults: Readonly<Record<string, unknown>>;
+  /** Ids §26 de fallas visibles con la `ModeUi` actual (CONTRATOS 6.6). */
+  readonly visibleFaults: ReadonlySet<string>;
+}
+
+export type PresentFn = (ctx: PresentContext) => VisualValue;
+
+/** Canales por pieza y por enlace; datos del módulo, los evalúa el presenter. */
+export interface PresentScheme {
+  parts: Readonly<Record<string, Readonly<Record<string, PresentFn>>>>;
+  links?: Readonly<
+    Record<string, { flow?: PresentFn; potential?: PresentFn; air?: PresentFn }>
+  >;
+  global?: Readonly<Record<string, PresentFn>>;
 }
 
 export interface ControlOption {
@@ -128,7 +173,12 @@ export interface ModuleDescriptor<M extends AnyModel = AnyModel> {
   order: number;
   viewBox: readonly [number, number, number, number];
   createModel(): M;
-  createView(ctx: ViewContext<M>): View;
+  /** Legado (hasta A7); el renderer genérico no lo llama. */
+  createView?(ctx: ViewContext<M>): View;
+  /** (A7) Circuito que dibuja el renderer: layout, conexiones y topología. */
+  circuit?: CircuitDef;
+  /** (A7) Esquema de canales del presenter (lo evalúa `src/presenter/`). */
+  present?: PresentScheme;
   defaultParams: Readonly<M['params']>;
   defaultFaults: Readonly<M['faults']>;
   controls: readonly ControlSpec<M>[];

@@ -28,9 +28,9 @@ Código que viole estas leyes no se implementa ni mergea.
 - **§8** UI declarativa: controles, fallas, lecturas, piezas y presets son
   **datos** en el descriptor del módulo. El core los renderiza; ningún
   módulo crea sus propios paneles.
-- **§9** La vista dibuja la geometría una vez en `createView`. En `update`
-  sólo muta atributos (transform, fill, opacity, partículas). Colores sólo
-  por variables CSS, para que funcione el tema oscuro.
+- **§9** La vista (o el drawer del renderer) dibuja la geometría una vez al
+  crearse. En `update` sólo muta atributos (transform, fill, opacity,
+  partículas). Colores sólo por variables CSS, para que funcione el tema oscuro.
 - **§10** Toda pieza clickeable lleva `data-part="<partId>"`, y ese `partId`
   existe en `parts`.
 - **§11** Aislamiento de módulos: ningún modelo importa ni lee a otro. La
@@ -68,7 +68,7 @@ Código que viole estas leyes no se implementa ni mergea.
   de qué se muestra.
 - **§22** El renderer sólo lee `VisualState` (del presenter) y la definición
   del circuito. No lee `model.state`, `model.params` ni `model.faults`.
-  (Excepción temporal: `legacyRenderer` de A1 hasta A7.)
+  (El `legacyRenderer` que las leía existió hasta A7.)
 - **§23** Identidad por tipo: una pieza se identifica por `type` + `id` de
   instancia. El dibujo se resuelve por tipo en el catálogo de cada renderer.
   Ninguna lógica depende de un nombre de archivo ni de una coordenada.

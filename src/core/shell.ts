@@ -1,6 +1,6 @@
 // Layout de la app + composición de sesión, modo, renderer y paneles (CONTRATOS.md §6).
 
-import type { Model, ModuleDescriptor, ParamValue } from './types.ts';
+import type { Model, ModuleDescriptor, ParamValue, VisualState } from './types.ts';
 import { h, clear } from './dom.ts';
 import { createRng } from './rng.ts';
 import { parseHash, type Route, type RouteTarget } from './router.ts';
@@ -15,7 +15,8 @@ import { createQuizMode, type QuizMode } from '../game/modes/quiz.ts';
 import { createSave } from '../game/save.ts';
 import { stages as campaignStages, getStage, isStageUnlocked, nextStageOf } from '../game/campaign.ts';
 import { intents, INTENT_TYPES, type Intent } from '../game/intents.ts';
-import { createLegacyRenderer } from '../render/legacy/index.ts';
+import { presentModel } from '../presenter/present.ts';
+import { createSvgRenderer } from '../render/svg/index.ts';
 import { createHud } from '../ui/hud.ts';
 import type {
   LabMode,
@@ -51,7 +52,7 @@ type MountTarget =
   | { kind: 'lab'; module: ModuleDescriptor }
   | { kind: 'stage'; module: ModuleDescriptor; stage: Stage; attempt: number };
 
-type Renderer = ReturnType<typeof createLegacyRenderer>;
+type Renderer = ReturnType<typeof createSvgRenderer>;
 
 interface SimDebug {
   session: Session;
@@ -232,13 +233,25 @@ export function createShell(
     const info = createInfoPanel(infoSec.body, desc.parts);
     const narr = createNarrationBar(narration);
 
-    const renderer = createLegacyRenderer({
+    if (!desc.circuit) throw new Error(`el módulo ${desc.id} no tiene circuit (A7)`);
+    const renderer = createSvgRenderer({
       container: stage,
+      circuit: desc.circuit,
+      viewBox: desc.viewBox,
       module: desc,
       emit,
-      model: session.model,
       tooltip,
     });
+
+    /** VisualState del frame: el presenter evalúa el esquema del módulo (§22). */
+    function visualNow(): VisualState {
+      return presentModel({
+        scheme: desc.present ?? { parts: {} },
+        catalog: desc.faultCatalog,
+        model: session.model,
+        revealedFaults: mode.ui.revealedFaults,
+      });
+    }
 
     if (hudSec) side.append(hudSec.node);
     side.append(ctlSec.node);
@@ -369,6 +382,7 @@ export function createShell(
     narr.set(desc.narrate(session.model));
     if (hud) hud.update(mode.hud());
     applyEvents(mode.update(0)); // anuncio inicial del modo (p. ej. la pieza a nombrar)
+    renderer.update(visualNow(), 0);
 
     const unframe = session.onFrame((simDt) => {
       const now = performance.now();
@@ -376,7 +390,7 @@ export function createShell(
       lastReal = now;
 
       applyEvents(mode.update(simDt));
-      renderer.update(null, simDt);
+      renderer.update(visualNow(), simDt);
       readouts.update(session.model.state);
       timebar.setClock(session.model.time);
 

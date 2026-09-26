@@ -13,10 +13,29 @@ export interface CircuitPartDef {
   x: number;
   y: number;
   rot?: number;
+  /** Tipo del drawer del renderer (A7); por defecto, `type`. */
+  visual?: string;
   params?: Readonly<Record<string, number>>;
   /** Fluido propio; si no, el del circuito (§30). */
   fluid?: Fluid;
   label?: string;
+}
+
+/** Datos de trazo de una conexión (A7); el renderer sólo los lee. */
+export interface CircuitLinkVisual {
+  /** partId del trazo para clic/resaltado; sin él, el tubo no es clickeable. */
+  owner?: string;
+  /** Clase del tubo: `fluid-*`. */
+  pipeClass?: string;
+  /** Clase de las partículas: `p-*`. Sin esto el enlace no lleva partículas. */
+  flowClass?: string;
+  /** px/s por unidad de caudal; por defecto `PX_PER_LH` (CONTRATOS 4.6). */
+  scale?: number;
+  spacing?: number;
+  radius?: number;
+  width?: number;
+  /** Opacidad fija del fluido cuando no hay `potential`. */
+  opacity?: number;
 }
 
 export interface CircuitLinkDef {
@@ -26,6 +45,8 @@ export interface CircuitLinkDef {
   to: string;
   /** Puntos para el renderer; opcional (A7 puede rutear sola). */
   route?: readonly (readonly [number, number])[];
+  /** Trazo visible (A7): con `route` o `visual` el renderer dibuja el tubo. */
+  visual?: CircuitLinkVisual;
 }
 
 export interface CircuitControllerDef {

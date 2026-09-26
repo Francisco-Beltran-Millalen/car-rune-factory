@@ -61,40 +61,6 @@ ni `2026-09-26-sistemas-genericos.md`: lo vigente de esos tres ya está aquí.
 
 ---
 
-## A7 — Presenter + renderer SVG del laboratorio
-
-**Qué es.** Reemplazar el renderer legacy por uno genérico que dibuja
-cualquier circuito por tipo de pieza. **El laboratorio es SVG** (diagramas
-claros, clickeables, tema oscuro); Phaser, si llega, es sólo para el juego.
-
-- `src/presenter/**`: `VisualState` desde el modelo compilado (CONTRATOS
-  §6.5).
-- `src/render/svg/**`: `createSvgRenderer` con drawers por tipo (§23).
-- Las coordenadas de `fuel/view.ts` pasan a `fuel/circuit.ts` (el layout es
-  un dato).
-- Se borran `src/render/legacy/` y `fuel/view.ts` al alcanzar la paridad.
-- Lo que usa el quiz también lo cumple el renderer nuevo: `applyUi`
-  (ocultar `.part-label`, tooltips), `highlight(partIds, style)` con los 4
-  estilos, y `selectPart`/`hoverPart` por clic y hover.
-- **Canales para el juego futuro**: cada animación que delata estado
-  (aguja, flujos, rotor, diafragma, spray, suciedad) sale de un canal con
-  nombre del presenter. `ModeUi.instruments` **no** se implementa.
-- **No asumir un solo circuito por módulo para siempre**: habrá variantes
-  (Contexto común, 3). No hace falta soportarlas todavía; sólo no cerrar la
-  puerta.
-
-- **Leer**: P23 §2 (D6 y D7), §8.5 y la fila A7 de §9; `CONTRATOS.md` §6.4
-  y §6.5.
-- **Archivos**: `src/presenter/**`, `src/render/svg/**`,
-  `src/modules/fuel/{circuit,index}.ts`, `tests/presenter/**`,
-  `src/core/shell.ts` (montar el renderer nuevo).
-- **Aceptación**: tests del presenter (canales y flujos por conexión desde un
-  estado conocido; filtrado de indicios).
-- **Firefox**: la checklist detallada del combustible de `AHORA.md`, tema
-  oscuro, y las etapas 1 y 2 del quiz sin etiquetas delatoras.
-
----
-
 ## A10 — Plan del vehículo (sin código)
 
 **Qué es.** Diseñar cómo se juntan los sistemas en un vehículo y cómo se ve

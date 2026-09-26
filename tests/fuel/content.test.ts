@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import type { Narration } from '../../src/core/types.ts';
+import { FUEL_DEF } from '../../src/modules/fuel/circuit.ts';
 import { parts } from '../../src/modules/fuel/content.ts';
 import { DEFAULT_FAULTS, DEFAULT_PARAMS, createFuelModel, type FuelModel } from '../../src/modules/fuel/reference-model.ts';
 import { createNarrator } from '../../src/modules/fuel/narrate.ts';
 import { controls, faults, presets, readouts } from '../../src/modules/fuel/specs.ts';
+import { DRAWERS } from '../../src/render/svg/drawers/index.ts';
 
 const PART_IDS = [
   'battery', 'key', 'relay', 'tank', 'strainer', 'pump', 'checkValve', 'feedLine', 'filter', 'rail',
@@ -113,13 +115,14 @@ describe('narración del combustible', () => {
   });
 });
 
-describe('vista ↔ contenido (§10)', () => {
-  it('cada data-part que dibuja la vista tiene ficha', async () => {
-    const { readFileSync } = await import('node:fs');
-    const src = readFileSync(new URL('../../src/modules/fuel/view.ts', import.meta.url), 'utf8');
-    const ids = new Set([...src.matchAll(/part: '([\w]+)'/g)].map((m) => m[1]!));
-    if (src.includes('part: `injector${i + 1}`')) [1, 2, 3, 4].forEach((n) => ids.add(`injector${n}`));
-    for (const id of ids) expect(parts, id).toHaveProperty(id);
-    for (const id of PART_IDS) expect(ids.has(id), `la vista no dibuja ${id}`).toBe(true);
+describe('circuito ↔ contenido (§10)', () => {
+  it('cada pieza que se dibuja tiene ficha, y el contenido está en el circuito', () => {
+    const defIds = new Set(FUEL_DEF.parts.map((p) => p.id));
+    for (const id of PART_IDS) expect(defIds.has(id), `el circuito no tiene ${id}`).toBe(true);
+    for (const part of FUEL_DEF.parts) {
+      const hasDrawer = DRAWERS[part.visual ?? part.type] !== undefined;
+      const isLinkOwner = FUEL_DEF.links.some((l) => l.visual?.owner === part.id);
+      if (hasDrawer || isLinkOwner) expect(parts[part.id], part.id).toBeDefined();
+    }
   });
 });

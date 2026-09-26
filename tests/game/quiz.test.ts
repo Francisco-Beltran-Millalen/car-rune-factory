@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { createRng } from '../../src/core/rng.ts';
 import type { PartInfo } from '../../src/core/types.ts';
 import { stages, getStage, isStageUnlocked, nextStageOf } from '../../src/game/campaign.ts';
@@ -302,8 +302,11 @@ describe('campaña (§6.8)', () => {
   });
 });
 
-describe('etiquetas delatoras en la vista (riesgo §6)', () => {
-  const src = readFileSync(new URL('../../src/modules/fuel/view.ts', import.meta.url), 'utf8');
+describe('etiquetas delatoras en el renderer (riesgo §6)', () => {
+  const dir = new URL('../../src/render/svg/drawers/', import.meta.url);
+  const src = readdirSync(dir)
+    .map((name) => readFileSync(new URL(name, dir), 'utf8'))
+    .join('\n');
   const classAfter = (text: string): string | null => {
     const i = src.indexOf(`'${text}',`);
     if (i < 0) return null;
@@ -337,10 +340,8 @@ describe('etiquetas delatoras en la vista (riesgo §6)', () => {
   });
 
   it('las etiquetas de valor no llevan part-label', () => {
-    for (const value of ['Apagado', '12,6 V']) {
-      expect(classAfter(value), value).not.toContain('part-label');
-    }
     expect(src).not.toMatch(/lbl-mono[^']*part-label|part-label[^']*lbl-mono/);
     expect(src).not.toMatch(/tag-text[^']*part-label|part-label[^']*tag-text/);
+    expect(src).not.toMatch(/inj-num[^']*part-label|part-label[^']*inj-num/);
   });
 });

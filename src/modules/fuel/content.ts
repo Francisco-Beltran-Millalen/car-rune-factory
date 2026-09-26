@@ -1,4 +1,5 @@
-// Fichas de cada pieza (PartInfo). Los partId coinciden con los data-part de view.ts (§10).
+// Fichas de cada pieza (PartInfo). Los partId coinciden con los `data-part` que
+// dibujan los drawers del renderer (§10).
 
 import type { PartInfo } from '../../core/types.ts';
 

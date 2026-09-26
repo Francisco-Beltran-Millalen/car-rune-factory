@@ -17,7 +17,8 @@ export default defineModule<FuelModel>({
   order: 1,
   viewBox: [0, 0, 1200, 700],          // sistema de coordenadas del SVG del escenario
   createModel,                          // () => M
-  createView,                           // (ctx: ViewContext<M>) => View
+  circuit: FUEL_DEF,                    // (A7) CircuitDef: topología + layout
+  present: FUEL_PRESENT,                // (A7) PresentScheme: canales del presenter
   defaultParams,                        // los DEFAULT_PARAMS del modelo
   defaultFaults,                        // los DEFAULT_FAULTS del modelo
   controls,                             // ControlSpec<M>[]
@@ -29,7 +30,8 @@ export default defineModule<FuelModel>({
 });
 ```
 El tipo exacto es `ModuleDescriptor<M>` en `src/core/types.ts`; el registry lo borra a
-`ModuleDescriptor` (una sola vez, vía `defineModule`).
+`ModuleDescriptor` (una sola vez, vía `defineModule`). `createView?` quedó opcional
+desde A7: el renderer genérico dibuja `circuit` y no lo llama.
 
 ### 4.2 Modelo — `src/modules/<id>/model.ts`
 El tipo es `Model<P, F, S>` de `src/core/types.ts` (`params`, `faults`, `state` de sólo
@@ -38,15 +40,18 @@ lectura afuera, `actions`, `time`, `step(dt)`, `reset()`).
 - `reset()` restaura **en el mismo objeto** (`Object.assign(params, DEFAULT_PARAMS)`): la UI guarda referencias a `params`/`faults`/`state` y no se re-cablea.
 - `step` debe tolerar cualquier combinación de params/faults sin producir `NaN` ni `Infinity`. Se limita todo con `clamp`.
 
-### 4.3 Vista — `createView(ctx)`
+### 4.3 Vista — `createView(ctx)` (legado; A7 en adelante usan drawers)
+
 `ViewContext<M>` y `View` están en `src/core/types.ts` (`svg`, `model`, `selectPart`; y
-`update(dt)`, `highlight?(partId)`, `destroy()`).
+`update(dt)`, `highlight?(partId)`, `destroy()`). Desde A7 ningún módulo registrado lo
+usa: el equivalente es un drawer por tipo visual (CONTRATOS 6.4), que también dibuja la
+geometría una vez y en `update` sólo muta atributos.
 - Todo elemento clickeable lleva `data-part="<partId>"`. Los `partId` deben existir en `parts`.
-- La vista **no** cablea clics ni hover: el legacyRenderer delega sobre `[data-part]`, abre la ficha, muestra el tooltip con el nombre y agrega la clase `.selected` a todos los elementos de esa pieza. `highlight` es opcional, para efectos extra.
+- Ni la vista ni el drawer cablean clics ni hover: el renderer delega sobre `[data-part]`, abre la ficha, muestra el tooltip con el nombre y agrega la clase `.selected` a todos los elementos de esa pieza. `highlight` es opcional, para efectos extra.
 - Clases CSS disponibles (`src/styles.css`): `.part-body`, `.pipe-wall`, `.pipe-fluid`, `.fluid-{fuel,coolant,oil,electric,vacuum}`, `.liquid`, `.p-*`, `.lbl`, `.lbl-small`, `.valve-bar`, `.gauge-*`.
-- La vista dibuja la geometría **una sola vez** en `createView`. En `update` solo cambia atributos (transform, fill, opacity, puntos de partículas).
+- La geometría se dibuja **una sola vez** (en `createView` o en `create` del drawer). En `update` solo cambia atributos (transform, fill, opacity, puntos de partículas).
 - Colores **solo vía variables CSS** (`var(--fuel)` etc.) para que funcione el tema oscuro.
-- **Trampa conocida (mordió dos veces)**: en SVG, una regla CSS le gana a un atributo de presentación (`fill="none"`, `opacity="…"`). Lo que la vista cambia en vivo va en `el.style.*`, y un trazo que no debe rellenarse necesita una regla CSS `fill: none` con más especificidad que la clase de color (p. ej. `.pipe .pipe-fluid`). Vale también para los drawers de A7.
+- **Trampa conocida (mordió dos veces)**: en SVG, una regla CSS le gana a un atributo de presentación (`fill="none"`, `opacity="…"`). Lo que se cambia en vivo va en `el.style.*`, y un trazo que no debe rellenarse necesita una regla CSS `fill: none` con más especificidad que la clase de color (p. ej. `.pipe .pipe-fluid`). Vale también para los drawers de A7.
 
 ### 4.4 Specs declarativas de la UI
 ```js
@@ -258,33 +263,47 @@ El descriptor de módulo (CONTRATOS 4.1) tiene `defaultParams` y `defaultFaults`
 ```ts
 createRenderer(o: {
   container: HTMLElement;        // .stage
-  circuit: CircuitDef | null;    // null con legacyRenderer
+  circuit: CircuitDef;           // layout + topología (A7)
+  viewBox: readonly [number, number, number, number];
   module: ModuleDescriptor;
   emit: (intent: Intent) => void; // único canal de salida (§20)
+  tooltip?: HTMLElement;
 }): Renderer
 ```
 
-`Renderer` es la interfaz de `src/render/legacy/index.ts`:
-`update(visual, dt)`, `applyUi(ui: ModeUi)`, `highlight(partIds?, style?)`, `resize()`,
-`destroy()`.
+`Renderer` (`src/render/svg/index.ts`):
+`update(visual: VisualState, dt)`, `applyUi(ui: ModeUi)`, `highlight(partIds?, style?)`,
+`resize()`, `destroy()`; expone el `svg`.
 
-- **`legacyRenderer`** (A1): envuelve `module.createView` existente. Traduce clics a `selectPart`. Con `labels:false`, `applyUi` oculta sólo los elementos con clase `part-label` (y apaga el tooltip). Es el único autorizado a leer el modelo (§22, excepción temporal).
-- **`svgRenderer`** (A7): genérico desde `CircuitDef` + drawers SVG.
+- **`svgRenderer`** (A7): dibuja cada parte con el drawer de
+  `part.visual ?? part.type` (catálogo `src/render/svg/drawers/`); cada conexión
+  con `route` o ruta ortogonal automática por los puertos del drawer; partículas
+  (`createFlow`) si el enlace declara `visual.flowClass`, con velocidad
+  `flow × scale`. `update` sólo lee el `VisualState` (§22). El layout vive en el
+  `CircuitDef` (`visual`, `route`, `visual.owner/pipeClass/flowClass/scale/opacity`).
+- **`legacyRenderer`** (A1–A6): eliminado en A7 junto con `fuel/view.ts`.
 - **`phaserRenderer`** (A8/A9): igual contrato, drawers Phaser.
 
-### 6.5 VisualState — `src/presenter/`
+### 6.5 VisualState y presenter — `src/presenter/`
 
 ```ts
 /**
  * @typedef {Object} VisualState
  * @property {Record<string, Record<string, number|string|boolean>>} parts  // partId → canales
  * @property {Record<string, { flow:number, potential:number, air:number }>} links  // linkId → flujo con signo (L/h o A), presión/tensión media, fracción de aire
- * @property {Record<string, string|number>} global   // p. ej. engineState, rpm
- * @property {string[]} faultCues                     // indicios visibles ya filtrados por ModeUi.revealedFaults
+ * @property {Record<string, string|number|boolean>} global   // p. ej. engineState, rpm
+ * @property {string[]} faultCues                     // ids §26 visibles y activos
  */
 ```
 
-Se definirá en TypeScript al portar el presenter (A7); por ahora es el contrato acordado.
+El tipo exacto es `VisualState` en `src/core/types.ts`. `presentCircuit({ scheme,
+catalog, state, params, faults, revealedFaults })` evalúa el `PresentScheme` del
+módulo (funciones `(PresentContext) => VisualValue` por canal); `presentModel`
+hace lo mismo partiendo de un `Model`. `visibleFaultSet` filtra las fallas
+activas y visibles (`visibility:'always'` o reveladas por id §26 o clave plana).
+Los canales de una animación que delata estado llevan nombre propio
+(`pump.flow`, `filter.dirt`, `regulator.open`, `rail.pressure`…) para que un
+modo futuro los pueda ocultar; A7 no implementa ese filtro (`ModeUi.instruments`).
 
 ### 6.6 Fallas: catálogo, visibilidad y reparación
 

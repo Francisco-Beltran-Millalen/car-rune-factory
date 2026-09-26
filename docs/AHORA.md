@@ -67,7 +67,7 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A5 | Elementos + circuito (compile/validate) + controladores base (§8.2–§8.4) | A4 | ✅ |
 | A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ✅ |
 | A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ✅ |
-| A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ⏳ |
+| A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ✅ |
 | A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ arquetipos por sistema y señales nuevas (`FICHAS.md`)** | A7 | ⏳ |
 | A11 | Ciclo de 4 tiempos: spec → plan → código (plan 2026-09-25 §3.5) | A10 | ⏳ |
 | A12 | Encendido | A10 | ⏳ |
@@ -93,7 +93,53 @@ dirección y ruedas, e inspección visual de carrocería. Sin fichas todavía
 | D-motor | Decisión del usuario; afecta al juego, el laboratorio sigue en SVG | A8 | ⏸ |
 | A9 | Armar circuitos E4 (plan propio) | D-motor | ⏸ |
 
-**Siguiente paso: A7**, ficha en `docs/FICHAS.md#a7--presenter--renderer-svg-del-laboratorio`.
+**Siguiente paso: A10**, ficha en `docs/FICHAS.md#a10--plan-del-vehículo-sin-código`.
+
+## CERRADO 2026-09-26 — A7 Presenter + renderer SVG genérico
+
+Plan: `plans/2026-09-26-renderer-svg.md`. El laboratorio del combustible ya no
+usa `legacyRenderer` ni `fuel/view.ts`: lo dibuja un renderer genérico desde el
+`CircuitDef` y lo anima un presenter desde canales con nombre.
+
+- `src/presenter/present.ts`: `presentCircuit` (esquema → `VisualState`),
+  `presentModel` (desde un `Model`) y `visibleFaultSet` (falla activa y
+  `visibility:'always'` o revelada por id §26 o clave plana). `VisualState` y
+  `PresentScheme` quedaron en `core/types.ts`.
+- `src/render/svg/`: `createSvgRenderer` con capas (tubos/fondo/partículas/
+  piezas/efectos), un drawer por tipo visual (`part.visual ?? part.type`),
+  pipes por `route` o ruta automática por puertos, `createFlow` por enlace,
+  `applyUi` (oculta `.part-label` y tooltip), `highlight` y clic/hover como el
+  legacy. `src/render/legacy/` y `src/modules/fuel/view.ts` borrados.
+- `fuel/circuit.ts` es ahora también el layout: posiciones, `visual`, rutas y
+  metadatos de trazo (`owner`, `pipeClass`, `flowClass`, `scale`, `spacing`,
+  `radius`, `width`, `opacity`); `FUEL_TYPES` agrega el elemento no-op `visual`
+  para las piezas sólo dibujables (`ecu`, `checkValve`, `injectorWires`,
+  `returnLine`). `fuel/present.ts` (nuevo) tiene el esquema de canales.
+- `core/types.ts` y `sim/circuit/types.ts`: campos aditivos para `circuit`,
+  `present` y `visual` (Tareas de core anotadas; `createView?` quedó opcional
+  para `_demo`). Perfiles de lint actualizados: `present` es puro y de módulo;
+  `src/render/svg/**` admite no-ops de contrato.
+- `FUEL_FAULTS` suma `visibility` (tabla de P23 §4.6): el filtro de indicios ya
+  existe y se prueba; en el laboratorio se ven todos (revela las claves planas).
+- Tests nuevos (7): `tests/presenter/present.test.ts` (canales, NaN→0,
+  `visibleFaultSet` y el esquema del fuel desde un estado conocido, con la
+  suciedad y el goteo tapados sin revelar) y `tests/presenter/route.test.ts`
+  (ruta automática). `content.test` y `quiz.test` ahora leen el circuito y los
+  drawers en vez de `view.ts`. `npm run check` verde (**206** tests).
+
+**Checklist de Firefox** (`npm run dev`) — es la del combustible de abajo,
+punto por punto; además:
+1. `#/lab/fuel` debe verse y comportarse **igual que antes**: partículas
+   (eléctricas y de combustible), aguja del manómetro, rotor, diafragma,
+   spray 1-3-4-2, suciedad del filtro, goteos, manguera suelta, etiqueta del
+   motor, llave y relé animados, tema oscuro.
+2. Clic en cada pieza → ficha y contorno; hover → nombre; el borde se resalta
+   también en las tuberías (alimentación, retorno) y en el arnés.
+3. `#/stage/fuel-quiz-1` y `#/stage/fuel-quiz-2`: siguen jugables y **sin
+   etiquetas de nombre**; el cable del inyector no acierta preguntas de
+   inyector.
+4. F12 sin errores; con la consola, `window.__sim.renderer` existe y
+   `window.__sim.model.state.pRail` responde.
 
 ## CERRADO 2026-09-26 — A6b Síntomas del combustible
 

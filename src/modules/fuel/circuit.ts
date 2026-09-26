@@ -1,14 +1,19 @@
-// El sistema de combustible sobre el solver (A6): `CircuitDef` + compilado con
-// paridad con el modelo de referencia. Puro (§1). Los ids de las piezas son los
-// del contenido (`content.ts`) para que el laboratorio y el quiz sigan igual.
+// El sistema de combustible sobre el solver (A6): `CircuitDef` con topología,
+// layout visual (A7) y compilado con paridad con la referencia. Puro (§1).
 
 import { clamp } from '../../core/math.ts';
 import type { ModelActions } from '../../core/types.ts';
 import { compileCircuit } from '../../sim/circuit/compile.ts';
-import type { CircuitBinding, CircuitDef, CompiledCircuit } from '../../sim/circuit/types.ts';
+import type {
+  CircuitBinding,
+  CircuitDef,
+  CircuitLinkDef,
+  CompiledCircuit,
+} from '../../sim/circuit/types.ts';
 import type { ControllerFactory } from '../../sim/controllers/index.ts';
 import { createEngineCore } from '../../sim/controllers/engineCore.ts';
-import { ELEMENT_TYPES } from '../../sim/elements/index.ts';
+import { noCommit, noEval } from '../../sim/elements/common.ts';
+import { ELEMENT_TYPES, type ElementTypeInfo } from '../../sim/elements/index.ts';
 import { createAlternator, createEcuFuel, createFuelSupply, type FuelSignals } from './controllers.ts';
 import {
   DEFAULT_FAULTS,
@@ -24,6 +29,17 @@ import {
 
 const KINJ = K.injFlow3bar / Math.sqrt(3);
 
+/** Piezas sólo visuales (A7): no tienen elemento ni puertos, no van al solver. */
+const VISUAL_TYPE: ElementTypeInfo = {
+  create: () => ({ ports: [], params: {}, control: {}, state: {}, eval: noEval, commit: noCommit }),
+};
+
+/** Tipos del módulo: los del solver más la pieza visual. */
+export const FUEL_TYPES: Readonly<Record<string, ElementTypeInfo>> = {
+  ...ELEMENT_TYPES,
+  visual: VISUAL_TYPE,
+};
+
 /**
  * Circuito del combustible. El colador va en la aspiración (entre el tanque y
  * la bomba), como pide P25 §3.3. No lleva `checkValve`: la guarda V < 0,5 V
@@ -31,21 +47,27 @@ const KINJ = K.injFlow3bar / Math.sqrt(3);
  * paridad por su transición de 0,02 bar (se anota en el CERRADO).
  * Las resistencias parásitas (batería, llave, relé) son chicas para que la
  * tensión de la bomba quede a menos de 0,05 V de la referencia (P23 §8.2).
+ * Desde A7 las coordenadas son las del diagrama (`view.ts` de A1–A6) y cada
+ * pieza declara su tipo de drawer en `visual`.
  */
-const FUEL_DEF: CircuitDef = {
+export const FUEL_DEF: CircuitDef = {
   id: 'fuel-return',
   title: 'Sistema de combustible',
   fluid: 'fuel',
   parts: [
-    { id: 'battery', type: 'battery', x: 90, y: 90, params: { r: 0.001 } },
-    { id: 'key', type: 'switch', x: 190, y: 70, params: { rOn: 0.001, rOff: 1e7 } },
-    { id: 'relay', type: 'switch', x: 280, y: 80, params: { rOn: 0.001, rOff: 1e7 } },
-    { id: 'tank', type: 'tank', x: 220, y: 600, params: { capacity: 50, pickupLow: 1 } },
-    { id: 'strainer', type: 'restrictor', x: 180, y: 620, params: { k: K.kStrainer0, clogFactor: K.strainerClogFactor } },
+    { id: 'battery', type: 'battery', visual: 'battery', x: 40, y: 40, params: { r: 0.001 } },
+    { id: 'key', type: 'switch', visual: 'key', x: 150, y: 40, params: { rOn: 0.001, rOff: 1e7 } },
+    { id: 'relay', type: 'switch', visual: 'relay', x: 260, y: 40, params: { rOn: 0.001, rOff: 1e7 } },
+    { id: 'ecu', type: 'visual', visual: 'ecu', x: 400, y: 40 },
+    { id: 'injectorWires', type: 'visual', visual: 'wires', x: 520, y: 70 },
+    { id: 'tank', type: 'tank', visual: 'tank', x: 60, y: 430, params: { capacity: 50, pickupLow: 1 } },
+    { id: 'strainer', type: 'restrictor', visual: 'strainer', x: 188, y: 616, params: { k: K.kStrainer0, clogFactor: K.strainerClogFactor } },
     {
       id: 'pump',
       type: 'electricPump',
-      x: 220, y: 540,
+      visual: 'pump',
+      x: 196,
+      y: 478,
       params: {
         qMax: K.Qmax0,
         pMax: K.Pmax0,
@@ -56,30 +78,32 @@ const FUEL_DEF: CircuitDef = {
         windingR: 1,
       },
     },
-    { id: 'feedLine', type: 'restrictor', x: 390, y: 330, params: { k: K.kLine0, clogFactor: 0 } },
-    { id: 'lineLeak', type: 'leak', x: 390, y: 380, params: { k: 2 } },
-    { id: 'filter', type: 'restrictor', x: 560, y: 200, params: { k: K.kFilter0, clogFactor: K.filterClogFactor } },
-    { id: 'rail', type: 'volume', x: 860, y: 110, params: { c: K.C } },
+    { id: 'checkValve', type: 'visual', visual: 'checkValve', x: 220, y: 466 },
+    { id: 'feedLine', type: 'restrictor', visual: 'feedLine', x: 300, y: 318, params: { k: K.kLine0, clogFactor: 0 } },
+    { id: 'lineLeak', type: 'leak', visual: 'lineLeak', x: 390, y: 338, params: { k: 2 } },
+    { id: 'filter', type: 'restrictor', visual: 'filter', x: 520, y: 308, params: { k: K.kFilter0, clogFactor: K.filterClogFactor } },
+    { id: 'rail', type: 'volume', visual: 'rail', x: 700, y: 190, params: { c: K.C } },
     { id: 'railNode', type: 'tee', x: 900, y: 140 },
-    { id: 'injector1', type: 'orifice', x: 760, y: 170, params: { k: KINJ, leakCoeff: 0.6 } },
-    { id: 'injector2', type: 'orifice', x: 860, y: 170, params: { k: KINJ, leakCoeff: 0.6 } },
-    { id: 'injector3', type: 'orifice', x: 960, y: 170, params: { k: KINJ, leakCoeff: 0.6 } },
-    { id: 'injector4', type: 'orifice', x: 1060, y: 170, params: { k: KINJ, leakCoeff: 0.6 } },
-    { id: 'manifold', type: 'pressureSource', x: 900, y: 300 },
+    { id: 'injector1', type: 'orifice', visual: 'injector', x: 760, y: 190, params: { k: KINJ, leakCoeff: 0.6 } },
+    { id: 'injector2', type: 'orifice', visual: 'injector', x: 860, y: 190, params: { k: KINJ, leakCoeff: 0.6 } },
+    { id: 'injector3', type: 'orifice', visual: 'injector', x: 960, y: 190, params: { k: KINJ, leakCoeff: 0.6 } },
+    { id: 'injector4', type: 'orifice', visual: 'injector', x: 1060, y: 190, params: { k: KINJ, leakCoeff: 0.6 } },
+    { id: 'manifold', type: 'pressureSource', visual: 'manifold', x: 690, y: 278 },
     { id: 'manifoldNode', type: 'tee', x: 900, y: 320 },
-    { id: 'regulator', type: 'reliefRegulator', x: 1140, y: 130, params: { k: K.kReg, set: K.regSet, smooth: 0.01 } },
-    { id: 'vacuumHose', type: 'pressureSource', x: 1050, y: 240 },
+    { id: 'regulator', type: 'reliefRegulator', visual: 'regulator', x: 1130, y: 150, params: { k: K.kReg, set: K.regSet, smooth: 0.01 } },
+    { id: 'vacuumHose', type: 'pressureSource', visual: 'vacuumHose', x: 1162, y: 300 },
+    { id: 'returnLine', type: 'visual', visual: 'returnLine', x: 760, y: 385 },
   ],
   links: [
-    { id: 'e-bat-key', from: 'battery.+', to: 'key.a' },
-    { id: 'e-key-relay', from: 'key.b', to: 'relay.a' },
-    { id: 'e-relay-pump', from: 'relay.b', to: 'pump.e+' },
+    { id: 'e-bat-key', from: 'battery.+', to: 'key.a', route: [[120, 70], [150, 70]], visual: { owner: 'battery', pipeClass: 'fluid-electric', flowClass: 'p-electric', scale: 60, spacing: 10, radius: 2, width: 3 } },
+    { id: 'e-key-relay', from: 'key.b', to: 'relay.a', route: [[230, 70], [260, 70]], visual: { owner: 'key', pipeClass: 'fluid-electric', flowClass: 'p-electric', scale: 60, spacing: 10, radius: 2, width: 3 } },
+    { id: 'e-relay-pump', from: 'relay.b', to: 'pump.e+', route: [[300, 100], [300, 150], [140, 150], [140, 500], [200, 500]], visual: { owner: 'relay', pipeClass: 'fluid-electric', flowClass: 'p-electric', scale: 18, spacing: 12, radius: 2, width: 3 } },
     { id: 'e-pump-gnd', from: 'pump.e-', to: 'battery.-' },
     { id: 'h-tank-strainer', from: 'tank.out', to: 'strainer.a' },
-    { id: 'h-strainer-pump', from: 'strainer.b', to: 'pump.in' },
-    { id: 'h-pump-line', from: 'pump.out', to: 'feedLine.a' },
+    { id: 'h-strainer-pump', from: 'strainer.b', to: 'pump.in', route: [[220, 632], [220, 455]], visual: { flowClass: 'p-fuel', opacity: 0.25 } },
+    { id: 'h-pump-line', from: 'pump.out', to: 'feedLine.a', route: [[220, 455], [220, 330], [520, 330]], visual: { owner: 'feedLine', flowClass: 'p-fuel' } },
     { id: 'h-line-filter', from: 'feedLine.b', to: 'filter.a' },
-    { id: 'h-filter-rail', from: 'filter.b', to: 'railNode.a' },
+    { id: 'h-filter-rail', from: 'filter.b', to: 'railNode.a', route: [[600, 330], [650, 330], [650, 190], [700, 190]], visual: { owner: 'feedLine', flowClass: 'p-fuel' } },
     { id: 'h-rail-volume', from: 'rail.a', to: 'railNode.b' },
     { id: 'h-rail-i1', from: 'railNode.a', to: 'injector1.in' },
     { id: 'h-rail-i2', from: 'railNode.b', to: 'injector2.in' },
@@ -87,14 +111,14 @@ const FUEL_DEF: CircuitDef = {
     { id: 'h-rail-i4', from: 'railNode.a', to: 'injector4.in' },
     { id: 'h-rail-leak', from: 'railNode.c', to: 'lineLeak.a' },
     { id: 'h-rail-reg', from: 'railNode.b', to: 'regulator.in' },
-    { id: 'h-reg-ret', from: 'regulator.ret', to: 'tank.ret' },
+    { id: 'h-reg-ret', from: 'regulator.ret', to: 'tank.ret', route: [[1194, 170], [1218, 170], [1218, 395], [340, 395], [340, 470]], visual: { owner: 'returnLine', flowClass: 'p-fuel', spacing: 16, radius: 3, width: 8, opacity: 0.25 } },
     { id: 'h-reg-ref', from: 'regulator.ref', to: 'vacuumHose.a' },
     { id: 'h-inj1-man', from: 'injector1.out', to: 'manifoldNode.a' },
     { id: 'h-inj2-man', from: 'injector2.out', to: 'manifoldNode.b' },
     { id: 'h-inj3-man', from: 'injector3.out', to: 'manifoldNode.a' },
     { id: 'h-inj4-man', from: 'injector4.out', to: 'manifoldNode.b' },
     { id: 'h-man-src', from: 'manifold.a', to: 'manifoldNode.c' },
-  ],
+  ] satisfies readonly CircuitLinkDef[],
   controllers: [
     { id: 'engineCore', type: 'engineCore' },
     { id: 'ecuFuel', type: 'ecuFuel' },
@@ -156,7 +180,7 @@ function buildFuelCircuit(overrides: FuelOverrides = {}): FuelBuild {
   };
   const circuit = compileCircuit<FuelState>({
     def: FUEL_DEF,
-    types: ELEMENT_TYPES,
+    types: FUEL_TYPES,
     controllerTypes,
     bindings: FUEL_BINDINGS,
     init: { tankLevel: overrides.tankLevel },

@@ -1,6 +1,6 @@
 // Catálogo §26 de fallas del combustible (P25 §3.1): id estable, clave plana
-// del modelo y pieza. La tabla es la de P23 §4.6; `visibility`, `repair` y
-// `symptoms` son datos de juego y los agrega A3, sin cambiar los ids.
+// del modelo, pieza y visibilidad (P23 §4.6; la usan el presenter y A3).
+// `repair` y `symptoms` son datos de juego y los agrega A3, sin cambiar ids.
 
 import type { FaultCatalogEntry } from '../../core/types.ts';
 
@@ -11,6 +11,7 @@ export const FUEL_FAULTS: readonly FaultCatalogEntry[] = [
     part: 'filter',
     kind: 'severity',
     healthy: 0,
+    visibility: 'never',
     label: 'Filtro tapado',
   },
   {
@@ -19,6 +20,7 @@ export const FUEL_FAULTS: readonly FaultCatalogEntry[] = [
     part: 'strainer',
     kind: 'severity',
     healthy: 0,
+    visibility: 'inspect',
     label: 'Colador tapado',
   },
   {
@@ -27,6 +29,7 @@ export const FUEL_FAULTS: readonly FaultCatalogEntry[] = [
     part: 'pump',
     kind: 'severity',
     healthy: 0,
+    visibility: 'never',
     label: 'Bomba gastada',
   },
   {
@@ -35,6 +38,7 @@ export const FUEL_FAULTS: readonly FaultCatalogEntry[] = [
     part: 'relay',
     kind: 'enum',
     healthy: 'ok',
+    visibility: 'never',
     label: 'Relé de bomba',
   },
   {
@@ -43,6 +47,7 @@ export const FUEL_FAULTS: readonly FaultCatalogEntry[] = [
     part: 'regulator',
     kind: 'enum',
     healthy: 'ok',
+    visibility: 'never',
     label: 'Regulador',
   },
   {
@@ -51,6 +56,7 @@ export const FUEL_FAULTS: readonly FaultCatalogEntry[] = [
     part: 'vacuumHose',
     kind: 'toggle',
     healthy: false,
+    visibility: 'inspect',
     label: 'Manguera de vacío suelta',
   },
   {
@@ -59,6 +65,7 @@ export const FUEL_FAULTS: readonly FaultCatalogEntry[] = [
     part: 'injector2',
     kind: 'severity',
     healthy: 0,
+    visibility: 'inspect',
     label: 'Inyector 2 gotea',
   },
   {
@@ -67,6 +74,7 @@ export const FUEL_FAULTS: readonly FaultCatalogEntry[] = [
     part: 'feedLine',
     kind: 'severity',
     healthy: 0,
+    visibility: 'always',
     label: 'Fuga en la línea',
   },
 ];

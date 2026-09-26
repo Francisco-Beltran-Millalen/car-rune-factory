@@ -77,6 +77,16 @@ Comprobación a mano de las constantes (para que el agente de T3 parta con núme
 Presión de riel (manómetro 0–8, verde 2.3–3.8 relativo al vacío; mostrar también `pRail − pMan`), caudal de la bomba, caudal inyectado (promedio), caudal de retorno, caída en el filtro, corriente de la bomba, nivel del estanque (L y %), vacío del múltiple, mezcla (% de la esperada). Todas con `history: true` menos el nivel.
 
 ## 7. Vista (viewBox 1200×700, coordenadas aproximadas)
+
+Desde A7 el renderer es genérico (`src/render/svg/`): este apartado describe lo
+que dibuja y anima. Las coordenadas, los tipos visuales y las rutas de cada
+conexión viven en `fuel/circuit.ts` (`visual`, `route` y
+`visual.owner/pipeClass/flowClass/scale/opacity`); los canales que animan los
+drawers (`pump.flow`, `filter.dirt`, `regulator.open`, `rail.pressure`, …) en
+`fuel/present.ts`. Las piezas sólo visuales (`ecu`, `checkValve`,
+`injectorWires`, `returnLine`) usan el elemento no-op `visual` del registro del
+módulo (`FUEL_TYPES`).
+
 - **Bloque eléctrico** arriba a la izquierda (40–300, 30–150): batería → llave → relé (contacto animado) → cable a la bomba. Cuando hay corriente, partículas `p-electric`.
 - **Estanque** abajo a la izquierda (60–380, 400–660). Rectángulo con el líquido (alto ∝ `tankLevel/50`) y una ondulación suave. **Bomba** vertical dentro (rotor que gira con velocidad ∝ `qPump`), **colador** en la base y **válvula check** en la salida.
 - **Línea de alimentación**: sube desde la bomba hasta el **filtro** (560, 200; cilindro con una flecha de sentido) y sigue al **riel** (700–1100, 110–150).

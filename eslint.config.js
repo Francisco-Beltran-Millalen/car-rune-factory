@@ -37,7 +37,8 @@ const PURE_BLOCKED = [
 
 const MODULE_BLOCKED = [
   // Un módulo sí arma su física sobre `sim/**` (A5/A6: `fuel/circuit.ts` usa
-  // `compileCircuit` y `ELEMENT_TYPES`); sigue sin ver game/presenter/render/ui.
+  // `compileCircuit` y `ELEMENT_TYPES`) y su esquema sobre `core/types.ts`
+  // (A7: `fuel/present.ts`); sigue sin ver game/presenter/render/ui.
   ...PHASER_BLOCKED,
   ...DOM_CORE_BLOCKED,
   pattern(
@@ -164,7 +165,7 @@ const PURE_FILES = [
   'src/sim/**',
   'src/game/**',
   'src/presenter/**',
-  'src/modules/*/{model,content,specs,narrate,faults,diagnosis,circuit,controllers,reference-model}.{js,ts}',
+  'src/modules/*/{model,content,specs,narrate,faults,diagnosis,circuit,controllers,reference-model,present}.{js,ts}',
 ];
 
 // Excepciones de 5.3, en la config y no inline: save es la frontera de E/S (§27)
@@ -244,7 +245,7 @@ export default tseslint.config(
       'src/game/session.{js,ts}',
       'src/core/ui/*.{js,ts}',
       'src/modules/*/view.{js,ts}',
-      'src/render/legacy/**',
+      'src/render/svg/**',
       'tests/**',
     ],
     rules: { '@typescript-eslint/no-empty-function': 'off' },
@@ -331,7 +332,7 @@ export default tseslint.config(
   },
   {
     files: [
-      'src/modules/*/{model,content,specs,narrate,faults,diagnosis,circuit,controllers,reference-model}.{js,ts}',
+      'src/modules/*/{model,content,specs,narrate,faults,diagnosis,circuit,controllers,reference-model,present}.{js,ts}',
     ],
     rules: {
       'no-restricted-imports': ['error', { patterns: MODULE_BLOCKED }],
@@ -357,7 +358,7 @@ export default tseslint.config(
   },
   {
     files: ['src/render/**'],
-    ignores: ['src/render/legacy/**', 'src/render/phaser/**'],
+    ignores: ['src/render/phaser/**'],
     rules: {
       'no-restricted-imports': [
         'error',
