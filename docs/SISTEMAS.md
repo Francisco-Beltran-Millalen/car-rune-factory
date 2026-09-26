@@ -24,7 +24,7 @@ Catálogo de a dónde apuntar, no compromiso de orden. La prioridad real vive en
 - **Lubricación** ⏳ `lubrication` — cárter, bomba de engranajes, válvula de
   alivio, filtro con bypass, galerías, cojinetes, luz de presión.
   `modules/lubrication.md`.
-- **Carburador** 💭 — cuba, flotador, surtidores de ralentí y principal,
+- **Carburador** ⏳ A16 `carburetor` — cuba, flotador, surtidores de ralentí y principal,
   estrangulador (choke), bomba de aceleración, bomba de bencina mecánica.
   Variante antigua de la alimentación.
 - **Admisión / mariposa / MAP** 💭 — hoy se representa sólo como `pMan` en
@@ -156,9 +156,10 @@ síntoma de "motor" causado por "frenos". Es un caso clásico para el juego.
 
 ## Integración
 
-- **Motor completo** 💭 `engine` — orquestador que conecta módulos copiando
-  señales de un `state` al `params` de otro (§11). Ver sección 11 del plan
-  maestro.
+- **Vehículo** ⏳ A10 (plan) y A15 (código) — `compileVehicle` une los
+  circuitos de cada sistema, con una variante por sistema, buses compartidos
+  y señales con dueño (P23 §14; reemplaza el orquestador del plan maestro
+  §11).
 
 ## Juegos (ver `plans/2026-09-22-hoja-de-ruta-juego.md`)
 

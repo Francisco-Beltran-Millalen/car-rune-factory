@@ -71,12 +71,18 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A6 | Combustible sobre el solver, paridad con la referencia; crea `fuel/faults.ts` mínimo (plan 2026-09-25 §3.1) | A5 | ✅ |
 | A6b | Síntomas del combustible: colador, relé intermitente, bomba (plan 2026-09-25 §3.3) | A6 | ⏳ **siguiente** |
 | A7 | Presenter + renderer SVG genérico del laboratorio; borra `legacyRenderer` y `fuel/view.ts`; quiz sigue jugable (§8.5 + plan 2026-09-25 §3.2) | A6 | ⏳ |
-| A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ arquetipos por sistema (planes 2026-09-26: alcance §4 y sistemas-genericos §1)** | A7 | ⏳ |
+| A10 | **Plan** del vehículo + laboratorio del vehículo, sin código (§14.4 + plan 2026-09-25 §3.4) **+ arquetipos por sistema y señales nuevas (plan 2026-09-26-sistemas-genericos §5)** | A7 | ⏳ |
 | A11 | Ciclo de 4 tiempos: spec → plan → código (plan 2026-09-25 §3.5) | A10 | ⏳ |
 | A12 | Encendido | A10 | ⏳ |
 | A13 | Refrigeración | A10 | ⏳ |
 | A14 | Lubricación | A10 | ⏳ |
-| A15 | Laboratorio del vehículo (sistemas relacionados) | A11–A14 | ⏳ |
+| A16 | Carburador: sistema hermano de `fuel`, publica `fuel.mixture` (plan 2026-09-26-sistemas-genericos §5) | A10 | ⏳ |
+| A15 | Laboratorio del vehículo (sistemas relacionados), con un vehículo antiguo y uno moderno | A11–A14, A16 | ⏳ |
+
+**Bloque S2 — resto del auto** (después de A15; el usuario elige el orden al
+cerrar A15): eléctrico (carga y arranque), frenos, tren motriz, suspensión,
+dirección y ruedas, e inspección visual de carrocería. Sin fichas todavía
+(plan 2026-09-26-sistemas-genericos §5).
 
 **Puerta:** el bloque G empieza sólo cuando el usuario lo escriba aquí.
 
@@ -92,7 +98,10 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 
 **Siguiente paso: A6b.** Su ficha está en `plans/2026-09-25-simulacion-antes-que-juego.md`
 §6: dice qué leer, qué ignorar, qué archivos tocar y cómo se acepta. **Cada tarea
-del bloque S tiene su ficha ahí; léanla antes que cualquier otro plan.**
+del bloque S tiene su ficha ahí; léanla antes que cualquier otro plan**, junto
+con sus agregados de `plans/2026-09-26-sistemas-genericos.md` §5 (sistemas
+por arquetipo: se modela por sistema, no por auto, con variantes de
+1970–2010; si chocan con la ficha, mandan los agregados).
 
 ## CERRADO 2026-09-25 — A6 Combustible sobre el solver (paridad con la referencia)
 
