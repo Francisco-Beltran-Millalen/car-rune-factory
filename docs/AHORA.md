@@ -4,6 +4,25 @@ Trabajo vivo entre sesiones (≤500 líneas). Lo cerrado se recorta y queda en
 git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 `plans/2026-09-22-plan-maestro.md`.
 
+## PENDIENTE — FIX 2026-09-25 (encontrado por el usuario) — el feedback del quiz usa tiempo simulado
+
+En las etapas del quiz, al bajar la velocidad con el timebar (p. ej. 0.05×) el
+1 s de feedback antes de pasar a la siguiente pregunta se estira igual que la
+simulación. Esos tiempos son de **UI** y no deberían depender de `timeScale`.
+
+- Causa: `core/shell.ts:378` llama `mode.update(simDt)` y `game/modes/quiz.ts:328`
+  descuenta el `timer` con ese `simDt` (`simDt = realDt × timeScale`,
+  CONTRATOS 4.5). El laboratorio no tiene timers de UI, por eso sólo se nota
+  en el quiz.
+- Arreglo propuesto: pasar también el `realDt` al modo (`GameMode.update(simDt,
+  realDt)` + `session.onFrame`/`core/loop.ts` entregando el `realDt`, que hoy
+  se descarta) y que `quiz.ts` descuente el feedback con `realDt`. Revisar si
+  el HUD/log u otro modo tienen timers de UI con el mismo problema.
+- Test: con `timeScale = 0.05`, el feedback debe durar ~1 s **real** aunque el
+  reloj de la sesión avance 50 ms de simulación.
+- Toca `core/loop.ts`, `game/session.ts`, `game/types.ts`, `core/shell.ts` y
+  `game/modes/quiz.ts`: es una tarea de core + modo, no de un módulo.
+
 ## CERRADO 2026-09-22 — Fase 1: sistema de combustible
 
 T0–T6 (docs, scaffold, core, shell, modelo, vista, contenido e
