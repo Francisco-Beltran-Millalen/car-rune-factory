@@ -2,7 +2,7 @@
 // verde 11–15 bar y un aviso mientras se mide.
 
 import { el, group, label } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber } from '../../util.ts';
 
 const BAR_W = 38;
@@ -15,6 +15,10 @@ const GREEN_HI = 15;
 const yOf = (bar: number): number => H - (Math.max(0, Math.min(P_MAX, bar)) / P_MAX) * H;
 
 /** Compresión 1..4 con la franja verde de motor sano. */
+export const compressionBarsGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 6, y: part.y + 26, w: 4 * (BAR_W + BAR_GAP) + 20, h: H + 90 },
+});
+
 export const compressionBarsDrawer: DrawerFactory = ({ part, layers }) => {
   const ox = part.x + 20;
   const oy = part.y + 60;

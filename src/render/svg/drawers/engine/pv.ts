@@ -2,7 +2,7 @@
 // último ciclo y punto actual. La traza es estado de la vista, no del modelo.
 
 import { el, group, label } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber } from '../../util.ts';
 
 const W = 340;
@@ -11,6 +11,10 @@ const V_MAX = 600; // cm³
 const P_MAX = 80; // bar abs
 
 /** Traza P-V: acumula los puntos que le llegan y la reinicia cada ciclo. */
+export const pvDiagramGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 4, y: part.y + 20, w: W + 40, h: H + 60 },
+});
+
 export const pvDiagramDrawer: DrawerFactory = ({ part, layers }) => {
   const ox = part.x + 10;
   const oy = part.y + 30;

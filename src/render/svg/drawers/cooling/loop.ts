@@ -2,8 +2,15 @@
 
 import { clamp } from '../../../../core/math.ts';
 import { el, group, label } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber } from '../../util.ts';
+
+/** Entra arriba a la izquierda y sale por abajo; la tapa es sub-pieza. */
+export const radiatorGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 90, h: 320 },
+  ports: { a: [part.x, part.y + 15], b: [part.x + 45, part.y + 320] },
+  subparts: { radiatorCap: { box: { x: part.x + 24, y: part.y - 18, w: 42, h: 18 } } },
+});
 
 /** Radiador: panal, suciedad y tapa. Canales: `temp`, `dirt`; `radiatorCap.failed`. */
 export const radiatorDrawer: DrawerFactory = ({ part, layers }) => {
@@ -18,8 +25,8 @@ export const radiatorDrawer: DrawerFactory = ({ part, layers }) => {
   const cap = group(g, { part: 'radiatorCap' });
   el('rect', { x: part.x + 24, y: part.y - 18, width: 42, height: 20, rx: 6, class: 'part-body' }, cap);
   label(g, part.x + 45, part.y - 28, 'Tapa', { anchor: 'middle', className: 'lbl-small part-label' });
-  label(g, part.x + 45, part.y + 345, 'Radiador', { anchor: 'middle', className: 'lbl part-label' });
-  const temp = label(g, part.x + 45, part.y + 365, '', { anchor: 'middle', className: 'lbl-small lbl-mono' });
+  label(g, part.x + 98, part.y + 160, 'Radiador', { className: 'lbl part-label' });
+  const temp = label(g, part.x + 98, part.y + 180, '', { className: 'lbl-small lbl-mono' });
   return {
     g,
     update(channels): void {
@@ -34,44 +41,97 @@ export const radiatorDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
-/** Ventilador: aspas, motor/termocontacto (eléctrico) o embrague (viscoso). */
-export const fanDrawer: DrawerFactory = ({ part, layers }) => {
+const hasElectricFan = (def: { parts: readonly { id: string }[] }): boolean =>
+  def.parts.some((p) => p.id === 'fanMotor');
+
+/**
+ * Ventilador con su carcasa. Eléctrico: fila de fusible → relé → motor bajo la
+ * carcasa (sub-piezas cableadas; el motor va a masa) y el termocontacto a la
+ * derecha. Viscoso: el embrague en el cubo.
+ */
+export const fanGeometry: GeometryFn = (part, def) => {
+  const cx = part.x + 80;
+  const cy = part.y + 100;
+  const row = cy + 96;
+  const box = { x: cx - 82, y: cy - 82, w: 164, h: 164 };
+  if (!hasElectricFan(def)) {
+    return { box, subparts: { fanClutch: { box: { x: cx - 26, y: cy - 26, w: 52, h: 52 } } } };
+  }
+  return {
+    box,
+    subparts: {
+      fuse: { box: { x: cx - 110, y: row, w: 34, h: 20 }, ports: { a: [cx - 110, row + 10], b: [cx - 76, row + 10] } },
+      fanRelay: { box: { x: cx - 50, y: row - 4, w: 44, h: 28 }, ports: { a: [cx - 50, row + 10], b: [cx - 6, row + 10] } },
+      fanMotor: { box: { x: cx + 30, y: row - 5, w: 46, h: 30 }, ports: { a: [cx + 30, row + 10], b: [cx + 76, row + 10] } },
+      fanSwitch: { box: { x: cx + 110, y: row - 4, w: 28, h: 28 } },
+    },
+  };
+};
+
+/** Ventilador: aspas, motor/termocontacto (eléctrico) o embrague (viscoso).
+ *  Canales: `speed`, `dead`, `relay` (relé cerrado), `switch` (termocontacto). */
+export const fanDrawer: DrawerFactory = ({ part, def, layers }) => {
   const g = group(layers.parts, { part: part.id });
   const cx = part.x + 80;
   const cy = part.y + 100;
+  const row = cy + 96;
   const blades = group(g);
+  const bladeEls: SVGElement[] = [];
   for (let i = 0; i < 5; i++) {
-    el('ellipse', { cx: cx - 34, cy, rx: 34, ry: 12, class: 'fan-blade', transform: `rotate(${i * 72} ${cx} ${cy})` }, blades);
+    bladeEls.push(el('ellipse', { cx: cx - 34, cy, rx: 34, ry: 12, class: 'fan-blade', transform: `rotate(${i * 72} ${cx} ${cy})` }, blades));
   }
   el('circle', { cx, cy, r: 12, class: 'dist-hub' }, g);
   el('circle', { cx, cy, r: 82, class: 'fan-shroud' }, g);
+  label(g, cx, cy - 90, 'Ventilador', { anchor: 'middle', className: 'lbl-small part-label' });
 
-  const motor = group(g, { part: 'fanMotor' });
-  el('rect', { x: cx + 60, y: cy + 70, width: 46, height: 26, rx: 5, class: 'part-body' }, motor);
-  const relay = group(g, { part: 'fanRelay' });
-  el('rect', { x: cx + 10, y: cy + 90, width: 44, height: 26, rx: 5, class: 'part-body' }, relay);
-  const sw = group(g, { part: 'fanSwitch' });
-  el('circle', { cx: cx - 60, cy: cy + 100, r: 14, class: 'part-body' }, sw);
-  const fuse = group(g, { part: 'fuse' });
-  el('rect', { x: cx - 120, y: cy + 88, width: 34, height: 20, rx: 9, class: 'part-body fuse' }, fuse);
-  const clutch = group(g, { part: 'fanClutch' });
-  el('circle', { cx, cy, r: 26, class: 'clutch' }, clutch);
-  label(g, cx, cy + 118, 'Ventilador', { anchor: 'middle', className: 'lbl-small part-label' });
+  let relayArm: SVGElement | null = null;
+  let switchDot: SVGElement | null = null;
+  if (hasElectricFan(def)) {
+    const fuse = group(g, { part: 'fuse' });
+    el('rect', { x: cx - 110, y: row, width: 34, height: 20, rx: 9, class: 'part-body fuse' }, fuse);
+    label(g, cx - 93, row + 36, 'Fusible', { anchor: 'middle', className: 'lbl-small part-label' });
+    const relay = group(g, { part: 'fanRelay' });
+    el('rect', { x: cx - 50, y: row - 4, width: 44, height: 28, rx: 5, class: 'part-body' }, relay);
+    relayArm = el('line', { x1: cx - 42, y1: row + 10, x2: cx - 14, y2: row + 10, class: 'relay-arm' }, relay);
+    label(g, cx - 28, row + 38, 'Relé', { anchor: 'middle', className: 'lbl-small part-label' });
+    const motor = group(g, { part: 'fanMotor' });
+    el('rect', { x: cx + 30, y: row - 5, width: 46, height: 30, rx: 6, class: 'part-body' }, motor);
+    el('text', { x: cx + 53, y: row + 15, 'text-anchor': 'middle', class: 'lbl-small', text: 'M' }, motor);
+    // El motor va a masa por la carrocería (el enlace a `battery.-` no se dibuja).
+    el('path', { d: `M ${cx + 76} ${row + 10} h 12 v 8 m -8 0 h 16 m -12 4 h 8 m -5 4 h 2`, class: 'ground-mark' }, motor);
+    const sw = group(g, { part: 'fanSwitch' });
+    el('circle', { cx: cx + 124, cy: row + 10, r: 14, class: 'part-body' }, sw);
+    switchDot = el('circle', { cx: cx + 124, cy: row + 10, r: 5, class: 'switch-dot' }, sw);
+    label(g, cx + 124, row + 40, 'Termocontacto', { anchor: 'middle', className: 'lbl-small part-label' });
+  } else {
+    const clutch = group(g, { part: 'fanClutch' });
+    el('circle', { cx, cy, r: 26, class: 'clutch' }, clutch);
+  }
 
   let angle = 0;
+  let dead: boolean | null = null;
   return {
     g,
     update(channels, dt): void {
       const speed = channelNumber(channels, 'speed');
       angle = (angle + speed * dt * 45) % 360;
       blades.setAttribute('transform', `rotate(${angle.toFixed(1)} ${cx} ${cy})`);
-      const dead = channelNumber(channels, 'dead') > 0.5;
-      for (const n of g.querySelectorAll<SVGElement>('.fan-blade')) {
-        n.style.fill = dead ? 'var(--muted)' : 'var(--metal)';
+      const nowDead = channelNumber(channels, 'dead') > 0.5;
+      if (nowDead !== dead) {
+        dead = nowDead;
+        for (const n of bladeEls) n.classList.toggle('dead', nowDead);
       }
+      relayArm?.setAttribute('transform', channelNumber(channels, 'relay') > 0.5 ? '' : `rotate(-25 ${cx - 42} ${row + 10})`);
+      switchDot?.classList.toggle('on', channelNumber(channels, 'switch') > 0.5);
     },
   };
 };
+
+/** Conecta por abajo a la aspiración de la bomba. */
+export const expansionTankGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 120, h: 120 },
+  ports: { a: [part.x + 60, part.y + 120] },
+});
 
 /** Depósito de expansión: nivel y presión. Canales: `level`, `pressure`. */
 export const expansionTankDrawer: DrawerFactory = ({ part, layers }) => {
@@ -94,6 +154,19 @@ export const expansionTankDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
+/** La llave (sub-pieza) a la derecha: entra por su derecha y pasa al panal;
+ *  el panal devuelve por abajo. */
+export const heaterCoreGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 80, h: 80 },
+  ports: { a: [part.x + 80, part.y + 40], b: [part.x + 40, part.y + 80] },
+  subparts: {
+    heaterValve: {
+      box: { x: part.x + 94, y: part.y + 24, w: 32, h: 32 },
+      ports: { a: [part.x + 126, part.y + 40], b: [part.x + 94, part.y + 40] },
+    },
+  },
+});
+
 /** Calefactor: panal interior y llave. Canales: `temp`, `on`. */
 export const heaterCoreDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
@@ -112,6 +185,11 @@ export const heaterCoreDrawer: DrawerFactory = ({ part, layers }) => {
     },
   };
 };
+
+export const tempGaugeGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 18, y: part.y + 8, w: 104, h: 104 },
+  subparts: { tempSensor: { box: { x: part.x + 130, y: part.y + 80, w: 20, h: 20 } } },
+});
 
 /** Reloj de temperatura: aguja y sonda. Canales: `reading`, `real`. */
 export const tempGaugeDrawer: DrawerFactory = ({ part, layers }) => {

@@ -4,10 +4,15 @@
 import { clamp } from '../../../core/math.ts';
 import { createFlow, PX_PER_LH, type Flow } from '../../../core/particles.ts';
 import { group, el, label, pipe, gaugeSvg } from '../../../core/svg.ts';
-import type { DrawerFactory } from '../types.ts';
+import type { DrawerFactory, GeometryFn } from '../types.ts';
 import { channelNumber, pressureOpacity } from '../util.ts';
 
 const RAIL_LEN = 430;
+
+export const filterGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 80, h: 44 },
+  ports: { a: [part.x, part.y + 22], b: [part.x + 80, part.y + 22] },
+});
 
 /** Filtro: cuerpo con pliegues, flecha y suciedad. Canal: `dirt` (0..1). */
 export const filterDrawer: DrawerFactory = ({ part, layers }) => {
@@ -21,12 +26,17 @@ export const filterDrawer: DrawerFactory = ({ part, layers }) => {
   label(g, part.x + 40, part.y + 77, 'Filtro', { anchor: 'middle', className: 'lbl-small part-label' });
   return {
     g,
-    ports: { a: [part.x, part.y + 22], b: [part.x + 80, part.y + 22] },
     update(channels): void {
       dirt.setAttribute('width', (76 * clamp(channelNumber(channels, 'dirt'), 0, 1)).toFixed(1));
     },
   };
 };
+
+/** El tubo del riel (sin el manómetro, que queda arriba a la izquierda). */
+export const railGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y - 8, w: RAIL_LEN, h: 16 },
+  ports: { a: [part.x, part.y] },
+});
 
 /** Riel: tubo, manómetro en T y su propio caudal. Canales: `pressure`, `flow`. */
 export const railDrawer: DrawerFactory = ({ part, layers }) => {
@@ -50,7 +60,6 @@ export const railDrawer: DrawerFactory = ({ part, layers }) => {
   const flow: Flow = createFlow({ path: tube.path, layer: layers.particles, spacing: 16, radius: 3.5 });
   return {
     g,
-    ports: { a: [part.x, part.y] },
     update(channels, dt): void {
       const pressure = channelNumber(channels, 'pressure');
       gauge.setValue(pressure);

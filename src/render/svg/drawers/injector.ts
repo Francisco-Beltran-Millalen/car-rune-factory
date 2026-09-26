@@ -3,10 +3,16 @@
 
 import { clamp, expSmooth, wrap } from '../../../core/math.ts';
 import { group, el, label } from '../../../core/svg.ts';
-import type { DrawerFactory } from '../types.ts';
+import type { DrawerFactory, GeometryFn } from '../types.ts';
 import { channelNumber } from '../util.ts';
 
 const FIRING_OFFSETS = [0, 540, 180, 360];
+
+/** Cuelga del riel (`joinedBy`); la tobera apunta al múltiple. */
+export const injectorGeometry: GeometryFn = (part) => ({
+  box: { x: part.x - 12, y: part.y + 12, w: 24, h: 68 },
+  ports: { in: [part.x, part.y + 12], out: [part.x, part.y + 80] },
+});
 
 export const injectorDrawer: DrawerFactory = ({ part, layers }) => {
   const n = Number(/(\d+)$/.exec(part.id)?.[1] ?? 0);
@@ -25,7 +31,6 @@ export const injectorDrawer: DrawerFactory = ({ part, layers }) => {
   let dripT = 0;
   return {
     g,
-    ports: { in: [x, y], out: [x, y + 80] },
     update(channels, dt): void {
       const crank = channelNumber(channels, 'crank');
       const rpm = channelNumber(channels, 'rpm');

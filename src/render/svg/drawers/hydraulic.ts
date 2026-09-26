@@ -3,11 +3,17 @@
 
 import { clamp } from '../../../core/math.ts';
 import { group, el, label } from '../../../core/svg.ts';
-import type { DrawerFactory } from '../types.ts';
+import type { DrawerFactory, GeometryFn } from '../types.ts';
 import { channelNumber } from '../util.ts';
 
 const TANK_W = 320;
 const TANK_H = 230;
+
+export const tankGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: TANK_W, h: TANK_H },
+  ports: { out: [part.x + 160, part.y], ret: [part.x + 280, part.y] },
+  container: true,
+});
 
 /** Estanque: líquido, ondulación y litros. Canal: `level` (L). */
 export const tankDrawer: DrawerFactory = ({ part, layers }) => {
@@ -20,7 +26,6 @@ export const tankDrawer: DrawerFactory = ({ part, layers }) => {
   let wave = 0;
   return {
     g,
-    ports: { out: [part.x + 160, part.y], ret: [part.x + 280, part.y] },
     update(channels, dt): void {
       const level = channelNumber(channels, 'level');
       const hgt = clamp(level / 50, 0, 1) * (TANK_H - 12);
@@ -39,6 +44,12 @@ export const tankDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
+/** Colador bajo la bomba: `a` desde el estanque, `b` arriba hacia la bomba. */
+export const strainerGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 64, h: 22 },
+  ports: { a: [part.x, part.y + 11], b: [part.x + 32, part.y] },
+});
+
 /** Colador: malla punteada. Sin canales (la falla no se dibuja). */
 export const strainerDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
@@ -46,10 +57,20 @@ export const strainerDrawer: DrawerFactory = ({ part, layers }) => {
   label(g, part.x + 70, part.y + 16, 'Colador', { className: 'lbl-small part-label' });
   return {
     g,
-    ports: { a: [part.x, part.y + 11], b: [part.x + 64, part.y + 11] },
     update(): void {},
   };
 };
+
+/** Bomba sumergida: aspira abajo, impulsa arriba; bornes a la izquierda. */
+export const pumpGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 48, h: 136 },
+  ports: {
+    in: [part.x + 24, part.y + 136],
+    out: [part.x + 24, part.y],
+    'e+': [part.x, part.y + 22],
+    'e-': [part.x, part.y + 44],
+  },
+});
 
 /** Bomba eléctrica: cuerpo, rotor. Canal: `flow` (L/h) gira el rotor. */
 export const pumpDrawer: DrawerFactory = ({ part, layers }) => {
@@ -64,13 +85,18 @@ export const pumpDrawer: DrawerFactory = ({ part, layers }) => {
   let angle = 0;
   return {
     g,
-    ports: { in: [part.x + 24, part.y], out: [part.x + 24, part.y - 8] },
     update(channels, dt): void {
       angle = (angle + channelNumber(channels, 'flow') * dt * 25) % 360;
       rotor.setAttribute('transform', `rotate(${angle.toFixed(1)} ${part.x + 24} ${part.y + 82})`);
     },
   };
 };
+
+/** Montada sobre el tubo de salida de la bomba. */
+export const checkValveGeometry: GeometryFn = (part) => ({
+  box: { x: part.x - 10, y: part.y - 10, w: 20, h: 20 },
+  inline: true,
+});
 
 /** Válvula check: bola que se levanta con caudal. Canal: `flow` (L/h). */
 export const checkValveDrawer: DrawerFactory = ({ part, layers }) => {
@@ -81,7 +107,6 @@ export const checkValveDrawer: DrawerFactory = ({ part, layers }) => {
   let open = false;
   return {
     g,
-    ports: { in: [part.x, part.y + 10], out: [part.x, part.y - 10] },
     update(channels): void {
       const now = channelNumber(channels, 'flow') > 0.5;
       if (now === open) return;

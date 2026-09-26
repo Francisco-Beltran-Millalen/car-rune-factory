@@ -3,13 +3,22 @@
 
 import { clamp } from '../../../../core/math.ts';
 import { el, group, label, roundedPathD } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber } from '../../util.ts';
 
 const R = 78;
 const TERMINALS = [45, 135, 225, 315]; // cilindros 1..4
 
 /** Distribuidor con avance centrífugo y por vacío (spec ignition §8). */
+/** La tapa (con su borne central); condensador y avance por vacío son sub-piezas. */
+export const distributorGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 140 - R, y: part.y + 140 - R - 18, w: 2 * R, h: 2 * R + 18 },
+  subparts: {
+    condenser: { box: { x: part.x + 22, y: part.y + 160, w: 34, h: 50 } },
+    vacuumAdvance: { box: { x: part.x + 10, y: part.y + 42, w: 44, h: 44 } },
+  },
+});
+
 export const distributorDrawer: DrawerFactory = ({ part, def, layers }) => {
   const g = group(layers.parts);
   const cx = part.x + 140;

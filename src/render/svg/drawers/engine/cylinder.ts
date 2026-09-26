@@ -2,7 +2,7 @@
 // mutan atributos (§9). Colores por variables CSS.
 
 import { el, group, label } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber, channelString } from '../../util.ts';
 
 const BORE_C = 300;
@@ -37,6 +37,11 @@ function valve(x: number, parent: SVGGElement, part: string): { g: SVGGElement }
 }
 
 /** Corte del cilindro visto: culata, válvulas, pistón, biela y cigüeñal. */
+/** Culata con lumbreras, cilindro y cárter (x 150–450, y 100–560). */
+export const cylinderSectionGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 150, y: part.y + 100, w: 300, h: 460 },
+});
+
 export const cylinderSectionDrawer: DrawerFactory = ({ part, layers }) => {
   const ox = part.x;
   const oy = part.y;

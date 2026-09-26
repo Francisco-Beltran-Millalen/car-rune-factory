@@ -101,6 +101,11 @@ export const FUEL_PRESENT: PresentScheme = {
       air: pumpAir,
       potential: stateNumber('pPumpOut'),
     },
+    'h-line-filter': {
+      flow: (ctx) => Math.max(0, number(ctx.state, 'qPump') - number(ctx.state, 'qLeakLine')),
+      air: pumpAir,
+      potential: stateNumber('pPumpOut'),
+    },
     'h-filter-rail': {
       flow: (ctx) => Math.max(0, number(ctx.state, 'qPump') - number(ctx.state, 'qLeakLine')),
       air: pumpAir,

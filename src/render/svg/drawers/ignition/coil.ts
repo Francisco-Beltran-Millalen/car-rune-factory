@@ -2,8 +2,13 @@
 
 import { clamp } from '../../../../core/math.ts';
 import { el, group, label } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber } from '../../util.ts';
+
+export const ballastGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 100, h: 60 },
+  ports: { a: [part.x, part.y + 30], b: [part.x + 100, part.y + 30] },
+});
 
 /** Balasto: resistencia en serie con el primario. Canal: `open`. */
 export const ballastDrawer: DrawerFactory = ({ part, layers }) => {
@@ -19,12 +24,18 @@ export const ballastDrawer: DrawerFactory = ({ part, layers }) => {
   cross.style.opacity = '0';
   return {
     g,
-    ports: { a: [part.x, part.y + 30], b: [part.x + 100, part.y + 30] },
     update(channels): void {
       cross.style.opacity = channelNumber(channels, 'open') > 0.5 ? '1' : '0';
     },
   };
 };
+
+/** Primario: `a` (+) arriba; `b` (−, a los platinos o al transistor) a la
+ *  derecha. Abajo sale el cable de alta (lo dibuja el distribuidor). */
+export const coilGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 120, h: 80 },
+  ports: { a: [part.x + 60, part.y], b: [part.x + 120, part.y + 40] },
+});
 
 /** Bobina (única en platinos, una por cilindro en COP). Canal: `current`. */
 export const coilDrawer: DrawerFactory = ({ part, layers }) => {
@@ -39,7 +50,6 @@ export const coilDrawer: DrawerFactory = ({ part, layers }) => {
   glow.style.opacity = '0';
   return {
     g,
-    ports: { a: [part.x + 60, part.y], b: [part.x + 60, part.y + 80] },
     update(channels): void {
       const current = channelNumber(channels, 'current');
       const dead = channelNumber(channels, 'dead') > 0.5;
@@ -48,6 +58,10 @@ export const coilDrawer: DrawerFactory = ({ part, layers }) => {
     },
   };
 };
+
+export const sparkPlugGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 18, y: part.y + 10, w: 24, h: 106 },
+});
 
 /** Bujía: electrodo, separación y destello. Canales: `spark`, `gap`, `flash`. */
 export const sparkPlugDrawer: DrawerFactory = ({ part, layers }) => {

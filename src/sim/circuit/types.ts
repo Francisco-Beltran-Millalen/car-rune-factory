@@ -19,6 +19,9 @@ export interface CircuitPartDef {
   /** Fluido propio; si no, el del circuito (§30). */
   fluid?: Fluid;
   label?: string;
+  /** Pieza cuya conexión dibuja el drawer de otra (inyectores del riel):
+   *  el chequeo de layout (plan V1) pide que sus cajas se toquen. */
+  joinedBy?: string;
 }
 
 /** Datos de trazo de una conexión (A7); el renderer sólo los lee. */
@@ -48,9 +51,9 @@ export interface CircuitLinkDef {
   /** `'part.port'`. */
   from: string;
   to: string;
-  /** Puntos para el renderer; opcional (A7 puede rutear sola). */
-  route?: readonly (readonly [number, number])[];
-  /** Trazo visible (A7): con `route` o `visual` el renderer dibuja el tubo. */
+  /** Codos intermedios (plan V1): las puntas son los puertos de la geometría. */
+  via?: readonly (readonly [number, number])[];
+  /** Trazo visible: sólo los enlaces con `visual` se dibujan (plan V1). */
   visual?: CircuitLinkVisual;
 }
 

@@ -45,23 +45,23 @@ function num(value: ParamValue | undefined, fallback = 0): number {
 
 function links(): CircuitLinkDef[] {
   return [
-    // ─── Hidráulica ───────────────────────────────────────────────────────
-    { id: 'h-pump-node1', from: 'waterPump.out', to: 'hN1.a', route: [[160, 420], [160, 380], [200, 380]] },
-    { id: 'h-node1-jacket', from: 'hN1.b', to: 'engineBlock.a', route: [[200, 380], [200, 120], [190, 120]], visual: { ...COOLANT, owner: 'engineBlock' } },
-    { id: 'h-leak-pump', from: 'pumpLeak.a', to: 'hN1.c', route: [[220, 500], [220, 380]] },
-    { id: 'h-jacket-node2', from: 'engineBlock.b', to: 'hN2.a', route: [[190, 320], [190, 200], [300, 200]] },
-    { id: 'h-node2-thermostat', from: 'hN2.b', to: 'thermostat.a', route: [[300, 200], [300, 80], [380, 80]] },
-    { id: 'h-node2-bypass', from: 'bypass.a', to: 'hN2.c', route: [[400, 250], [400, 200], [300, 200]], visual: { ...COOLANT, owner: 'bypass' } },
-    { id: 'h-node2-heater', from: 'hN2.d', to: 'heaterValve.a', route: [[300, 200], [300, 430], [540, 430]] },
-    { id: 'h-thermostat-node3', from: 'thermostat.b', to: 'hN3.a', route: [[380, 150], [500, 150], [500, 110]], visual: { ...COOLANT, owner: 'upperHose' } },
-    { id: 'h-node3-radiator', from: 'hN3.b', to: 'radiator.a', route: [[500, 110], [500, 80], [780, 80]], visual: { ...COOLANT, owner: 'upperHose' } },
-    { id: 'h-radiator-node4', from: 'radiator.b', to: 'hN4.a', route: [[780, 440], [600, 440], [600, 560]], visual: { ...COOLANT, owner: 'lowerHose' } },
-    { id: 'h-node4-pump', from: 'hN4.b', to: 'waterPump.in', route: [[600, 560], [160, 560], [160, 500]], visual: { ...COOLANT, owner: 'lowerHose' } },
-    { id: 'h-bypass-node4', from: 'bypass.b', to: 'hN4.c', route: [[400, 320], [400, 560], [600, 560]], visual: { ...COOLANT, owner: 'bypass' } },
-    { id: 'h-core-node4', from: 'heaterCore.b', to: 'hN4.d', route: [[560, 550], [560, 560], [600, 560]], visual: { ...COOLANT, owner: 'heaterCore' } },
-    { id: 'h-leak-hose', from: 'hoseLeak.a', to: 'hN4.e', route: [[700, 540], [700, 560], [600, 560]] },
-    { id: 'h-tank-node4', from: 'expansionTank.a', to: 'hN4.f', route: [[420, 470], [420, 560], [600, 560]] },
-    { id: 'h-heater-core', from: 'heaterValve.b', to: 'heaterCore.a', route: [[560, 470], [560, 490]], visual: { ...COOLANT, owner: 'heaterCore' } },
+    // ─── Hidráulica (plan V1: puntas desde la geometría, codos en `via`) ───
+    { id: 'h-pump-node1', from: 'waterPump.out', to: 'hN1.a', visual: { ...COOLANT, owner: 'waterPump' } },
+    { id: 'h-node1-jacket', from: 'hN1.b', to: 'engineBlock.a', visual: { ...COOLANT, owner: 'engineBlock' } },
+    { id: 'h-leak-pump', from: 'pumpLeak.a', to: 'hN1.c' },
+    { id: 'h-jacket-node2', from: 'engineBlock.b', to: 'hN2.a', via: [[380, 195]], visual: { ...COOLANT, owner: 'engineBlock' } },
+    { id: 'h-node2-thermostat', from: 'hN2.b', to: 'thermostat.a', visual: { ...COOLANT, owner: 'thermostat' } },
+    { id: 'h-node2-bypass', from: 'bypass.a', to: 'hN2.c', visual: { ...COOLANT, owner: 'bypass' } },
+    { id: 'h-node2-heater', from: 'hN2.d', to: 'heaterValve.a', via: [[700, 195], [700, 500]], visual: { ...COOLANT, owner: 'heaterValve' } },
+    { id: 'h-thermostat-node3', from: 'thermostat.b', to: 'hN3.a', visual: { ...COOLANT, owner: 'upperHose' } },
+    { id: 'h-node3-radiator', from: 'hN3.b', to: 'radiator.a', visual: { ...COOLANT, owner: 'upperHose' } },
+    { id: 'h-radiator-node4', from: 'radiator.b', to: 'hN4.a', via: [[1105, 620]], visual: { ...COOLANT, owner: 'lowerHose' } },
+    { id: 'h-node4-pump', from: 'hN4.b', to: 'waterPump.in', via: [[60, 620], [60, 390]], visual: { ...COOLANT, owner: 'lowerHose' } },
+    { id: 'h-bypass-node4', from: 'bypass.b', to: 'hN4.c', visual: { ...COOLANT, owner: 'bypass' } },
+    { id: 'h-core-node4', from: 'heaterCore.b', to: 'hN4.d', via: [[600, 620]], visual: { ...COOLANT, owner: 'heaterCore' } },
+    { id: 'h-leak-hose', from: 'hoseLeak.a', to: 'hN4.e' },
+    { id: 'h-tank-node4', from: 'expansionTank.a', to: 'hN4.f', via: [[330, 620]], visual: { ...COOLANT, owner: 'expansionTank' } },
+    { id: 'h-heater-core', from: 'heaterValve.b', to: 'heaterCore.a', visual: { ...COOLANT, owner: 'heaterCore' } },
     // ─── Térmica (topología sin dibujo) ───────────────────────────────────
     { id: 't-engine-cap', from: 'tEngine.a', to: 'engineThermal.a' },
     { id: 't-engine2', from: 'tEngine2.a', to: 'tEngine.a' },
@@ -107,22 +107,22 @@ const THERMAL_PARTS = [
 ] as const;
 
 const HYDRAULIC_PARTS = [
-  { id: 'hN1', type: 'hydroNode', x: 200, y: 380 },
-  { id: 'hN2', type: 'hydroNode', x: 300, y: 200 },
-  { id: 'hN3', type: 'hydroNode', x: 500, y: 110 },
-  { id: 'hN4', type: 'hydroNode', x: 600, y: 560 },
-  { id: 'waterPump', type: 'centrifugalPump', visual: 'waterPump', x: 100, y: 420, params: { qMax: K.qPumpMax, pMax: K.pPumpMax, nRef: K.pumpNRef } },
-  { id: 'engineBlock', type: 'restrictor', visual: 'engineJacket', x: 80, y: 120, params: { k: K.kJacket, clogFactor: 0 } },
-  { id: 'thermostat', type: 'variableOrifice', visual: 'thermostat', x: 340, y: 80, params: { gOpen: K.gThermostatOpen, gLeak: K.gThermostatOpen * K.thermostatLeak } },
-  { id: 'radiator', type: 'restrictor', visual: 'radiator', x: 780, y: 80, params: { k: K.kRadiator, clogFactor: K.tubeClogK } },
-  { id: 'bypass', type: 'restrictor', x: 400, y: 250, params: { k: K.kBypass, clogFactor: 0 } },
-  { id: 'heaterValve', type: 'variableOrifice', x: 540, y: 430, params: { gOpen: K.gHeaterOpen, gLeak: 0 } },
-  { id: 'heaterCore', type: 'restrictor', visual: 'heaterCore', x: 520, y: 470, params: { k: K.kHeaterCore, clogFactor: 0 } },
-  { id: 'expansionTank', type: 'pressureSource', visual: 'expansionTank', x: 360, y: 470 },
-  { id: 'pumpLeak', type: 'leak', x: 220, y: 500, params: { k: K.kPumpLeak } },
-  { id: 'hoseLeak', type: 'leak', x: 700, y: 540, params: { k: K.kHoseLeak } },
-  { id: 'tempGauge', type: 'visual', visual: 'tempGauge', x: 80, y: 560 },
-  { id: 'fan', type: 'visual', visual: 'fan', x: 620, y: 120 },
+  { id: 'hN1', type: 'hydroNode', x: 168, y: 390 },
+  { id: 'hN2', type: 'hydroNode', x: 440, y: 195 },
+  { id: 'hN3', type: 'hydroNode', x: 520, y: 135 },
+  { id: 'hN4', type: 'hydroNode', x: 440, y: 620 },
+  { id: 'waterPump', type: 'centrifugalPump', visual: 'waterPump', x: 60, y: 350, params: { qMax: K.qPumpMax, pMax: K.pPumpMax, nRef: K.pumpNRef } },
+  { id: 'engineBlock', type: 'restrictor', visual: 'engineJacket', x: 180, y: 220, params: { k: K.kJacket, clogFactor: 0 } },
+  { id: 'thermostat', type: 'variableOrifice', visual: 'thermostat', x: 400, y: 100, params: { gOpen: K.gThermostatOpen, gLeak: K.gThermostatOpen * K.thermostatLeak } },
+  { id: 'radiator', type: 'restrictor', visual: 'radiator', x: 1060, y: 120, params: { k: K.kRadiator, clogFactor: K.tubeClogK } },
+  { id: 'bypass', type: 'restrictor', visual: 'hosePoint', label: 'Bypass', x: 440, y: 300, params: { k: K.kBypass, clogFactor: 0 } },
+  { id: 'heaterValve', type: 'variableOrifice', x: 670, y: 500, params: { gOpen: K.gHeaterOpen, gLeak: 0 } },
+  { id: 'heaterCore', type: 'restrictor', visual: 'heaterCore', x: 560, y: 460, params: { k: K.kHeaterCore, clogFactor: 0 } },
+  { id: 'expansionTank', type: 'pressureSource', visual: 'expansionTank', x: 270, y: 470 },
+  { id: 'pumpLeak', type: 'leak', x: 168, y: 390, params: { k: K.kPumpLeak } },
+  { id: 'hoseLeak', type: 'leak', x: 440, y: 620, params: { k: K.kHoseLeak } },
+  { id: 'tempGauge', type: 'visual', visual: 'tempGauge', x: 1120, y: 470 },
+  { id: 'fan', type: 'visual', visual: 'fan', x: 780, y: 140 },
 ] as const;
 
 /** `CircuitDef` de la refrigeración; la variante eléctrica suma el ventilador. */
@@ -133,19 +133,21 @@ export function coolingDef(variant: CoolingVariant): CircuitDef {
     ...THERMAL_PARTS,
     ...(electric
       ? ([
-          { id: 'battery', type: 'battery', visual: 'battery', x: 40, y: 40, params: { r: 0.01 } },
-          { id: 'fuse', type: 'resistor', x: 170, y: 45, params: { r: 0.02 } },
-          { id: 'fanRelay', type: 'switch', x: 240, y: 45, params: { rOn: 0.001, rOff: 1e7 } },
-          { id: 'fanMotor', type: 'resistor', x: 310, y: 45, params: { r: K.fanMotorR } },
+          { id: 'battery', type: 'battery', visual: 'battery', x: 40, y: 60, params: { r: 0.01 } },
+          // Fusible, relé y motor los dibuja el ventilador (sub-piezas, plan V1).
+          { id: 'fuse', type: 'resistor', x: 767, y: 346, params: { r: 0.02 } },
+          { id: 'fanRelay', type: 'switch', x: 832, y: 346, params: { rOn: 0.001, rOff: 1e7 } },
+          { id: 'fanMotor', type: 'resistor', x: 913, y: 346, params: { r: K.fanMotorR } },
         ] as const)
       : []),
   ];
   const electricLinks: CircuitLinkDef[] = electric
     ? [
-        { id: 'e-bat-fuse', from: 'battery.+', to: 'fuse.a', route: [[120, 70], [170, 70]], visual: { pipeClass: 'fluid-electric', flowClass: 'p-electric', scale: 60, spacing: 10, radius: 2, width: 3, owner: 'battery' } },
-        { id: 'e-fuse-relay', from: 'fuse.b', to: 'fanRelay.a', route: [[210, 70], [240, 70]], visual: { pipeClass: 'fluid-electric', flowClass: 'p-electric', scale: 60, spacing: 10, radius: 2, width: 3 } },
-        { id: 'e-relay-motor', from: 'fanRelay.b', to: 'fanMotor.a', route: [[280, 70], [310, 70]], visual: { pipeClass: 'fluid-electric', flowClass: 'p-electric', scale: 60, spacing: 10, radius: 2, width: 3 } },
-        { id: 'e-motor-gnd', from: 'fanMotor.b', to: 'battery.-', route: [[350, 70], [380, 70], [380, 130], [120, 130], [120, 100]] },
+        { id: 'e-bat-fuse', from: 'battery.+', to: 'fuse.a', via: [[99, 30], [730, 30], [730, 346]], visual: { pipeClass: 'fluid-electric', flowClass: 'p-electric', scale: 60, spacing: 10, radius: 2, width: 3, owner: 'battery' } },
+        { id: 'e-fuse-relay', from: 'fuse.b', to: 'fanRelay.a', visual: { pipeClass: 'fluid-electric', flowClass: 'p-electric', scale: 60, spacing: 10, radius: 2, width: 3 } },
+        { id: 'e-relay-motor', from: 'fanRelay.b', to: 'fanMotor.a', visual: { pipeClass: 'fluid-electric', flowClass: 'p-electric', scale: 60, spacing: 10, radius: 2, width: 3 } },
+        // Masa por la carrocería: el drawer del ventilador la dibuja junto al motor.
+        { id: 'e-motor-gnd', from: 'fanMotor.b', to: 'battery.-' },
       ]
     : [];
   return {

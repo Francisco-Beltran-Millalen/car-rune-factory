@@ -2,8 +2,19 @@
 
 import { clamp } from '../../../../core/math.ts';
 import { el, group, label } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber } from '../../util.ts';
+
+/** Cárter: la rejilla (sub-pieza) entrega arriba a la bomba; los retornos
+ *  caen por `ret`, arriba a la derecha. */
+export const sumpGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 420, h: 150 },
+  ports: { ret: [part.x + 400, part.y] },
+  subparts: {
+    pickup: { box: { x: part.x + 60, y: part.y + 40, w: 40, h: 70 }, ports: { b: [part.x + 80, part.y + 40] } },
+    drainPlug: { box: { x: part.x + 290, y: part.y + 132, w: 20, h: 18 } },
+  },
+});
 
 /** Cárter con nivel, inclinación, chupador y tapón. Canales: `level`, `tilt`,
  *  `air`, `pickupDirt` (rejilla) y `drip` (tapón). */
@@ -54,6 +65,12 @@ export const sumpDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
+/** Aspira por abajo (de la rejilla) e impulsa por la derecha. */
+export const gearPumpGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 120, h: 100 },
+  ports: { in: [part.x + 60, part.y + 100], out: [part.x + 120, part.y + 50] },
+});
+
 /** Bomba de engranajes: dos ruedas que giran ∝ rpm. Canales: `rpm`, `air`. */
 export const gearPumpDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
@@ -70,7 +87,7 @@ export const gearPumpDrawer: DrawerFactory = ({ part, layers }) => {
       el('line', { x1: cx + Math.cos(a) * 22, y1: cy + Math.sin(a) * 22, x2: cx + Math.cos(a) * 30, y2: cy + Math.sin(a) * 30, class: 'gear-tooth' }, grp);
     }
   }
-  label(g, part.x + 60, part.y + 112, 'Bomba de aceite', { anchor: 'middle', className: 'lbl-small part-label' });
+  label(g, part.x + 60, part.y - 8, 'Bomba de aceite', { anchor: 'middle', className: 'lbl-small part-label' });
   let angle = 0;
   return {
     g,
@@ -86,6 +103,12 @@ export const gearPumpDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
+/** Entra por la izquierda (presión de la bomba) y descarga por abajo al cárter. */
+export const reliefValveGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 90, h: 110 },
+  ports: { in: [part.x, part.y + 50], ret: [part.x + 45, part.y + 110] },
+});
+
 /** Válvula de alivio con resorte. Canales: `open`, `pressure`. */
 export const reliefValveDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
@@ -94,7 +117,7 @@ export const reliefValveDrawer: DrawerFactory = ({ part, layers }) => {
   const spring: [number, number][] = [];
   for (let i = 0; i <= 10; i++) spring.push([part.x + 45 + (i % 2 ? 8 : -8), part.y + 18 + i * 2.4]);
   el('polyline', { points: spring.map((p) => p.join(',')).join(' '), class: 'spring' }, g);
-  label(g, part.x + 45, part.y + 128, 'Alivio', { anchor: 'middle', className: 'lbl-small part-label' });
+  label(g, part.x + 45, part.y - 8, 'Alivio', { anchor: 'middle', className: 'lbl-small part-label' });
   return {
     g,
     update(channels): void {
@@ -104,6 +127,22 @@ export const reliefValveDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
+/** Entra por abajo y sale por arriba; el bypass (sub-pieza) a su izquierda
+ *  y, en el enroscable, la válvula antirretorno arriba. */
+export const oilFilterGeometry: GeometryFn = (part, def) => ({
+  box: { x: part.x, y: part.y, w: 90, h: 120 },
+  ports: { a: [part.x + 45, part.y + 120], b: [part.x + 45, part.y] },
+  subparts: {
+    filterBypass: {
+      box: { x: part.x - 40, y: part.y + 40, w: 20, h: 50 },
+      ports: { in: [part.x - 30, part.y + 90], ret: [part.x - 30, part.y + 40] },
+    },
+    ...(def.id === 'lubrication-lamp'
+      ? { antiDrainback: { box: { x: part.x + 37, y: part.y + 8, w: 16, h: 16 } } }
+      : {}),
+  },
+});
+
 /** Filtro: carcasa o enroscable, suciedad y bypass. Canales: `dirt`, `bypass`,
  *  `leak`, `dp` y `antiDrainbackFailed` (sólo enroscable). */
 export const oilFilterDrawer: DrawerFactory = ({ part, def, layers }) => {
@@ -112,13 +151,13 @@ export const oilFilterDrawer: DrawerFactory = ({ part, def, layers }) => {
   el('rect', { x: part.x, y: part.y, width: 90, height: 120, rx: spinOn ? 14 : 6, class: 'part-body' }, g);
   const dirt = el('rect', { x: part.x + 4, y: part.y + 4, width: 82, height: 112, rx: 10, class: 'filter-dirt' }, g);
   dirt.style.opacity = '0';
-  label(g, part.x + 45, part.y - 10, spinOn ? 'Filtro enroscable' : 'Filtro de cartucho', { anchor: 'middle', className: 'lbl part-label' });
+  label(g, part.x + 98, part.y + 24, spinOn ? 'Filtro enroscable' : 'Filtro de cartucho', { className: 'lbl part-label' });
   const bypass = group(g, { part: 'filterBypass' });
   el('line', { x1: part.x - 30, y1: part.y + 40, x2: part.x - 30, y2: part.y + 90, class: 'bypass-line' }, bypass);
   const flap = el('line', { x1: part.x - 40, y1: part.y + 90, x2: part.x - 20, y2: part.y + 70, class: 'bypass-flap' }, bypass);
-  const leak = el('circle', { cx: part.x + 45, cy: part.y + 140, r: 4, class: 'drop-oil' }, g);
+  const leak = el('circle', { cx: part.x + 80, cy: part.y + 130, r: 4, class: 'drop-oil' }, g);
   const anti = spinOn ? el('circle', { cx: part.x + 45, cy: part.y + 16, r: 8, class: 'anti-drainback' }, group(g, { part: 'antiDrainback' })) : null;
-  const dp = label(g, part.x + 45, part.y + 156, '', { anchor: 'middle', className: 'lbl-small lbl-mono' });
+  const dp = label(g, part.x + 98, part.y + 44, '', { className: 'lbl-small lbl-mono' });
   let t = 0;
   return {
     g,
@@ -134,6 +173,13 @@ export const oilFilterDrawer: DrawerFactory = ({ part, def, layers }) => {
   };
 };
 
+/** La galería es un tramo de tubo grueso: las derivaciones corren por dentro. */
+export const galleryGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 260, h: 34 },
+  ports: { a: [part.x, part.y + 17] },
+  inline: true,
+});
+
 /** Galería con las derivaciones a los cojinetes. Canales: `pressure`, `flow`. */
 export const galleryDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
@@ -148,12 +194,18 @@ export const galleryDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
+/** Recibe arriba (de la galería) y gotea abajo (al cárter). */
+export const bearingGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 12, y: part.y - 18, w: 36, h: 36 },
+  ports: { a: [part.x + 30, part.y - 18], b: [part.x + 30, part.y + 18] },
+});
+
 /** Cojinete: casco con desgaste y golpeteo. Canales: `wear`, `knock`. */
 export const bearingDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
   const shell = el('circle', { cx: part.x + 30, cy: part.y, r: 18, class: 'bearing-shell' }, g);
   el('circle', { cx: part.x + 30, cy: part.y, r: 8, class: 'bearing-hole' }, g);
-  label(g, part.x + 30, part.y + 34, 'Cojinete', { anchor: 'middle', className: 'lbl-small part-label' });
+  label(g, part.x + 52, part.y + 4, part.label ?? 'Cojinete', { className: 'lbl-small part-label' });
   return {
     g,
     update(channels): void {
@@ -165,24 +217,53 @@ export const bearingDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
-/** Testigo y su interruptor de presión. Canales: `on`, `closed`. */
+/** Testigo del tablero: entra por la izquierda (llave) y sale por abajo (al interruptor). */
+export const warningLampGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 2, y: part.y + 2, w: 36, h: 36 },
+  ports: { a: [part.x + 2, part.y + 20], b: [part.x + 20, part.y + 38] },
+});
+
+/** Testigo de presión de aceite. Canal: `on`. */
 export const warningLampDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
   el('circle', { cx: part.x + 20, cy: part.y + 20, r: 18, class: 'lamp-face' }, g);
   const glow = el('circle', { cx: part.x + 20, cy: part.y + 20, r: 14, class: 'lamp-glow' }, g);
-  label(g, part.x + 20, part.y + 50, 'Aceite', { anchor: 'middle', className: 'lbl-small part-label' });
-  const sw = group(g, { part: 'pressureSwitch' });
-  el('rect', { x: part.x - 40, y: part.y + 10, width: 34, height: 24, rx: 5, class: 'part-body' }, sw);
-  const arm = el('line', { x1: part.x - 34, y1: part.y + 22, x2: part.x - 12, y2: part.y + 22, class: 'relay-arm' }, sw);
+  label(g, part.x + 44, part.y + 16, 'Testigo', { className: 'lbl-small part-label' });
+  label(g, part.x + 44, part.y + 30, 'de aceite', { className: 'lbl-small part-label' });
   return {
     g,
     update(channels): void {
-      const on = channelNumber(channels, 'on') > 0.5;
-      glow.style.opacity = on ? '0.9' : '0';
-      arm.setAttribute('transform', channelNumber(channels, 'closed') > 0.5 ? '' : `rotate(-25 ${part.x - 34} ${part.y + 22})`);
+      glow.style.opacity = channelNumber(channels, 'on') > 0.5 ? '0.9' : '0';
     },
   };
 };
+
+/** Interruptor de presión atornillado a la galería: cable arriba, masa por el bloque. */
+export const oilPressureSwitchGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 28, h: 28 },
+  ports: { a: [part.x + 14, part.y] },
+});
+
+/** Interruptor de presión: abre con presión, cierra a masa bajo 0,5 bar. Canal: `closed`. */
+export const oilPressureSwitchDrawer: DrawerFactory = ({ part, layers }) => {
+  const g = group(layers.parts, { part: part.id });
+  el('rect', { x: part.x, y: part.y, width: 28, height: 28, rx: 5, class: 'part-body' }, g);
+  const arm = el('line', { x1: part.x + 6, y1: part.y + 16, x2: part.x + 22, y2: part.y + 16, class: 'relay-arm' }, g);
+  // Masa por el bloque (el enlace a `battery.-` es sólo del modelo).
+  el('path', { d: `M ${part.x + 14} ${part.y + 28} v 6 m -8 0 h 16 m -12 4 h 8 m -5 4 h 2`, class: 'ground-mark' }, g);
+  label(g, part.x + 34, part.y + 12, 'Interruptor', { className: 'lbl-small part-label' });
+  label(g, part.x + 34, part.y + 26, 'de presión', { className: 'lbl-small part-label' });
+  return {
+    g,
+    update(channels): void {
+      arm.setAttribute('transform', channelNumber(channels, 'closed') > 0.5 ? '' : `rotate(-25 ${part.x + 6} ${part.y + 16})`);
+    },
+  };
+};
+
+export const oilGaugeGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 8, y: part.y + 8, w: 104, h: 104 },
+});
 
 /** Manómetro de aceite. Canales: `pressure`, `real`. */
 export const oilGaugeDrawer: DrawerFactory = ({ part, layers }) => {

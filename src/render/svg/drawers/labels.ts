@@ -3,13 +3,23 @@
 // enlace con `owner`.
 
 import { group, el, label } from '../../../core/svg.ts';
-import type { DrawerFactory } from '../types.ts';
+import type { DrawerFactory, GeometryFn } from '../types.ts';
 import { channelNumber } from '../util.ts';
+
+/** Un punto sobre su tubo (`a` = `b`): la manguera la dibujan sus enlaces. */
+export const linePointGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 0, h: 0 },
+  ports: { a: [part.x, part.y], b: [part.x, part.y] },
+  inline: true,
+});
+
+/** Etiqueta sola (sin cuerpo). */
+export const labelGeometry: GeometryFn = (part) => ({ box: { x: part.x, y: part.y, w: 0, h: 0 } });
 
 /** Línea de alimentación: etiqueta y gotas de la fuga. Canal: `leak` (L/h). */
 export const feedLineDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
-  label(g, part.x, part.y, 'Alimentación →', { className: 'lbl-small part-label' });
+  label(g, part.x, part.y - 12, 'Alimentación →', { className: 'lbl-small part-label' });
   const drops = [0, 1, 2].map(() => el('circle', { r: 3, class: 'drop', opacity: 0 }, layers.fx));
   let t = 0;
   return {
@@ -20,7 +30,7 @@ export const feedLineDrawer: DrawerFactory = ({ part, layers }) => {
       drops.forEach((drop, i) => {
         const ph = (t * 1.5 + i / 3) % 1;
         drop.setAttribute('cx', String(part.x + 90));
-        drop.setAttribute('cy', (part.y + 20 + ph * 50).toFixed(1));
+        drop.setAttribute('cy', (part.y + 8 + ph * 50).toFixed(1));
         drop.setAttribute('opacity', on ? (1 - ph).toFixed(2) : '0');
       });
     },
@@ -31,5 +41,15 @@ export const feedLineDrawer: DrawerFactory = ({ part, layers }) => {
 export const returnLineDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
   label(g, part.x, part.y, '← Retorno al estanque', { className: 'lbl-small part-label' });
+  return { g, update(): void {} };
+};
+
+/** Tramo de manguera con resistencia propia (el bypass): su nombre junto al
+ *  tubo. Canal: ninguno. */
+export const hosePointDrawer: DrawerFactory = ({ part, layers }) => {
+  const g = group(layers.parts, { part: part.id });
+  // Zona de clic sobre el tubo, para que la pieza se pueda seleccionar.
+  el('circle', { cx: part.x, cy: part.y, r: 9, class: 'hose-hit' }, g);
+  label(g, part.x + 10, part.y + 4, part.label ?? '', { className: 'lbl-small part-label' });
   return { g, update(): void {} };
 };

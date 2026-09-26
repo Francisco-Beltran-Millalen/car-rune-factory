@@ -3,7 +3,7 @@
 
 import { expSmooth, wrap } from '../../../core/math.ts';
 import { group, el, label, roundedPathD } from '../../../core/svg.ts';
-import type { DrawerFactory } from '../types.ts';
+import type { DrawerFactory, GeometryFn } from '../types.ts';
 import { channelBool, channelNumber, channelString } from '../util.ts';
 
 const KEY_LABEL: Readonly<Record<string, string>> = {
@@ -14,22 +14,36 @@ const KEY_LABEL: Readonly<Record<string, string>> = {
 };
 const KEY_ANGLE: Readonly<Record<string, number>> = { off: -45, on: 0, start: 45, run: 20 };
 
+/** Bornes arriba: `-` a la izquierda, `+` a la derecha (el + sale hacia la
+ *  llave, el − da la vuelta por el borde sin cruzarlo). */
+export const batteryGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y - 8, w: 80, h: 68 },
+  ports: { '-': [part.x + 21, part.y - 8], '+': [part.x + 59, part.y - 8] },
+});
+
 /** Batería: cuerpo, bornes y tensión. Canal: `v` (V). */
 export const batteryDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
   el('rect', { x: part.x, y: part.y, width: 80, height: 60, rx: 6, class: 'part-body' }, g);
   el('rect', { x: part.x + 15, y: part.y - 8, width: 12, height: 8, class: 'part-body' }, g);
   el('rect', { x: part.x + 53, y: part.y - 8, width: 12, height: 8, class: 'part-body' }, g);
+  label(g, part.x + 21, part.y + 12, '−', { anchor: 'middle', className: 'lbl-small' });
+  label(g, part.x + 59, part.y + 12, '+', { anchor: 'middle', className: 'lbl-small' });
   const text = label(g, part.x + 40, part.y + 36, '', { anchor: 'middle', className: 'lbl lbl-mono' });
   label(g, part.x + 40, part.y + 78, 'Batería', { anchor: 'middle', className: 'lbl-small part-label' });
   return {
     g,
-    ports: { '+': [part.x + 80, part.y + 30], '-': [part.x + 80, part.y + 60] },
     update(channels): void {
       text.textContent = `${channelNumber(channels, 'v').toFixed(1).replace('.', ',')} V`;
     },
   };
 };
+
+/** Llave y relé: entrada a la izquierda, salida a la derecha. */
+export const switchBoxGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 80, h: 60 },
+  ports: { a: [part.x, part.y + 30], b: [part.x + 80, part.y + 30] },
+});
 
 /** Llave de contacto: cuerpo, lengüeta y etiqueta. Canal: `position`. */
 export const keyDrawer: DrawerFactory = ({ part, layers }) => {
@@ -40,7 +54,6 @@ export const keyDrawer: DrawerFactory = ({ part, layers }) => {
   let last = '';
   return {
     g,
-    ports: { a: [part.x, part.y + 30], b: [part.x + 80, part.y + 30] },
     update(channels): void {
       const pos = channelString(channels, 'position', 'off');
       if (pos === last) return;
@@ -58,11 +71,10 @@ export const relayDrawer: DrawerFactory = ({ part, layers }) => {
   el('circle', { cx: part.x + 20, cy: part.y + 40, r: 3, class: 'contact' }, g);
   el('circle', { cx: part.x + 60, cy: part.y + 40, r: 3, class: 'contact' }, g);
   const arm = el('line', { x1: part.x + 20, y1: part.y + 40, x2: part.x + 60, y2: part.y + 40, class: 'relay-arm' }, g);
-  label(g, part.x + 40, part.y + 20, 'Relé', { anchor: 'middle', className: 'lbl-small part-label' });
+  label(g, part.x + 40, part.y + 20, part.label ?? 'Relé', { anchor: 'middle', className: 'lbl-small part-label' });
   let closed: boolean | null = null;
   return {
     g,
-    ports: { a: [part.x, part.y + 30], b: [part.x + 80, part.y + 30] },
     update(channels): void {
       const now = channelBool(channels, 'closed');
       if (now === closed) return;
@@ -71,6 +83,10 @@ export const relayDrawer: DrawerFactory = ({ part, layers }) => {
     },
   };
 };
+
+export const ecuGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 120, h: 60 },
+});
 
 /** ECU: caja y rpm. Canal: `rpm`. */
 export const ecuDrawer: DrawerFactory = ({ part, layers }) => {
@@ -88,6 +104,9 @@ export const ecuDrawer: DrawerFactory = ({ part, layers }) => {
 };
 
 const FIRING_OFFSETS = [0, 540, 180, 360]; // inyectores 1..4, orden 1-3-4-2
+
+/** El arnés es un trazo de señal: sin cuerpo propio. */
+export const wiresGeometry: GeometryFn = (part) => ({ box: { x: part.x, y: part.y, w: 0, h: 0 } });
 
 /** Arnés ECU → inyectores: un trazo por inyector que pulsa al abrir. */
 export const wiresDrawer: DrawerFactory = ({ part, def, layers }) => {

@@ -2,12 +2,20 @@
 
 import { clamp } from '../../../../core/math.ts';
 import { el, group, label } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber } from '../../util.ts';
 
 const R = 66;
 
 /** Rueda 60-2 con el hueco de dos dientes, sensores e igniter. */
+export const toothWheelGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 110 - R, y: part.y + 110 - R, w: 2 * R, h: 2 * R },
+  subparts: {
+    crankSensor: { box: { x: part.x + 110 - R - 34, y: part.y + 98, w: 26, h: 24 } },
+    camSensor: { box: { x: part.x + 110 + R + 14, y: part.y + 54, w: 52, h: 52 } },
+  },
+});
+
 export const toothWheelDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts);
   const cx = part.x + 110;

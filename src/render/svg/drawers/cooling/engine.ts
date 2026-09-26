@@ -2,8 +2,14 @@
 
 import { clamp } from '../../../../core/math.ts';
 import { el, group, label } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber } from '../../util.ts';
+
+/** Entra abajo a la izquierda (de la bomba) y sale arriba a la derecha (al termostato). */
+export const engineJacketGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 220, h: 200 },
+  ports: { a: [part.x, part.y + 170], b: [part.x + 200, part.y] },
+});
 
 /** Camisa del motor: bloque con canales, calor y vapor. Canales: `temp`, `boiling`. */
 export const engineJacketDrawer: DrawerFactory = ({ part, layers }) => {
@@ -40,6 +46,13 @@ export const engineJacketDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
+/** Aspira por la izquierda e impulsa por la derecha; la correa baja a la polea del cigüeñal. */
+export const waterPumpGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 24, y: part.y + 4, w: 72, h: 72 },
+  ports: { in: [part.x + 24, part.y + 40], out: [part.x + 96, part.y + 40] },
+  subparts: { pumpBelt: { box: { x: part.x + 34, y: part.y + 76, w: 52, h: 90 } } },
+});
+
 /** Bomba: polea, rotor y fuga. Canales: `flow`, `leak`. */
 export const waterPumpDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
@@ -51,9 +64,13 @@ export const waterPumpDrawer: DrawerFactory = ({ part, layers }) => {
     el('line', { x1: cx, y1: cy, x2: cx + 26, y2: cy, class: 'pump-vane', transform: `rotate(${i * 90} ${cx} ${cy})` }, rotor);
   }
   el('circle', { cx, cy, r: 8, class: 'dist-hub' }, g);
-  label(g, cx, part.y + 92, 'Bomba', { anchor: 'middle', className: 'lbl-small part-label' });
+  label(g, cx, part.y - 4, 'Bomba', { anchor: 'middle', className: 'lbl-small part-label' });
+  // Correa en V de la polea de la bomba (r 20) a la del cigüeñal (r 24), abajo.
   const belt = group(g, { part: 'pumpBelt' });
-  el('path', { d: `M ${cx} ${cy - 36} C ${cx - 90} ${cy - 120} ${cx - 190} ${cy - 60} ${cx - 200} ${cy + 40}`, class: 'belt' }, belt);
+  const crankY = cy + 100;
+  el('path', { d: `M ${cx - 20} ${cy} L ${cx - 24} ${crankY} A 24 24 0 0 0 ${cx + 24} ${crankY} L ${cx + 20} ${cy} A 20 20 0 0 0 ${cx - 20} ${cy}`, class: 'belt' }, belt);
+  el('circle', { cx, cy: crankY, r: 16, class: 'dist-hub' }, belt);
+  label(g, cx + 30, crankY + 6, 'Cigüeñal', { className: 'lbl-small part-label' });
   const drop = el('circle', { cx: cx + 30, cy: cy + 40, r: 4, class: 'drop' }, g);
   drop.style.opacity = '0';
   let angle = 0;
@@ -69,13 +86,19 @@ export const waterPumpDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
+/** Entra desde el motor por abajo y sale al radiador por la derecha. */
+export const thermostatGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 80, h: 70 },
+  ports: { a: [part.x + 40, part.y + 70], b: [part.x + 80, part.y + 35] },
+});
+
 /** Termostato: válvula que se abre con la cera. Canal: `open`. */
 export const thermostatDrawer: DrawerFactory = ({ part, layers }) => {
   const g = group(layers.parts, { part: part.id });
   el('rect', { x: part.x, y: part.y, width: 80, height: 70, rx: 10, class: 'part-body' }, g);
   const flap = el('line', { x1: part.x + 14, y1: part.y + 35, x2: part.x + 66, y2: part.y + 35, class: 'valve-flap' }, g);
   label(g, part.x + 40, part.y - 10, 'Termostato', { anchor: 'middle', className: 'lbl-small part-label' });
-  const text = label(g, part.x + 40, part.y + 88, '', { anchor: 'middle', className: 'lbl-small lbl-mono' });
+  const text = label(g, part.x - 6, part.y + 40, '', { anchor: 'end', className: 'lbl-small lbl-mono' });
   return {
     g,
     update(channels): void {

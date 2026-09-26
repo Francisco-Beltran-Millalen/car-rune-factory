@@ -3,7 +3,7 @@
 
 import { clamp } from '../../../../core/math.ts';
 import { el, group, label } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber } from '../../util.ts';
 
 const W = 300;
@@ -13,6 +13,10 @@ const I_MAX = 9;
 const V_MAX = 36;
 
 /** Osciloscopio de dos canales (se congela si no hay eventos). */
+export const scopeGeometry: GeometryFn = (part) => ({
+  box: { x: part.x + 12, y: part.y + 8, w: W + 40, h: H + 70 },
+});
+
 export const scopeDrawer: DrawerFactory = ({ part, layers }) => {
   const ox = part.x + 20;
   const oy = part.y + 30;

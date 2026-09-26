@@ -28,7 +28,7 @@ const switchClosed: PresentFn = (ctx) => {
 
 export const LUBRICATION_PRESENT: PresentScheme = {
   parts: {
-    // El chupador y el tapón los dibuja el drawer del cárter: sus canales van acá.
+    // La rejilla y el tapón los dibuja el drawer del cárter: sus canales van acá.
     sump: {
       level: stateNumber('level'),
       tilt: (ctx) => number(ctx.params, 'lateralG'),
@@ -58,8 +58,8 @@ export const LUBRICATION_PRESENT: PresentScheme = {
     warningLamp: {
       on: (ctx) => (ctx.state['lampOn'] === true ? 1 : 0),
       current: stateNumber('lampI'),
-      closed: switchClosed,
     },
+    pressureSwitch: { closed: switchClosed },
     battery: { v: (ctx) => (ctx.params['ignitionKey'] === 'run' ? K.vBusRun : K.vBusOff) },
     key: { position: (ctx) => (typeof ctx.params['ignitionKey'] === 'string' ? ctx.params['ignitionKey'] : 'off') },
     oilGauge: { pressure: stateNumber('gauge'), real: pressure },
@@ -78,5 +78,11 @@ export const LUBRICATION_PRESENT: PresentScheme = {
     'h-return-main': { flow: stateNumber('qMain') },
     'h-return-rod': { flow: stateNumber('qRod') },
     'h-return-cam': { flow: stateNumber('qCam') },
+    'h-node-bypass': { flow: stateNumber('qBypass'), potential: stateNumber('pPumpOut') },
+    'h-bypass-ret': { flow: stateNumber('qBypass'), potential: pressure },
+    'h-return-sump': { flow: (ctx) => number(ctx.state, 'qRelief') + number(ctx.state, 'qBearings') },
+    'e-bat-key': { flow: stateNumber('lampI') },
+    'e-key-lamp': { flow: stateNumber('lampI') },
+    'e-lamp-switch': { flow: stateNumber('lampI') },
   },
 };

@@ -317,12 +317,38 @@ createRenderer(o: {
 `update(visual: VisualState, dt)`, `applyUi(ui: ModeUi)`, `highlight(partIds?, style?)`,
 `resize()`, `destroy()`; expone el `svg`.
 
-- **`svgRenderer`** (A7): dibuja cada parte con el drawer de
-  `part.visual ?? part.type` (catálogo `src/render/svg/drawers/`); cada conexión
-  con `route` o ruta ortogonal automática por los puertos del drawer; partículas
-  (`createFlow`) si el enlace declara `visual.flowClass`, con velocidad
-  `flow × scale`. `update` sólo lee el `VisualState` (§22). El layout vive en el
-  `CircuitDef` (`visual`, `route`, `visual.owner/pipeClass/flowClass/scale/opacity`).
+- **`svgRenderer`** (A7): dibuja cada parte con la entrada del catálogo
+  `DRAWERS[part.visual ?? part.type]` (`src/render/svg/drawers/index.ts`);
+  partículas (`createFlow`) si el enlace declara `visual.flowClass`, con
+  velocidad `flow × scale`. `update` sólo lee el `VisualState` (§22).
+- **Conexiones (plan V1, `plans/2026-09-26-conexiones-visuales.md`)**:
+  - Cada entrada del catálogo es `{ geometry, draw }` (`DrawerEntry`). La
+    `geometry(part, def)` es **pura** y devuelve `PartGeometry`: `box` (el
+    cuerpo que dibuja el drawer, sin etiquetas), `ports` (absolutos, sobre el
+    borde del box), `subparts` (piezas que el drawer dibuja adentro, por id,
+    con su caja y puertos), `container` (se dibuja detrás y aloja piezas:
+    estanque, múltiple) e `inline` (va sobre un tubo: válvula check, galería).
+    El drawer recibe `geo` en su contexto; `Drawer.ports` ya no existe.
+  - Un enlace **se dibuja sólo si trae `visual`**. Su trazo es
+    `[puerto de from, ...via, puerto de to]`: las puntas salen de la geometría
+    (nunca se escriben), `via` son sólo los codos y todos los tramos son
+    horizontales o verticales. Punta en un nudo (`tee`, `junction`,
+    `hydroNode`, `thermalNode`): su `x/y`; con 3+ tubos dibujados lleva
+    `.junction-dot`. Punta en una sub-pieza: el puerto que declara su drawer.
+  - `CircuitPartDef.joinedBy`: la conexión de esa pieza (o nudo) la dibuja el
+    drawer de otra (inyectores → riel); sus cajas tienen que tocarse.
+  - Drawers genéricos para tramos: `hosePoint` (un restrictor que es la
+    manguera misma: punto con `part.label`, puertos `a = b`) y `feedLine`.
+  - `checkLayout(def, viewBox)` (`src/render/svg/layout.ts`) da los errores
+    `visual-sin-drawer`, `extremo-sin-pieza`, `puerto-inexistente`,
+    `tramo-diagonal`, `tubo-cruza-pieza`, `nudo-colgando`, `pieza-aislada`,
+    `piezas-solapadas`, `tubos-encimados`, `fuera-del-lienzo` y
+    `union-lejana`. `tests/render/layout.test.ts` lo corre sobre **todos** los
+    descriptores del registro. `npm run layout` escribe una hoja SVG por
+    laboratorio en `layout-sheets/` (cajas, puertos con coordenadas, tubos,
+    problemas); con `rsvg-convert` se pasa a PNG. Lo que el chequeo **no** ve:
+    etiquetas sobre tubos y trazos que un drawer dibuja por su cuenta (cables
+    de alta del distribuidor): eso se mira en Firefox.
 - **`legacyRenderer`** (A1–A6): eliminado en A7 junto con `fuel/view.ts`.
 - **`phaserRenderer`** (A8/A9): igual contrato, drawers Phaser.
 

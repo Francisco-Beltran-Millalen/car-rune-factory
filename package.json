@@ -14,7 +14,8 @@
     "knip": "knip",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run lint && npm run knip && npm test && npm run build"
+    "check": "npm run typecheck && npm run lint && npm run knip && npm test && npm run build",
+    "layout": "LAYOUT_SHEETS=1 vitest run tests/render/layout.test.ts"
   },
   "devDependencies": {
     "@eslint-community/eslint-plugin-eslint-comments": "^4.8.1",

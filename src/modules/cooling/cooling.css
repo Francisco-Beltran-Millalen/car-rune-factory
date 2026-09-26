@@ -53,6 +53,15 @@
   stroke: var(--line);
   stroke-width: 3;
 }
+.fan-blade.dead {
+  fill: var(--muted);
+}
+.switch-dot {
+  fill: var(--muted);
+}
+.switch-dot.on {
+  fill: var(--ok);
+}
 .clutch {
   fill: var(--metal-dark);
   stroke: var(--part-stroke);

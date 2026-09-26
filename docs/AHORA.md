@@ -73,6 +73,7 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A12 | Encendido: platinos y COP (spec + plan listos) | A10 | ✅ |
 | A13 | Refrigeración (spec + plan listos) | A10 | ✅ |
 | A14 | Lubricación (spec + plan listos) | A10 | ✅ |
+| V1 | Conexiones visuales: geometría de drawers, `via`, chequeo y hoja de layout (`plans/2026-09-26-conexiones-visuales.md`) | A14 | ✅ |
 | A16 | Carburador (spec + plan listos) | A10 | ⏳ |
 | A15 | Laboratorio del vehículo: `vehicle-70` y `vehicle-2000` (plan del vehículo) | A11–A14, A16 | ⏳ |
 
@@ -109,7 +110,77 @@ Turbo y diésel: sin plan hasta que el usuario diga si entran.
 (`docs/modules/<id>.md`) y el plan (`docs/plans/2026-09-26-<id>.md`) de
 todos los sistemas, A11–A25, y alineó el plan del vehículo (v3). El usuario
 aprobó el plan del vehículo el 2026-09-26; A11, A12, A13 y A14 ya están
-implementadas (ver los CERRADO de abajo). Sigue A16, en orden.
+implementadas, y V1 rehízo las conexiones visuales de todos los
+laboratorios (ver los CERRADO de abajo). Sigue A16, en orden.
+
+## CERRADO 2026-09-26 — V1 Conexiones visuales
+
+Plan: `plans/2026-09-26-conexiones-visuales.md` (pedido del usuario: "hay
+varias mangueras y diagramas que no tienen conexión unas con otras").
+`npm run check` verde (**373** tests).
+
+- **Causa**: las puntas de cada manguera eran coordenadas escritas a mano
+  en `route`, sin relación con el dibujo de la pieza; un enlace con `route`
+  y sin `visual` se dibujaba igual (color combustible, también las
+  referencias del modelo); las piezas dibujadas dentro de otro drawer
+  (fusible/relé/motor del electroventilador, llave del calefactor, rejilla)
+  recibían cables a su `x/y`, donde no había nada. Nada lo detectaba.
+- **Core**: `DRAWERS` pasa a `{ geometry, draw }` con geometría pura (caja,
+  puertos en el borde, sub-piezas, `container`, `inline`);
+  `CircuitLinkDef.route` → `via` (sólo codos; puntas desde la geometría);
+  se dibuja sólo lo que trae `visual`; `CircuitPartDef.joinedBy`; punto de
+  unión en nudos con 3+ tubos. `src/render/svg/layout.ts` con
+  `checkLayout` (11 códigos de error) y `renderLayoutSheet`;
+  `tests/render/layout.test.ts` recorre todo el registro; `npm run layout`
+  escribe las hojas en `layout-sheets/` (ignorada por git). Se borró
+  `route.ts` (`autoRoute`) y su test. Drawer genérico `hosePoint`.
+- **Laboratorios rehechos** (todos pasan el chequeo; hojas revisadas):
+  - Refrigeración: circuito cerrado bomba → motor → termostato → radiador →
+    retorno a la bomba, con el bypass (ahora visible, `hosePoint`), el
+    calefactor con su llave y el depósito sobre el mismo retorno.
+    Eléctrico: batería → fusible → relé → motor, en fila bajo el ventilador
+    y con masa dibujada; en la variante viscosa ya no se dibujan (antes sí).
+    Correa de la bomba a una polea del cigüeñal (antes salía del lienzo).
+  - Lubricación: cárter → rejilla → bomba → alivio / filtro (+ bypass) →
+    galería → bancada, bielas y levas → retorno al cárter. El interruptor
+    de presión pasa a ser su pieza (`oilPressureSwitch`), atornillado a la
+    galería, con masa por el bloque y cableado al testigo del tablero.
+  - Combustible y encendido: migrados a `via` con el mismo aspecto; la
+    línea de alimentación es un punto sobre su tubo; el riel une nudo,
+    inyectores y regulador por `joinedBy`.
+  - Batería: bornes `−` (izquierda) y `+` (derecha) marcados; los cables
+    salen de los bornes.
+- **Bugs de paso**: el encendido cerraba `startBridge` pero la pieza se
+  llamaba `bridge`: **el puente del balasto nunca se cerraba en Arranque**.
+  Se renombró la pieza, se dibuja ("Puente (arranque)", cierra en Arranque)
+  y tiene ficha. En refrigeración, `fanOn` (booleano) se leía como número y
+  el relé nunca se veía cerrado. Los canales de sub-piezas del ventilador
+  no llegaban a ningún drawer: ahora van al del ventilador.
+- **Lo que el chequeo no ve** (se mira en Firefox): etiquetas sobre tubos y
+  trazos que un drawer dibuja por su cuenta (cables de alta del
+  distribuidor, arnés de inyectores, manguera de vacío).
+- **Fases siguientes**: la convención y la aceptación quedaron en
+  `FICHAS.md` (Contexto común); A15 (ficha y plan del vehículo) desplaza
+  `via` y corre el chequeo sobre el vehículo compuesto.
+
+**Checklist de Firefox** (`npm run dev`), en **cada** laboratorio: ninguna
+manguera ni cable termina en el aire; cada tubo entra a su pieza por un
+borde; ninguno pasa por encima del cuerpo de otra pieza; colores del fluido
+(aceite ámbar, refrigerante verde agua, combustible, eléctrico azul).
+
+1. `#/lab/cooling-electric`: batería → fusible → relé → motor del
+   ventilador; a 100 °C el brazo del relé cierra y el termocontacto se
+   pone verde. Bypass, calefactor y depósito llegan al tubo de retorno.
+2. `#/lab/cooling-viscous`: el ventilador sólo con embrague (sin fusible,
+   relé ni motor).
+3. `#/lab/lubrication-lamp` y `-gauge`: el recorrido completo del aceite sin
+   tubos sueltos; con la llave en "Contacto" el interruptor de presión se
+   ve cerrado y el testigo prendido; en marcha abre.
+4. `#/lab/ignition-points`: en "Arranque" el puente cierra (y con el
+   balasto cortado el motor sigue con chispa); en "Marcha" abre.
+5. `#/lab/ignition-cop`, `#/lab/fuel` y los de 4 tiempos se ven como antes
+   (con los cables saliendo de los bornes); el quiz sigue jugable.
+6. Tema oscuro: los puntos de unión y las masas se ven.
 
 ## CERRADO 2026-09-26 — A14 Lubricación
 

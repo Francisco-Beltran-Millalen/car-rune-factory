@@ -3,7 +3,7 @@
 // Las coordenadas son relativas a `part.x/part.y` (la región 600–960 × 40–700).
 
 import { el, group, label } from '../../../../core/svg.ts';
-import type { DrawerFactory } from '../../types.ts';
+import type { DrawerFactory, GeometryFn } from '../../types.ts';
 import { channelNumber, channelString } from '../../util.ts';
 
 const CRANK = { x: 100, y: 500, r: 40 };
@@ -39,6 +39,11 @@ function sprocket(parent: SVGGElement, cx: number, cy: number, r: number, part: 
 }
 
 /** Cadena o correa, tensor, guía, piñones y zoom del chavetero. */
+/** La región de la distribución: 360 × 660 desde `part`. */
+export const timingDriveGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 360, h: 660 },
+});
+
 export const timingDriveDrawer: DrawerFactory = ({ part, layers }) => {
   const ox = part.x;
   const oy = part.y;

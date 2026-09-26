@@ -54,6 +54,7 @@ export const IGNITION_PRESENT: PresentScheme = {
     battery: { v: (ctx) => number(ctx.params, 'batteryV', 12.6) },
     key: { position: (ctx) => text(ctx.params, 'ignitionKey', 'off') },
     ballast: { open: (ctx) => (ctx.faults['ballastOpen'] === true ? 1 : 0) },
+    startBridge: { closed: (ctx) => ctx.params['ignitionKey'] === 'start' },
     coil: {
       current: stateNumber('busCurrent'),
       energy: stateNumber('energy'),

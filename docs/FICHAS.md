@@ -89,26 +89,46 @@ ellos ya está en las specs, los planes nuevos y aquí.
   siguientes los reusan.
 - **Drawers** nuevos en `src/render/svg/drawers/<sistema>/`; geometría una
   vez, `update` sólo muta atributos (§9); colores por variables CSS.
+- **Conexiones visuales (plan V1, 2026-09-26; contrato en `CONTRATOS.md`
+  §6.4)**. Vale para toda tarea con vista, aunque su plan no lo diga:
+  1. Cada drawer nuevo exporta, en su mismo archivo, su `GeometryFn`: la
+     caja del cuerpo (lo que dibuja, sin etiquetas), los **puertos sobre el
+     borde** con los nombres de los puertos del elemento, y las
+     `subparts` que dibuja adentro (con sus puertos si llevan cable o tubo).
+     Se registra en `DRAWERS` como `{ geometry, draw }`.
+  2. En el `CircuitDef`, un enlace que se ve lleva `visual` (con su
+     `pipeClass`); los codos van en `via`; **las puntas nunca se escriben**
+     (salen de la geometría). Todos los tramos son horizontales o
+     verticales. Los enlaces sólo del modelo (referencias, térmicos) van sin
+     `visual`.
+  3. Una pieza de red que no tenga cuerpo propio se dibuja igual: como
+     sub-pieza de otro drawer, como `hosePoint` (un tramo de manguera con
+     nombre) o se une con `joinedBy`. Un nudo con un solo tubo dibujado es
+     un error.
+  4. Las etiquetas del drawer no van donde entra un tubo (el chequeo no las
+     ve): a un costado del puerto.
+  5. Masa: si el retorno es por la carrocería o el bloque, el enlace a
+     `battery.-` va sin `visual` y el drawer dibuja `.ground-mark`.
+- **Aceptación de toda tarea con vista** (además de la de su ficha):
+  `tests/render/layout.test.ts` sin errores (corre en `npm run check` y
+  cubre solo al laboratorio nuevo por estar en el registro) y la hoja de
+  `npm run layout` (`layout-sheets/<id>.svg`) revisada por el agente antes
+  de dejar la checklist de Firefox. La checklist incluye "ninguna manguera
+  ni cable termina en el aire ni cruza el cuerpo de otra pieza".
 - **Límite del solver**: ±1 bar (o 1 V, 1 °C) por iteración y 25
   iteraciones: una entrada que salte mucho en un paso se limita en su
   controlador (frenos lo hacen explícito).
 
 ---
 
-## A14 — Lubricación
-
-- **Spec**: `docs/modules/lubrication.md`.
-- **Plan**: `docs/plans/2026-09-26-lubrication.md`.
-- **Estrena**: `displacementPump`, `linearRestrictor` y el control `drain`
-  del `tank`.
-- **Aceptación**: tests de la spec §11 y checklist del plan §6.
-
 ## A16 — Carburador
 
 - **Spec**: `docs/modules/carburetor.md`.
 - **Plan**: `docs/plans/2026-09-26-carburetor.md`.
 - **Estrena**: `flowSource`.
-- **Aceptación**: tests de la spec §11 y checklist del plan §5.
+- **Aceptación**: tests de la spec §11, checklist del plan §5 y la de
+  conexiones visuales del Contexto común (el carburador, la bomba mecánica y
+  sus tubos exportan geometría; los enlaces usan `via`).
 
 ## A15 — Laboratorio del vehículo
 
@@ -120,7 +140,11 @@ ellos ya está en las specs, los planes nuevos y aquí.
   (`vehicle-70` y `vehicle-2000`, §8), el panel de señales, el elemento
   `breach` y el benchmark commiteado.
 - **Aceptación**: la del plan §15 + la checklist en Firefox (una falla de
-  un sistema se ve en otro, en los dos vehículos).
+  un sistema se ve en otro, en los dos vehículos) + conexiones visuales
+  (Contexto común): `translateCircuit` desplaza `x/y` **y los `via`** (ya no
+  hay `route`), prefija también `joinedBy`, y `checkLayout` corre sobre el
+  vehículo compuesto: dos sistemas no pueden pisarse ni cruzarse los tubos
+  de uno por el cuerpo del otro.
 - **Al cerrar**: preguntar al usuario el orden del bloque S2 (A17–A25) y si
   abre la puerta del bloque G.
 

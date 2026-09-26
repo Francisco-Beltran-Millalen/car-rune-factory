@@ -158,7 +158,9 @@ subida a la culata, retornos goteando al cárter. Testigo y (70) manómetro a
 la derecha, con el cable al bus. Partículas `p-oil` ∝ caudal; el color del
 tubo por presión; `p-air` con aire. Drawers nuevos en
 `src/render/svg/drawers/lubrication/`: `sump`, `gearPump`, `reliefValve`,
-`oilFilter`, `gallery`, `bearing`, `warningLamp`, `oilGauge`. Canales que
+`oilFilter`, `gallery`, `bearing`, `warningLamp`, `oilGauge` y (plan V1)
+`oilPressureSwitch`: el interruptor atornillado al final de la galería, con
+masa por el bloque, cableado al testigo del tablero. Canales que
 delatan falla: `bearing.wear`, `oilFilter.dirt`, `pickup.dirt`.
 
 ## 9. Narración

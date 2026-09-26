@@ -83,7 +83,7 @@ describe.each(['points', 'cop'] as const)('contenido ignition %s', (variant) => 
     run(m, 1);
     for (const r of readouts(variant)) expect(Number.isFinite(r.get(m.state)), r.id).toBe(true);
     for (const part of ignitionDef(variant).parts) {
-      if (part.type === 'junction' || part.id === 'bridge') continue;
+      if (part.type === 'junction') continue;
       expect(IGNITION_PRESENT.parts[part.id], part.id).toBeDefined();
     }
   });

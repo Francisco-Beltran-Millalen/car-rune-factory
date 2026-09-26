@@ -2,7 +2,7 @@
 // Las coordenadas son relativas a `part.x/part.y`.
 
 import { group, el, label, pipe } from '../../../core/svg.ts';
-import type { DrawerFactory } from '../types.ts';
+import type { DrawerFactory, GeometryFn } from '../types.ts';
 import { channelBool, channelNumber, channelString, springPoints } from '../util.ts';
 
 const ENGINE_LABEL: Readonly<Record<string, string>> = {
@@ -12,6 +12,12 @@ const ENGINE_LABEL: Readonly<Record<string, string>> = {
   misfire: 'Falla (mezcla)',
   stalled: 'Se detuvo',
 };
+
+export const manifoldGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 440, h: 86 },
+  ports: { a: [part.x + 210, part.y] },
+  container: true,
+});
 
 /** Múltiple de admisión: caja y etiqueta del estado del motor. Canal: `engineState`. */
 export const manifoldDrawer: DrawerFactory = ({ part, layers }) => {
@@ -24,7 +30,6 @@ export const manifoldDrawer: DrawerFactory = ({ part, layers }) => {
   let last = '';
   return {
     g,
-    ports: { a: [part.x + 210, part.y] },
     update(channels): void {
       const state = channelString(channels, 'engineState', 'off');
       if (state === last) return;
@@ -34,6 +39,12 @@ export const manifoldDrawer: DrawerFactory = ({ part, layers }) => {
     },
   };
 };
+
+/** Tramo en L del múltiple al regulador (lo dibuja el propio drawer). */
+export const vacuumHoseGeometry: GeometryFn = (part) => ({
+  box: { x: part.x - 42, y: part.y - 56, w: 42, h: 56 },
+  ports: { a: [part.x - 42, part.y] },
+});
 
 /** Manguera de vacío: tramo conectado o suelto. Canal: `off`. */
 export const vacuumHoseDrawer: DrawerFactory = ({ part, layers }) => {
@@ -51,7 +62,6 @@ export const vacuumHoseDrawer: DrawerFactory = ({ part, layers }) => {
   let last: boolean | null = null;
   return {
     g,
-    ports: { ref: [part.x - 42, part.y] },
     update(channels): void {
       const isOff = channelBool(channels, 'off');
       if (isOff === last) return;
@@ -61,6 +71,11 @@ export const vacuumHoseDrawer: DrawerFactory = ({ part, layers }) => {
     },
   };
 };
+
+export const regulatorGeometry: GeometryFn = (part) => ({
+  box: { x: part.x, y: part.y, w: 64, h: 92 },
+  ports: { in: [part.x, part.y + 20], ret: [part.x + 64, part.y + 20], ref: [part.x + 32, part.y + 92] },
+});
 
 /** Regulador: diafragma y resorte que se comprime. Canal: `open` (0..1). */
 export const regulatorDrawer: DrawerFactory = ({ part, layers }) => {
@@ -72,7 +87,6 @@ export const regulatorDrawer: DrawerFactory = ({ part, layers }) => {
   let last = -1;
   return {
     g,
-    ports: { in: [part.x, part.y + 20], ret: [part.x + 64, part.y + 20], ref: [part.x + 32, part.y + 92] },
     update(channels): void {
       const open = channelNumber(channels, 'open');
       const key = Math.round(open * 100);

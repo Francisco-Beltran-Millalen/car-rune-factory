@@ -51,6 +51,14 @@ const BALLAST: PartInfo = {
   failures: ['Balasto cortado → arranca y se apaga al soltar la llave'],
 };
 
+const START_BRIDGE: PartInfo = {
+  name: 'Puente de arranque',
+  what: 'El contacto del burro de arranque que salta el balasto.',
+  why: 'Al arrancar la batería cae: sin balasto la bobina recibe toda la tensión que queda.',
+  how: 'Se cierra sólo con la llave en Arranque; al soltarla, la corriente vuelve a pasar por el balasto.',
+  failures: ['Con el balasto cortado, el motor arranca por el puente y se apaga al soltar la llave'],
+};
+
 const POINTS: PartInfo = {
   name: 'Platinos',
   what: 'El contacto mecánico que corta el primario.',
@@ -182,6 +190,7 @@ export function createParts(variant: IgnitionVariant): Readonly<Record<string, P
     Object.assign(parts, {
       coil: COIL,
       ballast: BALLAST,
+      startBridge: START_BRIDGE,
       points: POINTS,
       condenser: CONDENSER,
       distributor: DISTRIBUTOR,

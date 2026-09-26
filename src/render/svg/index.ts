@@ -3,13 +3,13 @@
 // circuito y el VisualState (§22).
 
 import { createFlow, PX_PER_LH, type Flow } from '../../core/particles.ts';
-import { arrowMarkers, el, group, pipe, type Point } from '../../core/svg.ts';
+import { arrowMarkers, el, group, pipe } from '../../core/svg.ts';
 import type { ModuleDescriptor, VisualState } from '../../core/types.ts';
 import type { CircuitDef, CircuitLinkDef } from '../../sim/circuit/types.ts';
 import { intents, type Intent } from '../../game/intents.ts';
 import type { HighlightStyle, ModeUi } from '../../game/types.ts';
 import { DRAWERS } from './drawers/index.ts';
-import { autoRoute } from './route.ts';
+import { resolveLayout } from './layout.ts';
 import { pressureOpacity } from './util.ts';
 import type { Drawer, SvgLayers } from './types.ts';
 
@@ -76,35 +76,19 @@ export function createSvgRenderer({
     fx: group(svg, { class: 'layer-fx' }),
   };
 
+  // Plan V1: las puntas de cada tubo salen de la geometría de los drawers.
+  const layout = resolveLayout(circuit);
   const drawers = new Map<string, Drawer>();
-  const partPorts = new Map<string, Readonly<Record<string, Point>>>();
-  for (const part of circuit.parts) {
-    const factory = DRAWERS[part.visual ?? part.type];
-    if (!factory) continue;
-    const drawer = factory({ part, def: circuit, layers });
-    drawers.set(part.id, drawer);
-    if (drawer.ports) partPorts.set(part.id, drawer.ports);
-  }
-
-  function portPoint(endpoint: string): Point | null {
-    const dot = endpoint.indexOf('.');
-    const part = dot < 0 ? endpoint : endpoint.slice(0, dot);
-    const port = dot < 0 ? '' : endpoint.slice(dot + 1);
-    return partPorts.get(part)?.[port] ?? null;
+  for (const [id, { part, geo }] of layout.parts) {
+    const entry = DRAWERS[part.visual ?? part.type];
+    if (entry) drawers.set(id, entry.draw({ part, def: circuit, layers, geo }));
   }
 
   const links: LinkView[] = [];
-  for (const link of circuit.links) {
-    if (!link.visual && !link.route) continue;
-    let route: readonly Point[] = link.route ?? [];
-    if (route.length < 2) {
-      const from = portPoint(link.from);
-      const to = portPoint(link.to);
-      if (!from || !to) continue;
-      route = autoRoute(from, to);
-    }
+  for (const { link, points } of layout.links) {
+    if (!points) continue;
     const vis = link.visual;
-    const parts = pipe(layers.pipes, route, {
+    const parts = pipe(layers.pipes, points, {
       width: vis?.width ?? 10,
       className: vis?.pipeClass ?? 'fluid-fuel',
       ...(vis?.owner !== undefined ? { part: vis.owner } : {}),
@@ -119,6 +103,9 @@ export function createSvgRenderer({
         })
       : null;
     links.push({ id: link.id, def: link, inner: parts.inner, flow });
+  }
+  for (const node of layout.nodes.values()) {
+    if (node.degree >= 3) el('circle', { cx: node.at[0], cy: node.at[1], r: 5, class: 'junction-dot' }, layers.parts);
   }
 
   const dataPart = (target: EventTarget | null): string | null => {

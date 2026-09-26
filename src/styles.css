@@ -538,6 +538,20 @@ a {
 .particle {
   pointer-events: none;
 }
+/* Plan V1: unión de 3+ tubos, masa a la carrocería y zona de clic de un tramo. */
+.junction-dot {
+  fill: var(--part-stroke);
+  pointer-events: none;
+}
+.ground-mark {
+  fill: none;
+  stroke: var(--part-stroke);
+  stroke-width: 2;
+}
+.hose-hit {
+  fill: transparent;
+  cursor: pointer;
+}
 .p-fuel {
   fill: var(--fuel);
 }
