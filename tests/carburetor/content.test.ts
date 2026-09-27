@@ -73,6 +73,14 @@ describe('contenido carburetor', () => {
     const drawn = ['tank', 'fuelLine', 'mechPump', 'fuelFilter', 'floatBowl', 'carbBody', 'choke'];
     for (const id of drawn) expect(CARBURETOR_PRESENT.parts[id], id).toBeDefined();
   });
+
+  it('todo enlace visual tiene canal de caudal en el esquema (si no, el tubo se ve vacío)', () => {
+    for (const link of CARB_DEF.links) {
+      if (!link.visual) continue;
+      expect(CARBURETOR_PRESENT.links?.[link.id], link.id).toBeDefined();
+      expect(CARBURETOR_PRESENT.links?.[link.id]?.flow, link.id).toBeDefined();
+    }
+  });
 });
 
 describe('narración carburetor', () => {

@@ -44,6 +44,7 @@ export type CarburetorState = {
   needleOpen: number;
   qPump: number;
   pPump: number;
+  qFilter: number;
   tankLevel: number;
   flooding: boolean;
   vaporization: number;
@@ -83,6 +84,7 @@ export function createInitialCarburetorState(): CarburetorState {
     needleOpen: 0,
     qPump: 0,
     pPump: 0,
+    qFilter: 0,
     tankLevel: K.tankDefault,
     flooding: false,
     vaporization: 1,
@@ -225,6 +227,7 @@ export function createCarburetor(
     state.needleOpen = needleOpen;
     state.qPump = ctx.read('qPump');
     state.pPump = ctx.read('pPump');
+    state.qFilter = ctx.read('qFilter');
     state.tankLevel = clamp(ctx.read('tankLevel'), 0, K.tankCapacity);
     state.flooding = bowlLevel >= K.bowlFloodLevel;
     state.vaporization = vaporization(engineTempC);

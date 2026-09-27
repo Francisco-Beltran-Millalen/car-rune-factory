@@ -7,7 +7,7 @@ git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 ## PARA RETOMAR (escrito al cerrar la sesión del 2026-09-27)
 
 - **Estado**: A11–A14, V1 y A16 (carburador) cerradas y commiteadas en
-  `main`. `npm run check` verde, 410 tests.
+  `main`. `npm run check` verde, 418 tests.
 - **Revisión del usuario**: pendiente. No se recorrieron punto por punto las
   checklists de A14, V1 ni A16 (abajo): conviene hacerlo al empezar, antes de
   A15, y anotar aquí lo que siga mal.
@@ -141,7 +141,25 @@ implementada. Sigue A15, en orden.
 
 Plan: `plans/2026-09-26-carburetor.md`; spec: `modules/carburetor.md`. Un
 descriptor (`carburetor`), ruta `#/lab/carburetor`. `npm run check` verde
-(**410** tests, +37 sobre los 373 previos).
+(**418** tests, +45 sobre los 373 previos).
+
+- **Fix post-cierre (mismo día, encontrado por el usuario en Firefox): "no
+  veo que fluya el combustible".** El `CARBURETOR_PRESENT` no tenía sección
+  `links`: sin ella, `presentCircuit` publica caudal y presión 0 para todo
+  enlace visual, así que ninguna manguera del carburador tenía partículas ni
+  opacidad (quedaban vacías/transparentes aunque el modelo sí tuviera flujo).
+  No lo agarró ningún test porque nada verificaba que un enlace `visual` (el
+  del `CircuitLinkDef`) tuviera su contraparte en el esquema del presenter.
+  Se agregaron los 5 canales (`qPump`/`qFilter` + `pPump`, con una sonda
+  nueva `qFilter`) y un test en `content.test.ts` que falla si un enlace
+  visual queda sin canal de caudal. **Se auditaron los demás módulos
+  registrados** (script suelto, no commiteado) comparando cada
+  `CircuitLinkDef` con `visual` contra las claves de `present.links`:
+  `ignition-points` e `ignition-cop` tienen el mismo problema en sus cables
+  (`e-bat-key`, `e-key-j1`/`e-key-bus`, `e-j2-coil` y los `e-c*-gnd` de COP
+  usan `WIRE` con `flowClass`, así que deberían mostrar partículas de
+  corriente y no las muestran). No se tocó `src/modules/ignition/` (fuera de
+  esta tarea, §12): queda para quien tome esa tarea.
 
 - **Elemento nuevo**: `flowSource` (`src/sim/elements/hydraulic.ts`), caudal
   impuesto `a→b` con jacobiano nulo — los surtidores de la cuba al múltiple.

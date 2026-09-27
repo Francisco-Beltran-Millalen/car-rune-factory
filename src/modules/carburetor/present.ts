@@ -36,4 +36,11 @@ export const CARBURETOR_PRESENT: PresentScheme = {
     },
     choke: { chokeEff: stateNumber('chokeEff') },
   },
+  links: {
+    'h-tank-line': { flow: stateNumber('qPump'), potential: stateNumber('pPump') },
+    'h-line-pump': { flow: stateNumber('qPump'), potential: stateNumber('pPump') },
+    'h-pump-node': { flow: stateNumber('qPump'), potential: stateNumber('pPump') },
+    'h-node-filter': { flow: stateNumber('qFilter'), potential: stateNumber('pPump') },
+    'h-filter-needle': { flow: stateNumber('qFilter'), potential: stateNumber('pPump') },
+  },
 };

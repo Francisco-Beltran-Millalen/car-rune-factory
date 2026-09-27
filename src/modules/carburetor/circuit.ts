@@ -78,6 +78,7 @@ export const CARB_DEF: CircuitDef = {
   probes: {
     qPump: { element: 'mechPump', probe: 'q' },
     pPump: { node: 'mechPump.out' },
+    qFilter: { element: 'fuelFilter', probe: 'q' },
     bowlLevel: { element: 'floatBowl', probe: 'level' },
     tankLevel: { element: 'tank', probe: 'level' },
   },
