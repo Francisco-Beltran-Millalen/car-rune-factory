@@ -37,6 +37,10 @@ const COOLANT = {
   potentialRange: [40, 110] as const,
   width: 9,
   radius: 3,
+  // El caudal real (miles de L/h) es mucho mayor que el de referencia de
+  // `PX_PER_LH` (100 L/h → 250 px/s, calibrado para combustible): sin este
+  // `scale` las partículas viajan a miles de px/s y no se ven fluir.
+  scale: 0.15,
 } as const;
 
 function num(value: ParamValue | undefined, fallback = 0): number {

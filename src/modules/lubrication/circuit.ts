@@ -37,6 +37,10 @@ const OIL = {
   flowClass: 'p-oil',
   width: 8,
   radius: 3,
+  // El caudal real (cientos de L/h) es mucho mayor que el de referencia de
+  // `PX_PER_LH` (100 L/h → 250 px/s, calibrado para combustible): sin este
+  // `scale` las partículas viajan a miles de px/s y no se ven fluir.
+  scale: 0.3,
 } as const;
 
 function num(value: ParamValue | undefined, fallback = 0): number {
