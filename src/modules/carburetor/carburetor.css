@@ -1,0 +1,110 @@
+/* Estilos de los drawers del carburador (A16). Colores por variables CSS. */
+
+.carb-body {
+  fill: var(--part);
+}
+.venturi-wall {
+  fill: none;
+  stroke: var(--metal-dark);
+  stroke-width: 2;
+}
+.air-arrow {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.jet-nozzle {
+  fill: var(--metal);
+  stroke: var(--metal-dark);
+  stroke-width: 1;
+}
+.jet-spray {
+  fill: var(--fuel);
+  pointer-events: none;
+}
+.throttle-plate {
+  stroke: var(--metal-dark);
+  stroke-width: 4;
+  transition: transform 0.05s;
+}
+.idle-screw {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.idle-screw-slot {
+  stroke: var(--metal-dark);
+  stroke-width: 1.5;
+}
+.accel-body {
+  fill: var(--part);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.accel-plunger {
+  fill: var(--metal);
+  transition: transform 0.05s;
+}
+
+.choke-body {
+  fill: var(--part);
+}
+.choke-flap {
+  stroke: var(--metal-dark);
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: transform 0.1s;
+}
+.choke-closed .choke-flap {
+  stroke: var(--warn);
+}
+
+.bowl-body {
+  fill: var(--panel);
+  stroke: var(--part-stroke);
+}
+.bowl-liquid.fluid-fuel {
+  fill: var(--fuel);
+  opacity: 0.85;
+}
+.float-ball {
+  fill: var(--metal);
+  stroke: var(--metal-dark);
+  stroke-width: 1.5;
+}
+.needle-body {
+  fill: var(--part);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.needle-pin {
+  stroke: var(--metal-dark);
+  stroke-width: 3;
+  transition: transform 0.1s;
+}
+.bowl-body.flooding {
+  stroke: var(--bad);
+  stroke-width: 2.5;
+}
+
+.cam-body {
+  fill: var(--metal);
+  stroke: var(--part-stroke);
+  stroke-width: 1.5;
+}
+.cam-lobe {
+  fill: var(--metal-dark);
+}
+.cam-body.worn {
+  stroke: var(--warn);
+}
+.diaphragm-line {
+  stroke: var(--metal-dark);
+  stroke-width: 4;
+}
+.drop-fuel {
+  fill: var(--fuel);
+  pointer-events: none;
+}

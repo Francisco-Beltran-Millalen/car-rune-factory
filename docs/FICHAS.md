@@ -121,15 +121,6 @@ ellos ya está en las specs, los planes nuevos y aquí.
 
 ---
 
-## A16 — Carburador
-
-- **Spec**: `docs/modules/carburetor.md`.
-- **Plan**: `docs/plans/2026-09-26-carburetor.md`.
-- **Estrena**: `flowSource`.
-- **Aceptación**: tests de la spec §11, checklist del plan §5 y la de
-  conexiones visuales del Contexto común (el carburador, la bomba mecánica y
-  sus tubos exportan geometría; los enlaces usan `via`).
-
 ## A15 — Laboratorio del vehículo
 
 - **Plan**: `docs/plans/2026-09-26-vehiculo.md` (v3), secciones §3–§10 y

@@ -1,0 +1,111 @@
+// Fichas de las piezas del carburador (CONTRATOS 4.4, spec §2).
+
+import type { PartInfo } from '../../core/types.ts';
+
+export const parts: Readonly<Record<string, PartInfo>> = {
+  tank: {
+    name: 'Estanque',
+    what: 'El depósito de bencina del auto.',
+    why: 'Alimenta a la bomba mecánica.',
+    how: 'La bomba la aspira por gravedad y presión negativa; casi vacío, entra aire.',
+    failures: ['Casi vacío → la bomba aspira aire'],
+  },
+  fuelLine: {
+    name: 'Línea de alimentación',
+    what: 'La manguera del estanque a la bomba mecánica.',
+    why: 'Lleva la bencina desde atrás del auto hasta el motor.',
+    how: 'Va al vacío (aspiración de la bomba); una fuga entra aire, no bencina.',
+    failures: [],
+  },
+  mechPump: {
+    name: 'Bomba mecánica',
+    what: 'Bomba de diafragma movida por una excéntrica del árbol de levas.',
+    why: 'Empuja la bencina desde el estanque hasta el carburador sin electricidad.',
+    how: 'La excéntrica late el diafragma una vez por vuelta de leva (rpm/2); si el diafragma se rompe, bombea la mitad y pierde bencina (en el auto real, al cárter).',
+    failures: ['Gastada → menos caudal, se nota a fondo en subidas largas', 'Diafragma roto → caudal a la mitad y fuga de bencina'],
+  },
+  fuelFilter: {
+    name: 'Filtro de bencina',
+    what: 'El filtro en línea antes de la aguja.',
+    why: 'Evita que la suciedad del estanque tape la aguja o los surtidores.',
+    how: 'Tapado, agrega resistencia y puede dejar la cuba sin llenar a régimen alto.',
+    failures: ['Tapado → menos caudal a la cuba'],
+  },
+  needleValve: {
+    name: 'Aguja de la cuba',
+    what: 'La válvula que regula el nivel de la cuba, como en el estanque de un WC.',
+    why: 'Mantiene el nivel constante para que el venturi siempre "vea" la misma altura de bencina.',
+    how: 'El flotador la cierra cuando el nivel sube; pinchado, no cierra y la cuba rebalsa; pegada, no abre y la cuba se vacía.',
+    failures: ['Pegada cerrada → la cuba se vacía y el motor se para', 'El flotador pinchado la deja siempre abierta → rebalse'],
+  },
+  floatBowl: {
+    name: 'Cuba',
+    what: 'El pequeño depósito de bencina dentro del carburador.',
+    why: 'Le da a los surtidores una altura de bencina constante para calibrar la mezcla.',
+    how: 'El flotador sube con el nivel y cierra la aguja; muy alta, enriquece; rebalsada, ahoga el motor.',
+    failures: ['Nivel alto → mezcla rica', 'Rebalse → se ahoga'],
+  },
+  float: {
+    name: 'Flotador',
+    what: 'La boya que sigue el nivel de la cuba.',
+    why: 'Es lo que mueve la aguja para regular el nivel.',
+    how: 'Pinchado, se hunde: la aguja queda siempre abierta.',
+    failures: ['Pinchado → se hunde y la aguja no cierra'],
+  },
+  venturi: {
+    name: 'Venturi',
+    what: 'El estrechamiento del ducto de aire, antes de la mariposa.',
+    why: 'El aire se acelera ahí y baja su presión: esa depresión es la que aspira la bencina.',
+    how: 'Cuanto más aire pasa, más depresión y más bencina aspira el surtidor principal.',
+    failures: [],
+  },
+  mainJet: {
+    name: 'Surtidor principal',
+    what: 'El calibre que dosifica la bencina a media/alta carga.',
+    why: 'Fija cuánta bencina entra por cada kg de aire cuando el venturi tira fuerte.',
+    how: 'Domina desde que el motor pasa de ralentí; tapado, la mezcla se empobrece a fondo.',
+    failures: ['Tapado → mezcla pobre a media y alta carga'],
+  },
+  idleJet: {
+    name: 'Surtidor de ralentí',
+    what: 'El calibre que dosifica la bencina con la mariposa casi cerrada.',
+    why: 'A esa apertura el venturi casi no tira: la bencina sale por un orificio bajo la mariposa, con el vacío del múltiple.',
+    how: 'Tapado, el motor no sostiene el ralentí aunque ande bien en carretera.',
+    failures: ['Tapado → no sostiene el ralentí'],
+  },
+  idleScrew: {
+    name: 'Tornillo de mezcla',
+    what: 'El tornillo que ajusta a mano la mezcla de ralentí.',
+    why: 'Permite afinar el ralentí sin cambiar de surtidor.',
+    how: 'Lo lee el circuito de ralentí (spec §5.2): fuera de punto, empobrece o enriquece sólo en ralentí.',
+    failures: [],
+  },
+  throttlePlate: {
+    name: 'Mariposa',
+    what: 'La válvula que regula cuánto aire entra al motor.',
+    why: 'Es el acelerador: más abierta, más aire (y más bencina la sigue).',
+    how: 'Gira con el pedal; casi cerrada en ralentí, gira ~80° a fondo.',
+    failures: [],
+  },
+  choke: {
+    name: 'Choke (estrangulador)',
+    what: 'La chapaleta manual en la boca de aire.',
+    why: 'Con el motor frío, tirado, enriquece la mezcla para que evapore mejor y arranque.',
+    how: 'Trabado cerrado, ahoga en caliente (humo negro); trabado abierto, no arranca en frío.',
+    failures: ['Trabado cerrado → mezcla muy rica en caliente', 'Trabado abierto → no arranca en frío'],
+  },
+  accelPump: {
+    name: 'Bomba de aceleración',
+    what: 'Una bombita mecánica ligada a la mariposa.',
+    why: 'Al pisar de golpe, el venturi tarda un instante en aspirar más: la bomba adelanta un chorro extra para que no falte bencina.',
+    how: 'Rota (diafragma roto), pisar de golpe empobrece un instante y el motor tironea.',
+    failures: ['Rota → tironeo al pisar de golpe'],
+  },
+  airHorn: {
+    name: 'Boca de aire',
+    what: 'La entrada de aire del carburador, donde va el filtro de aire.',
+    why: 'Por ahí entra todo el aire que el motor respira.',
+    how: 'El choke cierra justo en esta boca.',
+    failures: [],
+  },
+};

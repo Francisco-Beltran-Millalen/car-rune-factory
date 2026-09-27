@@ -10,6 +10,7 @@ import {
   createCurrentLoad,
   createDisplacementPump,
   createElectricPump,
+  createFlowSource,
   createHeatCapacity,
   createHeatSource,
   createJunction,
@@ -305,6 +306,17 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
     expect(-(evaluate(limited, [0, 0]).flow[0] ?? 0)).toBeCloseTo(0, 9);
   });
 
+  it('flowSource: caudal impuesto, jacobiano nulo (A16)', () => {
+    const source = createFlowSource({}, 'fuel');
+    source.control['q'] = 42;
+    expect(-(evaluate(source, [0.2, 0]).flow[0] ?? 0)).toBeCloseTo(42, 9);
+    expect(evaluate(source, [0.2, 0]).flow[1]).toBeCloseTo(42, 9);
+    checkJacobian(source, [0.2, 0], 'flowSource');
+    source.control['q'] = 0;
+    expect(evaluate(source, [5, -3]).flow[0]).toBeCloseTo(0, 12);
+    expect(evaluate(source, [5, -3]).flow[1]).toBeCloseTo(0, 12);
+  });
+
   it('linearRestrictor: q = g·Δp (A14)', () => {
     const res = createLinearRestrictor({ g: 260 }, 'oil');
     expect(-(evaluate(res, [1, 0]).flow[0] ?? 0)).toBeCloseTo(260, 9);
@@ -393,6 +405,7 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
       'variableOrifice',
       'displacementPump',
       'linearRestrictor',
+      'flowSource',
       'heatSource',
       'temperatureSource',
       'thermalConductance',

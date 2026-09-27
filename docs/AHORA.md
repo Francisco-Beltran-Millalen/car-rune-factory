@@ -4,26 +4,26 @@ Trabajo vivo entre sesiones (≤500 líneas). Lo cerrado se recorta y queda en
 git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 `plans/2026-09-22-plan-maestro.md`.
 
-## PARA RETOMAR (escrito al cerrar la sesión del 2026-09-26)
+## PARA RETOMAR (escrito al cerrar la sesión del 2026-09-27)
 
-- **Estado**: A11–A14 y V1 (conexiones visuales) cerradas y commiteadas en
-  `main` (último: `7533045`). `npm run check` verde, 373 tests.
-- **Revisión del usuario**: miró los laboratorios después de V1 y dijo
-  "está mejor". No se recorrieron punto por punto las checklists de A14 ni
-  de V1 (abajo): conviene hacerlo al empezar, antes de A16, y anotar aquí lo
-  que siga mal.
+- **Estado**: A11–A14, V1 y A16 (carburador) cerradas y commiteadas en
+  `main`. `npm run check` verde, 410 tests.
+- **Revisión del usuario**: pendiente. No se recorrieron punto por punto las
+  checklists de A14, V1 ni A16 (abajo): conviene hacerlo al empezar, antes de
+  A15, y anotar aquí lo que siga mal.
 - **Lo que el chequeo automático no ve** (candidatos si algo se ve raro):
   etiquetas encima de un tubo; trazos que un drawer dibuja por su cuenta
   (cables de alta del distribuidor, arnés de inyectores, manguera de
   vacío, correa de la bomba de agua); el manómetro de `lubrication-gauge`
   no tiene tubo a la galería (es un instrumento `visual`).
-- **Siguiente tarea: A16 — Carburador** (`FICHAS.md`). Además de su ficha,
-  vale la convención de conexiones del Contexto común: su drawer exporta
-  geometría, los enlaces usan `via` y la aceptación incluye
-  `tests/render/layout.test.ts` + revisar la hoja de `npm run layout`.
-  Después: A15 (vehículo), que ya tiene anotado mover los `via`.
+- **Siguiente tarea: A15 — Laboratorio del vehículo** (`FICHAS.md` y
+  `plans/2026-09-26-vehiculo.md` v3). Ya tiene anotado mover los `via` sobre
+  el vehículo compuesto y correr `checkLayout` sobre él.
 - **Pendiente aparte** (sin fecha): el fix del feedback del quiz (sección
-  siguiente).
+  siguiente); un pedido de core sobre `displacementPump` en
+  `docs/core-requests.md` (2026-09-27, encontrado al implementar A16: corte
+  duro en `pMax` que puede trabar a Newton — no bloquea A15, se esquivó con
+  un `slip` en el módulo).
 - **Cómo mirar un layout sin navegador**: `npm run layout` y
   `rsvg-convert layout-sheets/<id>.svg -o <id>.png`.
 
@@ -97,7 +97,7 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | A13 | Refrigeración (spec + plan listos) | A10 | ✅ |
 | A14 | Lubricación (spec + plan listos) | A10 | ✅ |
 | V1 | Conexiones visuales: geometría de drawers, `via`, chequeo y hoja de layout (`plans/2026-09-26-conexiones-visuales.md`) | A14 | ✅ |
-| A16 | Carburador (spec + plan listos) | A10 | ⏳ |
+| A16 | Carburador (spec + plan listos) | A10 | ✅ |
 | A15 | Laboratorio del vehículo: `vehicle-70` y `vehicle-2000` (plan del vehículo) | A11–A14, A16 | ⏳ |
 
 **Bloque S2 — resto del auto** (después de A15; el usuario elige el orden al
@@ -134,7 +134,69 @@ Turbo y diésel: sin plan hasta que el usuario diga si entran.
 todos los sistemas, A11–A25, y alineó el plan del vehículo (v3). El usuario
 aprobó el plan del vehículo el 2026-09-26; A11, A12, A13 y A14 ya están
 implementadas, y V1 rehízo las conexiones visuales de todos los
-laboratorios (ver los CERRADO de abajo). Sigue A16, en orden.
+laboratorios (ver los CERRADO de abajo). A16 (carburador) ya está
+implementada. Sigue A15, en orden.
+
+## CERRADO 2026-09-27 — A16 Carburador
+
+Plan: `plans/2026-09-26-carburetor.md`; spec: `modules/carburetor.md`. Un
+descriptor (`carburetor`), ruta `#/lab/carburetor`. `npm run check` verde
+(**410** tests, +37 sobre los 373 previos).
+
+- **Elemento nuevo**: `flowSource` (`src/sim/elements/hydraulic.ts`), caudal
+  impuesto `a→b` con jacobiano nulo — los surtidores de la cuba al múltiple.
+  Test de ley en `tests/sim/elements.test.ts`; filas en `solver.md` §6 y
+  `CONTRATOS.md` §4.10.
+- **Física** (`venturi.ts`, `transient.ts`, `controllers.ts`): depresión del
+  venturi, fracción del principal, proporción de régimen `r` (= 1 por
+  construcción cuando el carburador está sano), retraso de la bencina
+  (τ = 0,25 s) y bomba de aceleración exactamente como pide la spec §5; los
+  9 casos de la grilla sano (rpm × mariposa) dan mezcla en [0,97; 1,03] sin
+  tocar ninguna constante de la spec.
+- **Dos ajustes de robustez, no pedidos por el plan** (ARCHITECTURE §6 y
+  §14, con la cuenta en `modules/carburetor.md` §5.4): la bomba mecánica usa
+  `slip = 30` (el plan decía 0) y la apertura de la aguja tiene un piso
+  (`needleSafeFloor = 0,08`, redondea a 0 por debajo). Sin esto, cualquier
+  falla que empujara el punto de operación cerca de `pMax` (bomba gastada,
+  filtro tapado, aguja casi cerrada) hacía que el solver **fallara todos los
+  pasos siguientes sin parar** — no da NaN, el estado queda congelado, así
+  que sólo lo detecta un test que exija `failures === 0` (se agregó ese
+  chequeo al fuzz, 60 combinaciones × 500 pasos). Causa de fondo (un corte
+  duro sin cola suave en `displacementPump.lim` más allá de `pMax`) anotada
+  en `docs/core-requests.md` (2026-09-27): no bloquea, pero conviene una
+  tarea de core más adelante.
+- **Circuito**: red de bencina real (estanque → bomba mecánica → filtro →
+  aguja → cuba → surtidores, fluido `fuel`); el aire y la mezcla no pasan
+  por el solver (spec §1), los calcula `carbCore` a partir de `air.massFlow`
+  del bus. `needleValve` y `pumpOutNode` son piezas sin `visual` propio: la
+  aguja es sub-pieza de `floatBowl` (`joinedBy`) y el nudo de la bomba es un
+  `tee` sin dibujo (plan V1).
+- **Drawers nuevos** (`render/svg/drawers/carburetor/`): `carbBody` (venturi,
+  mariposa, surtidores, tornillo de mezcla, bomba de aceleración, boca de
+  aire, todos sub-dibujos sin geometría propia porque no están en la red del
+  solver), `floatBowl` (cuba, flotador, aguja), `mechPump` (excéntrica,
+  diafragma, fuga) y `choke`. Reutiliza `tank`, `filter` y `hosePoint` ya
+  existentes. `tests/render/layout.test.ts`: 0 problemas; hoja de
+  `npm run layout` revisada.
+- Tests: `tests/carburetor/{venturi,transient,model,faults,content}.test.ts`
+  (35) + el de `flowSource` en `tests/sim/elements.test.ts`.
+
+**Checklist de Firefox** (`npm run dev`) — la del plan §5:
+
+`#/lab/carburetor`:
+1. En ralentí sale bencina por el orificio bajo la mariposa; al subir rpm y
+   mariposa empieza a pulverizar el surtidor del venturi y el de ralentí se
+   apaga.
+2. La cuba: el flotador sube, la aguja cierra, y la bomba mecánica late con
+   la excéntrica (gira a rpm/2).
+3. "Partida en frío con choke": sin choke la mezcla queda en ~50 %; con
+   choke tirado, ~100 %. "Se olvidó el choke": rica.
+4. "Tironea al pisar": al mover la mariposa de golpe la mezcla cae un
+   momento; con la bomba sana se ve el chorro y no cae.
+5. "Se ahoga": la cuba rebalsa y la mezcla se dispara.
+6. "Se para en la subida": a fondo la cuba baja hasta vaciarse.
+7. Combustible, 4 tiempos, encendido, refrigeración, lubricación y quiz
+   siguen funcionando; F12 sin errores.
 
 ## CERRADO 2026-09-26 — V1 Conexiones visuales
 
@@ -288,216 +350,14 @@ tests). `typescript-eslint` acepta TS `>=4.8.4 <6.1.0` (paso 1 del plan).
 y el filtro dice "de cartucho", sin punto antirretorno. Los demás
 laboratorios y el quiz siguen funcionando; F12 sin errores.
 
-## CERRADO 2026-09-26 — A13 Refrigeración
-
-Plan: `plans/2026-09-26-cooling.md`; spec: `modules/cooling.md`. Dos
-descriptores (`cooling-viscous`, `cooling-electric`) y la ruta vieja
-`#/lab/cooling` → `cooling-electric`. `npm run check` verde (**324** tests).
-
-- **Core nuevo**: dominio `thermal` (°C/W/J/K) en `Domain`; `setPotential` en
-  el solver (escribe `x`/`xStart` de un nodo libre y no toca los fijos) con
-  su test; `CircuitDef.initial` aplicado al compilar y en `reset`, con test;
-  elementos `centrifugalPump` y `variableOrifice` (los reusan A16/A18/A23);
-  elementos térmicos `heatSource`, `thermalConductance`, `advection`,
-  `heatCapacity`; y tres que el plan no listaba (§12, anotado):
-  `temperatureSource` (el ambiente fijo, hacía falta), `hydroNode` y
-  `thermalNode` (nudos `joint`/`multiple` para las redes de A13).
-  `restrictor` y `leak` suman sonda `q`. Conservación de la advección en un
-  lazo cerrado de 3 nodos probada (±1e-6 relativo).
-- **Física**: en la bomba centrífuga `Δp = p_out − p_in` (el signo inicial
-  estaba al revés y Newton quedaba oscilando en 0; se corrigió, no se tocó la
-  ley). `fastThermal` escala los controles (×20) y el estado publica sin
-  escalar; la advección se pasa por controlador (§25); nivel, aire de nivel y
-  de ebullición, presión de tapa, ventilador por histéresis (eléctrico) o
-  acople viscoso, sensor que miente y códigos quedan como pide la spec.
-- **Único ajuste de constante** (§14): `thermostatLeak` 2 % → **1 %**. Con el
-  2 % el `stuckClosed` se estabilizaba en ~126 °C y **no hervía** (el test 8
-  pide >120 °C *y* `boiling` a los 15 min); con 1 % hierve (~10 min) y el
-  calentamiento en ralentí sigue cruzando 85 °C a los 21,6 min (rango 15–30).
-- **Desviaciones anotadas**: el test 11 (manguera rota) corre **sin**
-  `fastThermal` porque el nivel no es un flujo térmico y con ×20 la fuga no
-  drenaba 1,5 L en el tiempo del test; el test 12 deja asentar el calefactor
-  30 s (la masa térmica del núcleo tiene τ ~9 s). El escenario "panal tapado a
-  fondo" (test 10) pasa de 104 °C y sigue subiendo con ebullición: el modelo
-  no acota ese runaway (el rango del test sólo pide >104).
-- **Vista**: drawers nuevos (`engineJacket`, `waterPump`+`pumpBelt`,
-  `thermostat`, `radiator`+`radiatorCap`, `fan` con motor/termocontacto/relé/
-  fusible o embrague, `expansionTank`, `heaterCore`, `tempGauge`+`tempSensor`)
-  y `cooling.css`. Para colorear el refrigerante por temperatura se agregaron
-  `visual.potentialRange` al renderer y `Flow.setTint` (escribe `--t` en el
-  tubo y las partículas; el CSS interpola con `color-mix`).
-- **Core config**: `vite.config.ts` sube `testTimeout` a 30 s: las
-  simulaciones largas de A13 compiten en paralelo y hacían fallar por tiempo
-  tests viejos de 5 s (el test 8 de combustible). `eslint.config.js` extiende
-  la excepción de `type` a `controllers` (el `core`/`mechanism` de A11/A12 y
-  los nuevos `constants/gas/timing/events` ya estaban). `router.ts` suma el
-  alias `cooling`.
-- Tests: `tests/cooling/model.test.ts` (17), `content.test.ts` (12) y los de
-  elementos/nodal/circuito.
-
-**Checklist de Firefox** (`npm run dev`) — la del plan §6:
-
-`#/lab/cooling-electric`:
-1. "Calentar desde frío": las partículas van del azul al rojo en el motor;
-   hasta ~88 °C todo circula por el bypass; después se abre el termostato y
-   el radiador se entibia.
-2. En ralentí caliente el ventilador se prende a 100 °C y se apaga a 95.
-3. "Tráfico con el ventilador muerto": la temperatura sube pasando 105 °C;
-   con la tapa fallada hierve antes (aparece vapor y burbujas).
-4. "Termostato pegado abierto en invierno": no pasa de ~50 °C.
-5. "Manguera rota": gotea, baja el nivel del depósito y luego aparecen
-   burbujas y sube la temperatura.
-6. "El reloj miente": el motor está rojo y el reloj marca 30 °C menos.
-7. El calefactor calienta la cabina (kW en lecturas) y tapado casi no.
-
-`#/lab/cooling-viscous`: el ventilador gira con el motor y acopla más con el
-radiador caliente; embrague gastado → recalienta en tráfico.
-
-Combustible, 4 tiempos, encendido y quiz siguen funcionando; F12 sin errores.
-
-## CERRADO 2026-09-26 — A12 Encendido (platinos y COP)
-
-Plan: `plans/2026-09-26-ignition.md`; spec: `modules/ignition.md`. Dos
-descriptores del mismo código (`ignition-points`, `ignition-cop`) y la ruta
-vieja `#/lab/ignition` → `ignition-cop`. `npm run check` verde (**288**
-tests; +37).
-
-- **Elementos nuevos** (fuera de la lista del plan, §12 anotado):
-  `currentLoad` (`I = control.i·smoothstep(ΔV/1 V)`, C¹, en vez de la rampa de
-  0,05 V que pedía el plan: da el mismo objetivo sin esquinas para Newton) y
-  `junction` (nudo eléctrico `joint`/`multiple` de 6 puertos; hacía falta para
-  el `coilBus` y los empalmes y no estaba en la lista). Tests de ley +
-  jacobiano en `tests/sim/elements.test.ts`; filas en `solver.md` §6 y
-  `CONTRATOS.md` §4.10.
-- **Modelo por eventos** (`events.ts` puro + `core.ts`): cortes en `[θ, θ+Δθ)`
-  con desfases 0/540/180/360, avance de platinos (8 + centrífugo + vacío de
-  puerto) y mapa COP, corriente RL con tope de 8 A, `Vdisp = √(2ηE/Cs)` vs
-  `Vped = 2 + 2·gap·p + 4·rotorWorn`, arco, picado del condensador, chispa
-  perdida y códigos P0016/P0340. El consumo medio de cada bobina se le escribe
-  al `currentLoad` paso a paso (integral analítica del dwell partida por los
-  eventos).
-- **Decisiones de implementación, anotadas**: la sonda `coilV` se toma **antes
-  del balasto** (`ballast.a` en platinos, `coil1.a` en COP), porque el plan
-  §5.3 computa `R_t = R + balasto` (spec §5.3) y medir después del balasto
-  contaría dos veces su caída; `state.busCurrent` se muestra suavizado
-  (τ = 0,1 s, como un amperímetro) mientras el solver recibe el promedio exacto
-  del paso; con una falla sistémica (balasto/tapa en corto o sin sincronía) la
-  señal `ignition.spark` se fuerza a 0 en el acto (el test 6 pide 0 al soltar
-  la llave); `state` suma `syncRpm`, `pointsOpen` y `pulses` (aditivos, para
-  lecturas y el destello de las bujías).
-- **Circuito**: baja tensión con batería real (`r = 0,01 Ω`), llave, balasto
-  como `switch` de 1,5 Ω con binding del cortado y puente de arranque; en COP
-  `coilBus`/`groundBus` con `junction`. Sin compuerta por software de la
-  batería; el solver converge con `failures === 0` en los tres escenarios del
-  test 11. `validate` sólo deja avisos de puertos de nudo sin usar (esperado).
-- **Drawers nuevos** (`render/svg/drawers/ignition/`): `ballast`, `coil`
-  (única y COP), `sparkPlug`, `distributor` (leva, contactos, rotor, tapa,
-  contrapesos, cápsula y cables), `toothWheel` (60-2, sensores e igniter) y
-  `scope` (dos trazos analíticos). `ignition.css` con variables CSS.
-- **Core**: `eslint.config.js` extiende las listas de pureza/capas a
-  `events/core` y la excepción de `type` a `core` (§33); `src/core/router.ts`
-  suma el alias `ignition` con tests.
-- Tests: `tests/ignition/events.test.ts` (6), `core.test.ts` (15) y
-  `content.test.ts` (16), más el elemento y el alias.
-
-**Verificado por el usuario en Firefox (2026-09-26): funciona.**
-
-**Checklist de Firefox** (`npm run dev`) — la del plan §5:
-
-`#/lab/ignition-points`:
-1. En ralentí la leva abre y cierra los platinos, el rotor apunta al cilindro
-   que enciende y cada bujía destella en su turno (orden 1-3-4-2).
-2. El osciloscopio muestra la rampa de corriente y el pico de voltaje; en
-   cámara lenta se ve el arco.
-3. Al subir rpm los contrapesos se abren y el avance sube; en crucero
-   (mariposa 0,3) la cápsula de vacío adelanta más.
-4. "Arranca y se apaga al soltar la llave": en `start` hay chispa, en `run` no.
-5. "Falla en alta": a 6000 rpm a fondo las bujías fallan, en ralentí no.
-6. `camOffset = 10`: el avance baja 10°.
-
-`#/lab/ignition-cop`:
-7. La rueda 60-2 gira con su hueco; sin sensor no hay chispa y la ECU lo dice.
-8. `camOffset = 10`: la chispa no cambia pero aparece el código P0016.
-9. Bobina 2 muerta: la bujía 2 no destella.
-10. Combustible, 4 tiempos y quiz siguen funcionando; F12 sin errores.
-
-## CERRADO 2026-09-26 — A11 Ciclo de 4 tiempos y distribución
-
-Plan: `plans/2026-09-26-four-stroke.md`; spec: `modules/four-stroke.md` (con
-las cuentas del gas y la distribución). El usuario aprobó el plan del vehículo
-(v3) y se implementó A11 en orden. `npm run check` verde (**251** tests).
-
-- **Bus de señales** (`src/sim/signals/{bus,stubs}.ts`): `createLabBus` con
-  dueño único (§28), latencia de un paso, `sameStep` para la fase, stubs de la
-  tabla del plan del vehículo §5.3 (incluye `air.massFlow` del carburador) y
-  `createPhaseStub`. El controlador `labBus` va primero en el circuito.
-- **Mecanismo sin red**: `compileCircuit` con 0 nodos ya convergía; su test
-  quedó en `tests/sim/nodal.test.ts` (red vacía, 1 iteración). `VISUAL_TYPE`
-  se movió de `fuel/circuit.ts` a `src/sim/elements/visual.ts` y entró en
-  `ELEMENT_TYPES`; `FUEL_TYPES` desapareció (el combustible usa el registro
-  compartido). `typescript-eslint` sigue pidiendo TS < 6.1: no hay migración.
-- **Física** (`sim/engine/geometry.ts` + `four-stroke/{constants,gas,timing,
-  mechanism}.ts`): subpasos de ≤ 1°; el calor va en la forma integral de
-  `dp = −n·p·dV/V + (n−1)/V·dQ·1e-5` (calor al volumen medio) porque con la
-  forma diferencial el subpaso de 1° no cumplía §11.15 (daba 4,9 % a 6000 rpm;
-  ahora 0,09 %). El pistón sigue al **cigüeñal** y las válvulas/combustión a la
-  **leva**: así el choque de §5.7 da los números de la spec (1 diente 0,2 mm
-  de margen; 2 dientes −1,7 mm en los dos sentidos).
-- **Números medidos** a 3000 rpm: a fondo 25° → 581 J y 67,2 bar de pico
-  (spec: 585/66); 0° → 493 (503); 40° → 554 (555); sin chispa → −1,7 J (−6);
-  prueba de compresión sana → 13,2 bar manométricos (13,4); `kLeak` 8 → 5,1
-  (≈5,5). Ningún rango de §11 necesitó tocar constantes.
-- **Ajustes de implementación, anotados**: `state.compression` guarda bar
-  manométricos (el pico absoluto menos 1,013); `state` suma `viewWork` y
-  `cycleCount` (aditivos, para lecturas y el P-V); el torque es instantáneo
-  (oscila y cruza por cero, como el P-V). El test 8 (choque) vive en
-  `tests/four-stroke/model.test.ts`: necesita el gas, no sólo `timing.ts`.
-- **Fuera de la lista de archivos de A11** (§12, anotado): `eslint.config.js`
-  extiende las listas de pureza/capas y la excepción de `type` a
-  `constants/gas/timing/mechanism` (§33); `src/core/router.ts` gana
-  `LAB_ALIASES` (`four-stroke` → `four-stroke-dohc`) con tests en
-  `tests/game/router.test.ts` y `tests/core/ui-pure.test.ts`;
-  `tests/game/quiz.test.ts` lee los drawers recursivamente (hay subcarpeta
-  `engine/`); `tests/sim/{nodal,elements}.test.ts` cubren 0 nodos y el tipo
-  `visual`. Docs: `CONTRATOS.md` §4.11 (bus) y la lista de §4.10,
-  `solver.md` §6 (fila `visual`) y la mención a `ELEMENT_TYPES` en `fuel.md`.
-- **Módulo**: `four-stroke-ohv` (varillas y balancines, tensor de resorte) y
-  `four-stroke-dohc` (dos árboles, tensor hidráulico, correa opcional) con
-  `fourStrokeDef`, catálogo §26 por variante, contenido, narración y presets;
-  drawers nuevos en `render/svg/drawers/engine/` (corte del cilindro, tren de
-  distribución con inset del chavetero, P-V y barras de compresión) y
-  `four-stroke.css`. Tests: `tests/four-stroke/*` (gas 7, timing 5, model 11,
-  contenido 13) y `tests/sim/signals.test.ts` (8).
-
-**Verificado por el usuario en Firefox (2026-09-26): funciona.**
-
-**Checklist de Firefox** (`npm run dev`) — la del plan §6:
-1. `#/lab/four-stroke-dohc`: a 120 rpm (preset "Cámara lenta") se ven los 4
-   tiempos en orden, el nombre cambia en PMS/PMI, las válvulas abren y cierran
-   donde dice la spec §5 y el cruce se resalta con `showOverlap`.
-2. El P-V dibuja el lazo: con chispa, un lazo con área; sin chispa, casi una
-   línea (ida y vuelta).
-3. "Prueba de compresión" llena las 4 barras entre 12,5 y 14 bar; con anillos
-   gastados en el 3 la barra 3 queda baja.
-4. "Chavetero ovalado": en el inset se ve el piñón con juego sobre el eje; al
-   subir la carga, la marca de la leva se separa de la referencia y se ve el
-   golpeteo.
-5. "Perno flojo": el chavetero se abre solo hasta que la chaveta se corta; la
-   marca de la leva se va quedando atrás.
-6. "Saltaron dos dientes": aparece el aviso de choque y la compresión de un
-   cilindro cae.
-7. Tensor hidráulico con presión 0,2: la cadena se comba y hay ruido; con 3 bar
-   se tensa.
-8. `#/lab/four-stroke-ohv` dibuja varillas y balancines; `rocker.lash` baja la
-   alzada y hace tic-tic.
-9. `#/lab/four-stroke` redirige a la versión DOHC. El combustible y el quiz
-   siguen funcionando; F12 sin errores.
-
 ## Historial recortado
 
 Los CERRADO/FIX/REVISIÓN anteriores a A11 (A0–A7, A6b, TS5, fixes del
 2026-09-23/24) se recortaron el 2026-09-26 para respetar el límite de
 líneas; están en git (`git log -p -- docs/AHORA.md`, antes de `7533045`).
+Los CERRADO de A11 (4 tiempos), A12 (encendido) y A13 (refrigeración) se
+recortaron el 2026-09-27 por el mismo motivo; están en git (antes del commit
+de A16).
 
 ## Checklist detallada del combustible (opcional, usuario, Firefox)
 

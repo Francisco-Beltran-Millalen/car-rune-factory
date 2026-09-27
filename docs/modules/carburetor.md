@@ -112,7 +112,7 @@ con `map = −0,65 + 0,65·throttle`. Ralentí (800 rpm) = 16,5 kg/h; a fondo a
 | pieza | elemento | valores |
 |---|---|---|
 | estanque | `tank` | 50 L, `pickupLow = 1` |
-| bomba mecánica | `displacementPump` (de A14) | `disp = 5e-4 L/rev`, `n = rpm/2` (la mueve la leva), `pMax = 0,3 bar`, `wearQ = 0,8` → 90 L/h a 6000 rpm (la demanda a fondo es 38 L/h); `wear` |
+| bomba mecánica | `displacementPump` (de A14) | `disp = 5e-4 L/rev`, `n = rpm/2` (la mueve la leva), `pMax = 0,3 bar`, `wearQ = 0,8`, **`slip = 30`** (el plan pedía 0; ver nota abajo) → 90 L/h a 6000 rpm (la demanda a fondo es 38 L/h); `wear` |
 | fuga del diafragma | `leak` | `k = 10` con la falla |
 | filtro | `restrictor` | `k = 2e-5`, `clogFactor = 2000` |
 | aguja | `variableOrifice` (de A13) | `gOpen = 164 L/h/√bar` (90 L/h a 0,3 bar), `gLeak = 0`; `open = clamp((0,060 − nivel)/0,008, 0, 1)` (1 con `floatPunctured`, 0 con `needleStuck`) |
@@ -122,6 +122,29 @@ con `map = −0,65 + 0,65·throttle`. Ralentí (800 rpm) = 16,5 kg/h; a fondo a
 `disponible = clamp(nivel/0,01, 0, 1)`: con la cuba casi vacía los
 surtidores no entregan lo pedido y la mezcla cae sola. La proporción
 publicada usa lo realmente entregado.
+
+**Dos ajustes de robustez (§14, ARCHITECTURE §6), anotados al implementar:**
+
+- **`slip = 30`, no 0.** `displacementPump` corta `lim` a 0 en seco para
+  `Δp ≥ pMax` (rama plana, jacobiano nulo, sin cola suave). Con `slip = 0`,
+  cualquier falla que empuje el punto de operación cerca de `pMax` (bomba
+  gastada, filtro tapado, aguja casi cerrada) hace que Newton se pase de esa
+  rama en la primera iteración y quede atrapado: el solver falla **todos**
+  los pasos siguientes sin parar (no da NaN; el estado queda congelado, así
+  que sólo lo detecta un test que exija `failures === 0`, no uno que sólo
+  mire NaN/Infinity). Se reprodujo aislado (`tests/sim/`, no queda commiteado)
+  variando `n`, `wear`, `clog` y `open`; `slip = 30` (una fuga interna con
+  pendiente lineal suave incluso más allá de `pMax`) lo resuelve en los 60
+  casos al azar × 500 pasos del test de robustez. Pedido de fondo (cola suave
+  en `lim` en vez del corte a 0) en `docs/core-requests.md` (2026-09-27).
+- **Piso de apertura de la aguja (`needleSafeFloor = 0,08`).** La misma
+  rigidez aparece del lado de `variableOrifice`: con `gOpen = 164` (spec),
+  una apertura apenas mayor que 0 (que es justo donde se asienta la aguja en
+  régimen, regulando el nivel) vuelve casi singular esa ecuación y el solver
+  no converge en 25 iteraciones aunque `slip` ya esté puesto. `open` se
+  redondea a 0 (rama limpia del elemento) cuando la fórmula de la spec daría
+  menos de 0,08; el nivel de la cuba oscila unas pocas décimas de mL por
+  encima de lo que oscilaría sin el piso, invisible en los rangos de §11.
 
 ### 5.5. Referencia (planificador)
 

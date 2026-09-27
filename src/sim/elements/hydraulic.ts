@@ -379,6 +379,34 @@ export function createTank(
   return def;
 }
 
+/**
+ * Caudal impuesto de `a` a `b` (A16, spec carburetor §5.4): `q = control.q`
+ * (L/h), sin depender del salto de presión → jacobiano nulo. Lo usan los
+ * surtidores del carburador (la cuba entrega lo que calcula el controlador).
+ */
+export function createFlowSource(
+  _params: Readonly<Record<string, number>>,
+  fluid: Fluid,
+): ElementDef {
+  const def: ElementDef = {
+    ports: hydraulic2('a', 'b', fluid),
+    params: {},
+    control: { q: 0 },
+    state: {},
+    eval(_pot, out) {
+      const q = controlNumber(def.control['q']);
+      out.flow[0] = -q;
+      out.flow[1] = q;
+      out.jac.fill(0);
+    },
+    commit: noCommit,
+    probes: {
+      q: () => controlNumber(def.control['q']),
+    },
+  };
+  return def;
+}
+
 /** Nodo fijo (Dirichlet) con potencial `control.p` (el múltiple, §8.2). */
 export function createPressureSource(
   _params: Readonly<Record<string, number>>,

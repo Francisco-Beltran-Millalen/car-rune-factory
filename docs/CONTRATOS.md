@@ -147,8 +147,9 @@ interface ElementTypeInfo { create: ElementFactory; joint?: boolean; multiple?: 
 // thermalNode (A12/A13: nudos `joint`/`multiple`), centrifugalPump,
 // variableOrifice, displacementPump, linearRestrictor (A14), heatSource,
 // temperatureSource, thermalConductance,
-// advection y heatCapacity (A13: dominio thermal: °C/W/J/K) y visual (A7: la
-// pieza sólo dibujable; se movió a `sim/elements/` en A11).
+// advection y heatCapacity (A13: dominio thermal: °C/W/J/K), flowSource (A16:
+// caudal impuesto, jacobiano nulo; los surtidores del carburador) y visual
+// (A7: la pieza sólo dibujable; se movió a `sim/elements/` en A11).
 
 // Circuito (A5):
 compileCircuit<S extends CircuitState>(options: CompileOptions<S>): CompiledCircuit<S>

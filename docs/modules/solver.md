@@ -132,6 +132,7 @@ puertos son un nodo interno) y `multiple` (un puerto admite varias conexiones).
 | `variableOrifice` | a, b (hidr) | restrictor con `k = 1/g²`, `g = gOpen·open + gLeak`; `gOpen`, `gLeak` | `open` | — |
 | `displacementPump` | in, out (hidr) | `q = disp·n·60·(1−wearQ·wear)·(1−aire)·lim − slip·slipFactor·(1+4·wear)·Δp`, `Δp = p_out−p_in`, `lim = √⁺(1−Δp/pMax)` si `pMax > 0`; params `disp` (L/rev), `slip` (L/h/bar), `pMax`, `wearQ` | `n`, `air`, `wear`, `slipFactor` | `wear` |
 | `linearRestrictor` | a, b (hidr) | `q = g·Δp`; `g` en L/h/bar | `g` | — |
+| `flowSource` | a, b (hidr) | caudal impuesto `q = control.q` (L/h) de `a` a `b`, jacobiano nulo (A16) | `q` | — |
 | `heatSource` | a (térm) | inyecta `control.q` W (positivo calienta) | `q` | — |
 | `temperatureSource` | a (térm) | nodo fijo (Dirichlet) con `control.t` en °C | `t` | — |
 | `thermalConductance` | a, b (térm) | `q = g·(Ta − Tb)` W; `g` en W/K | `g` | — |

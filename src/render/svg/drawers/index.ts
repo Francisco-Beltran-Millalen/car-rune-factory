@@ -2,6 +2,10 @@
 // (plan V1). Un tipo sin entrada no se dibuja (nudos, piezas sólo del modelo).
 
 import type { DrawerEntry } from '../types.ts';
+import { carbBodyDrawer, carbBodyGeometry } from './carburetor/carbBody.ts';
+import { chokeDrawer, chokeGeometry } from './carburetor/choke.ts';
+import { floatBowlDrawer, floatBowlGeometry } from './carburetor/floatBowl.ts';
+import { mechPumpDrawer, mechPumpGeometry } from './carburetor/mechPump.ts';
 import {
   engineJacketDrawer,
   engineJacketGeometry,
@@ -143,4 +147,8 @@ export const DRAWERS: Readonly<Record<string, DrawerEntry>> = {
   warningLamp: { geometry: warningLampGeometry, draw: warningLampDrawer },
   oilPressureSwitch: { geometry: oilPressureSwitchGeometry, draw: oilPressureSwitchDrawer },
   oilGauge: { geometry: oilGaugeGeometry, draw: oilGaugeDrawer },
+  carbBody: { geometry: carbBodyGeometry, draw: carbBodyDrawer },
+  choke: { geometry: chokeGeometry, draw: chokeDrawer },
+  floatBowl: { geometry: floatBowlGeometry, draw: floatBowlDrawer },
+  mechPump: { geometry: mechPumpGeometry, draw: mechPumpDrawer },
 };
