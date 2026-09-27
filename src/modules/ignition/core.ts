@@ -75,6 +75,10 @@ export type IgnitionState = {
   pulses: number[];
   coilV: number;
   busCurrent: number;
+  /** [4] A, corriente media suavizada por bobina (COP: cada una la suya;
+   *  platinos: sólo [0], igual a `busCurrent`). Para los cables del COP, que
+   *  no comparten un único lazo en serie. */
+  coilCurrents: number[];
   sync: boolean;
   /** RPM a partir de la cual sincroniza el sensor de cigüeñal (COP). */
   syncRpm: number;
@@ -135,6 +139,7 @@ export function createInitialIgnitionState(): IgnitionState {
     pulses: [0, 0, 0, 0],
     coilV: 0,
     busCurrent: 0,
+    coilCurrents: [0, 0, 0, 0],
     sync: true,
     syncRpm: 0,
     pointsOpen: true,
@@ -367,6 +372,7 @@ export function createIgnition(
       stepBus += average;
       const element = ctx.elements[points ? 'coil' : `coil${i + 1}`];
       if (element) element.control['i'] = average;
+      state.coilCurrents[i] = expSmooth(state.coilCurrents[i] ?? 0, average, dt, 0.1);
     }
     if (!sync) lastResult.fill(0);
     state.busCurrent = expSmooth(state.busCurrent, stepBus, dt, 0.1);

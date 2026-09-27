@@ -41,13 +41,21 @@ function plugChannels(index: number): Readonly<Record<string, PresentFn>> {
   };
 }
 
+const coilCurrent = (index: number): PresentFn => (ctx) => arrayNumber(ctx.state, 'coilCurrents', index - 1);
+
 function copCoil(index: number): Readonly<Record<string, PresentFn>> {
   return {
-    current: stateNumber('busCurrent'),
+    current: coilCurrent(index),
     energy: stateNumber('energy'),
     dead: index === 2 ? (ctx) => (ctx.faults['coil2Dead'] === true ? 1 : 0) : (): number => 0,
   };
 }
+
+/** El balasto y el puente de arranque se turnan: sólo uno conduce a la vez. */
+const cranking: PresentFn = (ctx) => (ctx.params['ignitionKey'] === 'start' ? 1 : 0);
+const busCurrent: PresentFn = stateNumber('busCurrent');
+const ballastCurrent: PresentFn = (ctx) => (cranking(ctx) ? 0 : busCurrent(ctx));
+const bridgeCurrent: PresentFn = (ctx) => (cranking(ctx) ? busCurrent(ctx) : 0);
 
 export const IGNITION_PRESENT: PresentScheme = {
   parts: {
@@ -98,5 +106,27 @@ export const IGNITION_PRESENT: PresentScheme = {
         return Array.isArray(codes) ? codes.filter((c): c is string => typeof c === 'string').join(' ') : '';
       },
     },
+  },
+  links: {
+    // Platinos: un solo lazo en serie, la misma corriente en todo el cable.
+    'e-bat-key': { flow: busCurrent },
+    'e-key-j1': { flow: busCurrent },
+    'e-j1-ballast': { flow: ballastCurrent },
+    'e-j1-bridge': { flow: bridgeCurrent },
+    'e-ballast-j2': { flow: ballastCurrent },
+    'e-bridge-j2': { flow: bridgeCurrent },
+    'e-j2-coil': { flow: busCurrent },
+    'e-coil-gnd': { flow: busCurrent },
+    // COP: la alimentación y la masa comunes llevan la suma; cada bobina, la suya.
+    'e-key-bus': { flow: busCurrent },
+    'e-bus-c1': { flow: coilCurrent(1) },
+    'e-bus-c2': { flow: coilCurrent(2) },
+    'e-bus-c3': { flow: coilCurrent(3) },
+    'e-bus-c4': { flow: coilCurrent(4) },
+    'e-c1-gnd': { flow: coilCurrent(1) },
+    'e-c2-gnd': { flow: coilCurrent(2) },
+    'e-c3-gnd': { flow: coilCurrent(3) },
+    'e-c4-gnd': { flow: coilCurrent(4) },
+    'e-gnd-bat': { flow: busCurrent },
   },
 };

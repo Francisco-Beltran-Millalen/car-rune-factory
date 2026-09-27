@@ -94,6 +94,14 @@ describe.each(['viscous', 'electric'] as const)('contenido cooling %s', (variant
     ];
     for (const id of drawn) expect(COOLING_PRESENT.parts[id], id).toBeDefined();
   });
+
+  it('todo enlace visual tiene canal de caudal en el esquema (si no, la manguera se ve muerta)', () => {
+    for (const link of coolingDef(variant).links) {
+      if (!link.visual) continue;
+      expect(COOLING_PRESENT.links?.[link.id], link.id).toBeDefined();
+      expect(COOLING_PRESENT.links?.[link.id]?.flow, link.id).toBeDefined();
+    }
+  });
 });
 
 describe('narración cooling', () => {

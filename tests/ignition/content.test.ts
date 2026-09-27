@@ -87,6 +87,14 @@ describe.each(['points', 'cop'] as const)('contenido ignition %s', (variant) => 
       expect(IGNITION_PRESENT.parts[part.id], part.id).toBeDefined();
     }
   });
+
+  it('todo enlace visual tiene canal de caudal en el esquema (si no, el cable se ve muerto)', () => {
+    for (const link of ignitionDef(variant).links) {
+      if (!link.visual) continue;
+      expect(IGNITION_PRESENT.links?.[link.id], link.id).toBeDefined();
+      expect(IGNITION_PRESENT.links?.[link.id]?.flow, link.id).toBeDefined();
+    }
+  });
 });
 
 describe('narración ignition', () => {

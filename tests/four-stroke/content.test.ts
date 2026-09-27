@@ -91,6 +91,14 @@ describe.each(VARIANTS_TO_TEST)('contenido four-stroke %s', (variant) => {
     }
     expect(VARIANTS[variant].id).toContain(variant);
   });
+
+  it('todo enlace visual tiene canal de caudal en el esquema (si no, se ve muerto)', () => {
+    for (const link of fourStrokeDef(variant).links) {
+      if (!link.visual) continue;
+      expect(FOUR_STROKE_PRESENT.links?.[link.id], link.id).toBeDefined();
+      expect(FOUR_STROKE_PRESENT.links?.[link.id]?.flow, link.id).toBeDefined();
+    }
+  });
 });
 
 describe('narración four-stroke', () => {

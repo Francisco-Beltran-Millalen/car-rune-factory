@@ -5,6 +5,7 @@ import { parts } from '../../src/modules/fuel/content.ts';
 import { DEFAULT_FAULTS, DEFAULT_PARAMS, createFuelModel, type FuelModel } from '../../src/modules/fuel/reference-model.ts';
 import { createNarrator } from '../../src/modules/fuel/narrate.ts';
 import { controls, faults, presets, readouts } from '../../src/modules/fuel/specs.ts';
+import { FUEL_PRESENT } from '../../src/modules/fuel/present.ts';
 import { DRAWERS } from '../../src/render/svg/drawers/index.ts';
 
 const PART_IDS = [
@@ -123,6 +124,14 @@ describe('circuito ↔ contenido (§10)', () => {
       const hasDrawer = DRAWERS[part.visual ?? part.type] !== undefined;
       const isLinkOwner = FUEL_DEF.links.some((l) => l.visual?.owner === part.id);
       if (hasDrawer || isLinkOwner) expect(parts[part.id], part.id).toBeDefined();
+    }
+  });
+
+  it('todo enlace visual tiene canal de caudal en el esquema (si no, el tubo se ve vacío)', () => {
+    for (const link of FUEL_DEF.links) {
+      if (!link.visual) continue;
+      expect(FUEL_PRESENT.links?.[link.id], link.id).toBeDefined();
+      expect(FUEL_PRESENT.links?.[link.id]?.flow, link.id).toBeDefined();
     }
   });
 });

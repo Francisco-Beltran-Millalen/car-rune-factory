@@ -13,13 +13,16 @@ const stateNumber =
     number(ctx.state, key);
 
 const coolantFlow: PresentFn = stateNumber('qPump');
+const radiatorFlow: PresentFn = stateNumber('qRadiator');
+const bypassFlow: PresentFn = stateNumber('qBypass');
+const heaterFlow: PresentFn = stateNumber('qHeater');
 const engineTemp: PresentFn = stateNumber('engineTemp');
 const radiatorTemp: PresentFn = stateNumber('radiatorTemp');
 const heaterTemp: PresentFn = stateNumber('heaterTemp');
 const fanOn: PresentFn = (ctx) => (ctx.state['fanOn'] === true ? 1 : 0);
 
-function coolantLink(potential: PresentFn): { flow: PresentFn; potential: PresentFn } {
-  return { flow: coolantFlow, potential };
+function coolantLink(flow: PresentFn, potential: PresentFn): { flow: PresentFn; potential: PresentFn } {
+  return { flow, potential };
 }
 
 export const COOLING_PRESENT: PresentScheme = {
@@ -53,20 +56,26 @@ export const COOLING_PRESENT: PresentScheme = {
     battery: { v: (ctx) => number(ctx.params, 'batteryV', 13.8) },
   },
   links: {
-    'h-pump-node1': coolantLink(engineTemp),
-    'h-node1-jacket': coolantLink(engineTemp),
-    'h-jacket-node2': coolantLink(engineTemp),
-    'h-node2-thermostat': coolantLink(engineTemp),
-    'h-node2-bypass': coolantLink(engineTemp),
-    'h-node2-heater': coolantLink(engineTemp),
-    'h-thermostat-node3': coolantLink(engineTemp),
-    'h-node3-radiator': coolantLink(engineTemp),
-    'h-radiator-node4': coolantLink(radiatorTemp),
-    'h-node4-pump': coolantLink(radiatorTemp),
-    'h-bypass-node4': coolantLink(engineTemp),
-    'h-core-node4': coolantLink(heaterTemp),
-    'h-heater-core': coolantLink(heaterTemp),
-    'h-tank-node4': coolantLink(radiatorTemp),
+    // Lazo principal (bomba → culata): pasa todo el caudal.
+    'h-pump-node1': coolantLink(coolantFlow, engineTemp),
+    'h-node1-jacket': coolantLink(coolantFlow, engineTemp),
+    'h-jacket-node2': coolantLink(coolantFlow, engineTemp),
+    // Rama del radiador: sólo lo que de verdad pasa por el termostato abierto.
+    'h-node2-thermostat': coolantLink(radiatorFlow, engineTemp),
+    'h-thermostat-node3': coolantLink(radiatorFlow, engineTemp),
+    'h-node3-radiator': coolantLink(radiatorFlow, engineTemp),
+    'h-radiator-node4': coolantLink(radiatorFlow, radiatorTemp),
+    // Rama del bypass: sólo mientras el termostato está cerrado.
+    'h-node2-bypass': coolantLink(bypassFlow, engineTemp),
+    'h-bypass-node4': coolantLink(bypassFlow, engineTemp),
+    // Rama del calefactor: sólo con la llave de calefacción abierta.
+    'h-node2-heater': coolantLink(heaterFlow, engineTemp),
+    'h-heater-core': coolantLink(heaterFlow, heaterTemp),
+    'h-core-node4': coolantLink(heaterFlow, heaterTemp),
+    // Retorno a la bomba: se juntan las tres ramas, vuelve a ser el caudal total.
+    'h-node4-pump': coolantLink(coolantFlow, radiatorTemp),
+    // El depósito de expansión no tiene caudal continuo, sólo nivela presión.
+    'h-tank-node4': { flow: (): number => 0, potential: stateNumber('pSystem') },
     'e-bat-fuse': { flow: stateNumber('fanCurrent') },
     'e-fuse-relay': { flow: stateNumber('fanCurrent') },
     'e-relay-motor': { flow: stateNumber('fanCurrent') },

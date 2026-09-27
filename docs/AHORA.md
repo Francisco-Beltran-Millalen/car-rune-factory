@@ -7,10 +7,11 @@ git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 ## PARA RETOMAR (escrito al cerrar la sesión del 2026-09-27)
 
 - **Estado**: A11–A14, V1 y A16 (carburador) cerradas y commiteadas en
-  `main`. `npm run check` verde, 418 tests.
+  `main`, más un fix del mismo día en `ignition` y `cooling` (mangueras/cables
+  sin caudal real, ver el CERRADO). `npm run check` verde, 427 tests.
 - **Revisión del usuario**: pendiente. No se recorrieron punto por punto las
-  checklists de A14, V1 ni A16 (abajo): conviene hacerlo al empezar, antes de
-  A15, y anotar aquí lo que siga mal.
+  checklists de A14, V1 ni A16 (abajo), ni la nueva del fix de flujo:
+  conviene hacerlo al empezar, antes de A15, y anotar aquí lo que siga mal.
 - **Lo que el chequeo automático no ve** (candidatos si algo se ve raro):
   etiquetas encima de un tubo; trazos que un drawer dibuja por su cuenta
   (cables de alta del distribuidor, arnés de inyectores, manguera de
@@ -137,6 +138,52 @@ implementadas, y V1 rehízo las conexiones visuales de todos los
 laboratorios (ver los CERRADO de abajo). A16 (carburador) ya está
 implementada. Sigue A15, en orden.
 
+## CERRADO 2026-09-27 — FIX: mangueras y cables sin caudal en varios laboratorios
+
+Encontrado por el usuario al revisar el carburador ("el flujo en casi todos
+los diagramas está raro"). Auditado todo `modules/registry.ts` comparando
+cada `CircuitLinkDef` con `visual` contra las claves de `present.links` de su
+módulo: dos causas distintas, en tres laboratorios.
+
+- **`ignition-points` e `ignition-cop`**: `IGNITION_PRESENT` no tenía sección
+  `links` (mismo bug que el carburador, ver arriba): ningún cable mostraba
+  corriente. Al armarla apareció un problema aparte: en COP cada bobina
+  necesita **su propia** corriente (topología en paralelo: batería → llave →
+  bus → 4 bobinas → masa), pero `state.busCurrent` sólo traía la **suma** de
+  las 4 (`core.ts`, para el amperímetro del primario de platinos, que sí es
+  un lazo único en serie). Se agregó `state.coilCurrents[4]` (cada bobina
+  suavizada por separado, τ = 0,1 s, igual que `busCurrent`) y se usa para
+  el canal `current` de cada `coilN` y para sus cables (`e-bus-cN`,
+  `e-cN-gnd`); `e-bat-key`/`e-key-bus`/`e-gnd-bat` siguen con la suma
+  (`busCurrent`), que ahí sí es correcta. También se separó el balasto del
+  puente de arranque (`e-j1-ballast`/`e-ballast-j2` vs `e-j1-bridge`/
+  `e-bridge-j2`): antes de esto ninguno de los dos existía, pero al agregarlos
+  había que cuidar que sólo uno lleve corriente según `ignitionKey`.
+- **`cooling-viscous` y `cooling-electric`**: sí tenían `links`, pero **las
+  14 mangueras usaban el mismo caudal (`qPump`)**, sin distinguir rama. El
+  modelo ya calcula por separado `qRadiator`, `qBypass` y `qHeater`
+  (`controllers.ts`), pero `present.ts` nunca los leía. Se corrigió: el lazo
+  bomba→culata sigue con `qPump` (por ahí pasa todo), pero termostato→
+  radiador usa `qRadiator`, la derivación del bypass usa `qBypass` y la del
+  calefactor usa `qHeater`. Antes de esto se veía la manguera del bypass
+  "fluyendo" a full aunque el termostato estuviera bien abierto, y la del
+  radiador fluyendo aunque estuviera cerrado.
+- **Revisados y sin problema**: `fuel` y `lubrication-*` ya distinguían bien
+  por rama; `four-stroke-*` no tiene mangueras (0 enlaces visuales).
+- Se agregó en los cinco módulos (`carburetor`, `ignition`, `cooling`, `fuel`,
+  `lubrication`, `four-stroke`) el mismo test de regresión: todo
+  `CircuitLinkDef` con `visual` debe tener un canal `flow` en el
+  `PresentScheme.links` del módulo. `npm run check` verde (**427** tests).
+
+**Checklist de Firefox** (`npm run dev`), en los laboratorios tocados:
+1. `#/lab/ignition-points`: en marcha se ve corriente en el cable del balasto
+   (no en el del puente); en Arranque, al revés. `#/lab/ignition-cop`: cada
+   bobina muestra su propio pulso de corriente, no las 4 a la vez.
+2. `#/lab/cooling-electric` y `-viscous`: "Calentar desde frío" — con el
+   termostato cerrado el bypass se ve fluyendo y el radiador quieto; al
+   abrirse (~88 °C), se invierte. El calefactor sólo fluye con
+   `heaterOn`.
+
 ## CERRADO 2026-09-27 — A16 Carburador
 
 Plan: `plans/2026-09-26-carburetor.md`; spec: `modules/carburetor.md`. Un
@@ -152,14 +199,8 @@ descriptor (`carburetor`), ruta `#/lab/carburetor`. `npm run check` verde
   del `CircuitLinkDef`) tuviera su contraparte en el esquema del presenter.
   Se agregaron los 5 canales (`qPump`/`qFilter` + `pPump`, con una sonda
   nueva `qFilter`) y un test en `content.test.ts` que falla si un enlace
-  visual queda sin canal de caudal. **Se auditaron los demás módulos
-  registrados** (script suelto, no commiteado) comparando cada
-  `CircuitLinkDef` con `visual` contra las claves de `present.links`:
-  `ignition-points` e `ignition-cop` tienen el mismo problema en sus cables
-  (`e-bat-key`, `e-key-j1`/`e-key-bus`, `e-j2-coil` y los `e-c*-gnd` de COP
-  usan `WIRE` con `flowClass`, así que deberían mostrar partículas de
-  corriente y no las muestran). No se tocó `src/modules/ignition/` (fuera de
-  esta tarea, §12): queda para quien tome esa tarea.
+  visual queda sin canal de caudal. Lo mismo en `ignition` y `cooling` (ver
+  el CERRADO siguiente).
 
 - **Elemento nuevo**: `flowSource` (`src/sim/elements/hydraulic.ts`), caudal
   impuesto `a→b` con jacobiano nulo — los surtidores de la cuba al múltiple.

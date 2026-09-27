@@ -98,6 +98,14 @@ describe.each(['gauge', 'lamp'] as const)('contenido lubrication %s', (variant) 
     ];
     for (const id of drawn) expect(LUBRICATION_PRESENT.parts[id], id).toBeDefined();
   });
+
+  it('todo enlace visual tiene canal de caudal en el esquema (si no, el tubo se ve vacío)', () => {
+    for (const link of lubricationDef(variant).links) {
+      if (!link.visual) continue;
+      expect(LUBRICATION_PRESENT.links?.[link.id], link.id).toBeDefined();
+      expect(LUBRICATION_PRESENT.links?.[link.id]?.flow, link.id).toBeDefined();
+    }
+  });
 });
 
 describe('narración lubrication', () => {
