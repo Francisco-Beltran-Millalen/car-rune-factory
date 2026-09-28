@@ -162,7 +162,9 @@ el usuario elija (PARA RETOMAR).
 Plan: `plans/2026-09-26-vehiculo.md` v3, §3–§10 y §12. Specs de A11–A14 y A16
 (§12 de cada una: qué publica/lee cada sistema en el vehículo). `npm run
 check` verde (**456** tests, +29 sobre los 427 previos, ya con los dos fixes
-de flujo del 2026-09-27 cerrados antes de empezar A15).
+de flujo del 2026-09-27 cerrados antes de empezar A15). Informe con las
+dificultades, dónde el plan no alcanzaba a bajar a código y qué queda
+pendiente: `informes/2026-09-28-vehiculo.md`.
 
 - **Plomería del core, nueva o extendida** (todo con test):
   - `switch` (`sim/elements/electric.ts`): param `rampMs` — conmutación
