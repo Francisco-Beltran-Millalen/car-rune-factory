@@ -135,6 +135,14 @@ export function lubricationDef(variant: LubricationVariant): CircuitDef {
     params: DEFAULT_PARAMS,
     faults: DEFAULT_FAULTS,
     fixed: { 'battery.-': 0 },
+    // A15, plan del vehículo §8: este sistema nunca provee el bus `12v`
+    // (siempre lo trae encendido o combustible), pero declara `source` igual
+    // por si algún día lo hiciera; `compileVehicle` excluye `battery`
+    // (§3.1, §4 paso 3) y sus puertos quedan fundidos al riel compartido.
+    buses: {
+      '12v': { ports: ['battery.+'], source: 'battery' },
+      chassis: { ports: ['battery.-'] },
+    },
   };
 }
 

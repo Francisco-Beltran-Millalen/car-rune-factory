@@ -5,6 +5,7 @@ import {
   ELEMENT_TYPES,
   createAdvection,
   createBattery,
+  createBreach,
   createCentrifugalPump,
   createCheckValve,
   createCurrentLoad,
@@ -252,6 +253,31 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
     checkJacobian(resistor, [10, 0], 'resistor');
   });
 
+  it('switch con rampMs: conductancia log-lineal en `commit`, no en `eval` (§24)', () => {
+    const sw = createSwitch({ rOn: 0.01, rOff: 1e7, rampMs: 20 });
+    sw.control['closed'] = true;
+    // Recién creado (p=0): eval no se mueve solo, sólo `commit` avanza `p`.
+    expect(-(evaluate(sw, [1, 0]).flow[0] ?? 0)).toBeCloseTo(1e-7, 12);
+    const zero = new Float64Array(2);
+    for (let i = 0; i < 20; i++) sw.commit(zero, 0.001, zero);
+    expect(-(evaluate(sw, [1, 0]).flow[0] ?? 0)).toBeCloseTo(100, 6);
+    sw.control['closed'] = false;
+    for (let i = 0; i < 20; i++) sw.commit(zero, 0.001, zero);
+    expect(-(evaluate(sw, [1, 0]).flow[0] ?? 0)).toBeCloseTo(1e-7, 12);
+  });
+
+  it('breach: cruce de fluidos gateado por `severity` (A15 §10.4)', () => {
+    const breach = createBreach({ k: 1e-3 }, 'coolant', 'oil');
+    expect(breach.ports.map((p) => p.fluid)).toEqual(['coolant', 'oil']);
+    expect(evaluate(breach, [3, 1]).flow[0]).toBe(0); // sin falla no fluye
+    breach.control['severity'] = 1;
+    const dp = 2;
+    const q = -(evaluate(breach, [3, 1]).flow[0] ?? 0);
+    expect(q).toBeCloseTo(dp / Math.sqrt(1e-3 * (dp + 1e-4)), 6);
+    expect(breach.probes?.['q']?.(new Float64Array([3, 1]))).toBeCloseTo(q, 6);
+    checkJacobian(breach, [3, 1], 'breach');
+  });
+
   it('currentLoad: I = control.i·ramp con jacobiano suave', () => {
     const load = createCurrentLoad({});
     load.control['i'] = 2;
@@ -413,6 +439,7 @@ describe('elementos — ley y jacobiano (§8.2)', () => {
       'heatCapacity',
       'thermalNode',
       'hydroNode',
+      'breach',
       'visual',
     ];
     for (const type of types) {

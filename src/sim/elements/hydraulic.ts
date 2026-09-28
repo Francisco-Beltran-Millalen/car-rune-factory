@@ -3,7 +3,7 @@
 
 import { clamp } from '../../core/math.ts';
 import type { ElementDef, Fluid, PortDef } from '../solver/types.ts';
-import { controlFlag, controlNumber, noCommit, noEval, smoothSqrt, smoothSqrtSlope, softRelu, softReluSlope } from './common.ts';
+import { EPS_P, controlFlag, controlNumber, noCommit, noEval, smoothSqrt, smoothSqrtSlope, softRelu, softReluSlope } from './common.ts';
 
 function hydraulic2(idA: string, idB: string, fluid: Fluid): PortDef[] {
   return [
@@ -402,6 +402,64 @@ export function createFlowSource(
     commit: noCommit,
     probes: {
       q: () => controlNumber(def.control['q']),
+    },
+  };
+  return def;
+}
+
+/**
+ * Cruce de fluidos por falla (A15, plan del vehículo §10.4): puertos `a`/`b`
+ * de **dos fluidos distintos** (empaquetadura de culata: `coolant`↔`oil`,
+ * o `coolant`↔`combustion`). Sin falla no conecta nada (§30); con
+ * `control.severity` > 0 una conductancia chica deja pasar en cualquier
+ * sentido según el `Δp`: misma ley del restrictor (`q = severity·Δp/√(k(|Δp|+ε))`),
+ * escalada por la severidad para que en 0 el cruce desaparezca del todo.
+ * `fluid2` (segundo argumento de la fábrica) sale de `CircuitPartDef.fluid2`;
+ * sin él, degenera a un restrictor normal (un solo fluido) — `validate`
+ * exige `ElementTypeInfo.crossFluid` para que un part declare `fluid2`.
+ */
+export function createBreach(
+  params: Readonly<Record<string, number>>,
+  fluid: Fluid,
+  fluid2?: Fluid,
+): ElementDef {
+  const k = controlNumber(params['k'], 1e-3);
+  const def: ElementDef = {
+    ports: [
+      { id: 'a', domain: 'hydraulic', fluid },
+      { id: 'b', domain: 'hydraulic', fluid: fluid2 ?? fluid },
+    ],
+    params: { k },
+    control: { severity: 0 },
+    state: {},
+    faults: { severity: { label: 'Empaquetadura', kind: 'severity' } },
+    eval(pot, out) {
+      const severity = clamp(controlNumber(def.control['severity']), 0, 1);
+      if (severity <= 0) {
+        out.flow[0] = 0;
+        out.flow[1] = 0;
+        out.jac.fill(0);
+        return;
+      }
+      const dp = (pot[0] ?? 0) - (pot[1] ?? 0);
+      const s = Math.abs(dp) + EPS_P;
+      const q = (severity * dp) / Math.sqrt(k * s);
+      const dq = (severity * (Math.abs(dp) / 2 + EPS_P)) / (Math.sqrt(k) * Math.pow(s, 1.5));
+      out.flow[0] = -q;
+      out.flow[1] = q;
+      out.jac[0] = -dq;
+      out.jac[1] = dq;
+      out.jac[2] = dq;
+      out.jac[3] = -dq;
+    },
+    commit: noCommit,
+    probes: {
+      q: (pot) => {
+        const severity = clamp(controlNumber(def.control['severity']), 0, 1);
+        if (severity <= 0) return 0;
+        const dp = (pot[0] ?? 0) - (pot[1] ?? 0);
+        return (severity * dp) / Math.sqrt(k * (Math.abs(dp) + EPS_P));
+      },
     },
   };
   return def;

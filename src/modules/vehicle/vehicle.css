@@ -1,0 +1,9 @@
+/* Estilos del vehículo (A15): sólo la caja del mecanismo (4 tiempos); cada
+   sistema trae los suyos (fuel.css, ignition.css…), ya cargados por sus
+   propios módulos. */
+
+.vehicle-inset .part-body {
+  fill: var(--panel);
+  stroke: var(--line);
+  stroke-dasharray: 6 4;
+}

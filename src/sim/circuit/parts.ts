@@ -29,7 +29,7 @@ export function buildParts(
       parts.set(part.id, { part, ports: [] });
       continue;
     }
-    const element = info.create(part.params ?? {}, fluidOf(part, def));
+    const element = info.create(part.params ?? {}, fluidOf(part, def), part.fluid2);
     parts.set(part.id, { part, info, ports: element.ports, element });
   }
   return parts;

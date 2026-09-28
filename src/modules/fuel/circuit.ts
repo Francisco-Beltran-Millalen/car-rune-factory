@@ -45,7 +45,9 @@ export const FUEL_DEF: CircuitDef = {
   parts: [
     { id: 'battery', type: 'battery', visual: 'battery', x: 40, y: 40, params: { r: 0.001 } },
     { id: 'key', type: 'switch', visual: 'key', x: 150, y: 40, params: { rOn: 0.001, rOff: 1e7 } },
-    { id: 'relay', type: 'switch', visual: 'relay', x: 260, y: 40, params: { rOn: 0.001, rOff: 1e7 } },
+    // `rampMs` sólo lo usa el vehículo (A15, plan §8): en el laboratorio el
+    // relé queda siempre cerrado (ver `createEcuFuel`) y nunca conmuta.
+    { id: 'relay', type: 'switch', visual: 'relay', x: 260, y: 40, params: { rOn: 0.001, rOff: 1e7, rampMs: 20 } },
     { id: 'ecu', type: 'visual', visual: 'ecu', x: 400, y: 40 },
     { id: 'injectorWires', type: 'visual', visual: 'wires', x: 520, y: 70 },
     { id: 'tank', type: 'tank', visual: 'tank', x: 60, y: 430, params: { capacity: 50, pickupLow: 1 } },
@@ -129,6 +131,13 @@ export const FUEL_DEF: CircuitDef = {
   params: DEFAULT_PARAMS,
   faults: DEFAULT_FAULTS,
   fixed: { 'battery.-': 0 },
+  // A15, plan del vehículo §8: en `vehicle-2000` este sistema provee el bus
+  // `12v` (su batería/llave); si no es el proveedor, `compileVehicle` excluye
+  // `battery` (§3.1, §4 paso 3) y sus puertos quedan igual fundidos al riel.
+  buses: {
+    '12v': { ports: ['battery.+'], source: 'battery' },
+    chassis: { ports: ['battery.-'] },
+  },
 };
 
 /** Fallas planas → `control` del elemento (P25 §3.1). Los enums van por ECU. */

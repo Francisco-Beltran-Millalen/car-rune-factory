@@ -64,8 +64,18 @@ function splitEndpoint(endpoint: string): [string, string] {
   return dot < 0 ? [endpoint, ''] : [endpoint.slice(0, dot), endpoint.slice(dot + 1)];
 }
 
+/**
+ * `geo.subparts` lo escribe la geometría del drawer con su clave de siempre
+ * (p. ej. `heaterValve`), sin saber de `sistema:pieza` (A15 §3.1): dentro de
+ * un vehículo, el `id` que llega acá ya viene prefijado (`cooling:heaterValve`),
+ * así que si la clave completa no está, se prueba sin el prefijo.
+ */
 function subOf(layout: { parts: ReadonlyMap<string, PlacedPart> }, owner: string, id: string): SubGeometry | undefined {
-  return layout.parts.get(owner)?.geo.subparts?.[id];
+  const subparts = layout.parts.get(owner)?.geo.subparts;
+  if (!subparts) return undefined;
+  if (subparts[id]) return subparts[id];
+  const colon = id.indexOf(':');
+  return colon >= 0 ? subparts[id.slice(colon + 1)] : undefined;
 }
 
 /** Resuelve la geometría de cada pieza y las puntas de los enlaces dibujados. */
@@ -85,7 +95,14 @@ export function resolveLayout(def: CircuitDef): Layout {
     }
     const geo = entry.geometry(part, def);
     parts.set(part.id, { part, geo });
-    for (const sub of Object.keys(geo.subparts ?? {})) subOwner.set(sub, part.id);
+    // Alias con el prefijo del dueño (A15 §3.1): un enlace del vehículo
+    // referencia `cooling:heaterValve`, no el `heaterValve` bien de siempre.
+    const ownerColon = part.id.indexOf(':');
+    const ownerPrefix = ownerColon >= 0 ? part.id.slice(0, ownerColon + 1) : '';
+    for (const sub of Object.keys(geo.subparts ?? {})) {
+      subOwner.set(sub, part.id);
+      if (ownerPrefix) subOwner.set(`${ownerPrefix}${sub}`, part.id);
+    }
   }
 
   const nodes = new Map<string, { at: Point; degree: number }>();

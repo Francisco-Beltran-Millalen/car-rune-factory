@@ -99,6 +99,7 @@ import {
   warningLampDrawer,
   warningLampGeometry,
 } from './lubrication/oil.ts';
+import { mechanismInsetDrawer, mechanismInsetGeometry } from './vehicle.ts';
 
 export const DRAWERS: Readonly<Record<string, DrawerEntry>> = {
   battery: { geometry: batteryGeometry, draw: batteryDrawer },
@@ -151,4 +152,5 @@ export const DRAWERS: Readonly<Record<string, DrawerEntry>> = {
   choke: { geometry: chokeGeometry, draw: chokeDrawer },
   floatBowl: { geometry: floatBowlGeometry, draw: floatBowlDrawer },
   mechPump: { geometry: mechPumpGeometry, draw: mechPumpDrawer },
+  mechanismInset: { geometry: mechanismInsetGeometry, draw: mechanismInsetDrawer },
 };

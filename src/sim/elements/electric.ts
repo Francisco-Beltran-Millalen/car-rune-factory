@@ -1,5 +1,6 @@
 // Elementos eléctricos de la biblioteca (P23 §8.2). Puro (§1).
 
+import { clamp } from '../../core/math.ts';
 import type { ElementDef } from '../solver/types.ts';
 import { controlFlag, controlNumber, noCommit, noEval } from './common.ts';
 
@@ -101,20 +102,37 @@ export function createBattery(params: Readonly<Record<string, number>>): Element
   return def;
 }
 
-/** Llave / relé: `R_on` o `R_off` según `control.closed`. Params: `rOn`, `rOff`. */
+/**
+ * Llave / relé: `R_on` o `R_off` según `control.closed`. Params: `rOn`, `rOff`.
+ * `rampMs` (plan del vehículo §8, default 0 = como antes, instantáneo): con
+ * `rampMs > 0` la conductancia va de `gOff` a `gOn` en `rampMs` (lineal en
+ * logaritmo, `g = gOff·(gOn/gOff)^p`) y vuelve igual al abrir; lo necesita un
+ * bus compartido para no partir la tensión de todo el bus en un paso (relé de
+ * la bomba, solenoide de arranque). `p` (progreso 0..1) es estado interno:
+ * se lee en `eval` y se avanza en `commit`, después de converger (§24).
+ */
 export function createSwitch(params: Readonly<Record<string, number>>): ElementDef {
   const rOn = controlNumber(params['rOn'], 0.01);
   const rOff = controlNumber(params['rOff'], 1e7);
+  const rampMs = controlNumber(params['rampMs'], 0);
+  const gOn = 1 / rOn;
+  const gOff = 1 / rOff;
+  const state: Record<string, number> = { p: 0 };
+  function conductance(): number {
+    if (rampMs <= 0) return controlFlag(def.control['closed']) ? gOn : gOff;
+    const p = clamp(state['p'] ?? 0, 0, 1);
+    return gOff * Math.pow(gOn / gOff, p);
+  }
   const def: ElementDef = {
     ports: [
       { id: 'a', domain: 'electric' },
       { id: 'b', domain: 'electric' },
     ],
-    params: { rOn, rOff },
+    params: { rOn, rOff, rampMs },
     control: { closed: false },
-    state: {},
+    state,
     eval(pot, out) {
-      const g = controlFlag(def.control['closed']) ? 1 / rOn : 1 / rOff;
+      const g = conductance();
       const q = g * ((pot[0] ?? 0) - (pot[1] ?? 0));
       out.flow[0] = -q;
       out.flow[1] = q;
@@ -123,7 +141,19 @@ export function createSwitch(params: Readonly<Record<string, number>>): ElementD
       out.jac[2] = g;
       out.jac[3] = -g;
     },
-    commit: noCommit,
+    commit(_pot, dt): void {
+      if (rampMs <= 0) {
+        state['p'] = controlFlag(def.control['closed']) ? 1 : 0;
+        return;
+      }
+      const target = controlFlag(def.control['closed']) ? 1 : 0;
+      const step = (dt * 1000) / rampMs;
+      const p = state['p'] ?? 0;
+      state['p'] = target > p ? Math.min(1, p + step) : target < p ? Math.max(0, p - step) : p;
+    },
+    probes: {
+      g: () => conductance(),
+    },
   };
   return def;
 }

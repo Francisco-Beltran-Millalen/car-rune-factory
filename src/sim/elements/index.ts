@@ -4,6 +4,7 @@
 import type { ElementDef, Fluid } from '../solver/types.ts';
 import { createBattery, createCurrentLoad, createJunction, createResistor, createSwitch } from './electric.ts';
 import {
+  createBreach,
   createCentrifugalPump,
   createDisplacementPump,
   createElectricPump,
@@ -36,6 +37,8 @@ import { VISUAL_TYPE } from './visual.ts';
 export type ElementFactory = (
   params: Readonly<Record<string, number>>,
   fluid: Fluid,
+  /** Segundo fluido (A15, `CircuitPartDef.fluid2`): sólo lo usan los `crossFluid`. */
+  fluid2?: Fluid,
 ) => ElementDef;
 
 export interface ElementTypeInfo {
@@ -44,11 +47,15 @@ export interface ElementTypeInfo {
   joint?: boolean;
   /** Un puerto admite más de una conexión (tee). */
   multiple?: boolean;
+  /** Sus puertos hidráulicos declaran fluidos distintos a propósito (`breach`,
+   *  A15 plan del vehículo §10.4): `validate` sólo lo permite con esta marca. */
+  crossFluid?: boolean;
 }
 
 export {
   createAdvection,
   createBattery,
+  createBreach,
   createCentrifugalPump,
   createCheckValve,
   createCurrentLoad,
@@ -107,5 +114,6 @@ export const ELEMENT_TYPES: Readonly<Record<string, ElementTypeInfo>> = {
   thermalConductance: { create: createThermalConductance },
   advection: { create: createAdvection },
   heatCapacity: { create: createHeatCapacity },
+  breach: { create: createBreach, crossFluid: true },
   visual: VISUAL_TYPE,
 };

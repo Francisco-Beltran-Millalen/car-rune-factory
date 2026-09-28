@@ -108,7 +108,10 @@ La relajación por nodo (A6) costó ~10 % sobre el benchmark anterior.
 Cada tipo es una fábrica `createX(params, fluid) → ElementDef` con `params`
 numéricos y las entradas de `control` que los controladores/bindings escriben.
 Registro en `ELEMENT_TYPES` (`index.ts`), que además marca `joint` (todos los
-puertos son un nodo interno) y `multiple` (un puerto admite varias conexiones).
+puertos son un nodo interno), `multiple` (un puerto admite varias conexiones)
+y `crossFluid` (A15: sus puertos hidráulicos declaran fluidos distintos a
+propósito, sólo `breach`; `validateCircuit` rechaza `CircuitPartDef.fluid2` en
+cualquier otro tipo).
 
 | tipo | puertos | ley y params | control | fallas |
 |---|---|---|---|---|
@@ -124,7 +127,7 @@ puertos son un nodo interno) y `multiple` (un puerto admite varias conexiones).
 | `pressureSource` | a (hidr) | nodo fijo (Dirichlet) con `control.p` | `p` | — |
 | `battery` | +, - (eléc) | `V = control.v − R·I`; `r` | `v` | — |
 | `resistor` | a, b (eléc) | `q = Δp/r` (el juguete de A5; no estaba en §8.2) | — | — |
-| `switch` | a, b (eléc) | `R_on`/`R_off` según `control.closed`; `rOn`, `rOff` | `closed` | — |
+| `switch` | a, b (eléc) | `R_on`/`R_off` según `control.closed`; `rOn`, `rOff`. Con `rampMs > 0` (A15, plan del vehículo §8) la conductancia va de `gOff` a `gOn` en `rampMs` (lineal en logaritmo, `g = gOff·(gOn/gOff)^p`) y vuelve igual al abrir; `p` es estado interno que sólo avanza en `commit()` (§24), no en `eval` | `closed` | — |
 | `currentLoad` | a, b (eléc) | carga de corriente media: `I = control.i·smoothstep(ΔV/1 V)` (C¹, sin escalones para Newton); `i` | `i` | — |
 | `junction` | a..f (eléc) | nudo eléctrico: todos los puertos son el mismo nodo (`joint`, `multiple`), sin flujos (A12) | — | — |
 | `hydroNode` | a..f (hidr) | nudo hidráulico `joint`/`multiple` (A13) | — | — |
@@ -140,6 +143,7 @@ puertos son un nodo interno) y `multiple` (un puerto admite varias conexiones).
 | `heatCapacity` | a (térm) | sólo `capacitance = c` (J/K, sin ×3600) | — | — |
 | `thermalNode` | a..f (térm) | nudo térmico `joint`/`multiple` (A13) | — | — |
 | `visual` | — | pieza sólo dibujable: sin puertos, sin flujos (A7; vive en `visual.ts` desde A11) | — | — |
+| `breach` | a, b (hidr, **dos fluidos distintos**) | cruce por falla (A15, plan del vehículo §10.4): sin falla no conecta; `q = severity·Δp/√(k(|Δp|+ε))`; `k` | `severity` | `severity` |
 
 **Dominio térmico (A13)**: potencial °C, flujo W y capacidad J/K; lo usan las
 leyes de la refrigeración. El paso no cruza el 0 del nodo (§4), así que un
@@ -157,10 +161,13 @@ validateCircuit(def, types, controllerTypes?): CircuitIssue[]
 ```
 
 - **`CircuitDef`**: `parts` (`id`, `type`, `x`, `y`, `rot?`, `params?`,
-  `fluid?`, `label?`), `links` (`id`, `from: 'part.port'`, `to`, `route?`),
-  `controllers`, `probes` (`{ node }` o `{ element, probe }`), `params` y
-  `faults` por defecto, `fixed` (`'part.port' → potencial`, atmósfera/chasis).
-  El layout es parte del circuito (D5).
+  `fluid?`, `fluid2?` — sólo `crossFluid`, A15 —, `label?`), `links` (`id`,
+  `from: 'part.port'`, `to`, `via?`, `visual?`), `controllers`, `probes`
+  (`{ node }` o `{ element, probe }`), `params` y `faults` por defecto,
+  `fixed` (`'part.port' → potencial`, atmósfera/chasis), `initial` (potencial
+  inicial de un nodo libre, A13) y `buses?` (A15, plan del vehículo §3:
+  puertos que pertenecen a un bus del vehículo — `ports`, `source?` — que
+  `compileVehicle` funde entre sistemas). El layout es parte del circuito (D5).
 - **Union-find**: cada conexión une puertos; los elementos `joint` unen sus
   propios puertos (`tank`, `tee`). Los puertos sin conectar quedan con `gmin`.
   `portToNode`, `linkToNodes` y `nodes.ports` salen del compilado.
@@ -184,8 +191,10 @@ validateCircuit(def, types, controllerTypes?): CircuitIssue[]
 - A6: el combustible sobre el solver (`fuel/circuit.ts` y controladores
   `ecuFuel`, `engineCore` en `sim/controllers/`, `stubs.ts`), con paridad
   contra el modelo de referencia y `failures === 0`.
-- A7: presenter y drawer SVG por tipo; A10: `compileVehicle` y el laboratorio
-  del vehículo.
+- A7: presenter y drawer SVG por tipo.
+- A15: `compileVehicle` (`src/modules/vehicle/`) y los dos vehículos
+  genéricos, hecho — `compileNet`/`translateCircuit` (`sim/circuit/net.ts`,
+  `translate.ts`) factorizados de `compileCircuit` para eso.
 - Los tests de A5 están en `tests/sim/elements.test.ts` (ley + jacobiano
   contra diferencias finitas, error < 1e-4) y `tests/sim/circuit.test.ts`
   (validate, juguetes analíticos, controladores y reset).

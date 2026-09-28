@@ -41,8 +41,10 @@ export const radiatorDrawer: DrawerFactory = ({ part, layers }) => {
   };
 };
 
+// `p.id` puede venir prefijado dentro de un vehículo (`cooling:fanMotor`,
+// A15 §3.1): además del nombre bien de siempre, alcanza con que termine así.
 const hasElectricFan = (def: { parts: readonly { id: string }[] }): boolean =>
-  def.parts.some((p) => p.id === 'fanMotor');
+  def.parts.some((p) => p.id === 'fanMotor' || p.id.endsWith(':fanMotor'));
 
 /**
  * Ventilador con su carcasa. Eléctrico: fila de fusible → relé → motor bajo la

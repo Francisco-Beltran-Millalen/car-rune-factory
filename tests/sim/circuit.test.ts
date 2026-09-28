@@ -332,6 +332,26 @@ describe('circuit — validate (§8.4)', () => {
     expect(codes).toContain('unconnected-port');
   });
 
+  it('`fluid2` en un tipo que no es `crossFluid` es un error (A15 §10.4)', () => {
+    const def: CircuitDef = {
+      id: 'cross',
+      fluid: 'coolant',
+      parts: [
+        { id: 'a', type: 'restrictor', x: 0, y: 0, params: { k: 1 }, fluid2: 'oil' },
+        { id: 'b', type: 'restrictor', x: 0, y: 0, params: { k: 1 } },
+      ],
+      links: [{ id: 'l', from: 'a.a', to: 'b.a' }],
+    };
+    expect(issueCodes(validateCircuit(def, ELEMENT_TYPES))).toContain('invalid-cross-fluid');
+
+    const ok: CircuitDef = {
+      ...def,
+      parts: [{ id: 'br', type: 'breach', x: 0, y: 0, params: { k: 1e-3 }, fluid2: 'oil' }, def.parts[1]!],
+      links: [{ id: 'l', from: 'br.a', to: 'b.a' }],
+    };
+    expect(issueCodes(validateCircuit(ok, ELEMENT_TYPES))).not.toContain('invalid-cross-fluid');
+  });
+
   it('un puerto thermal con uno hydraulic es domain-mismatch (A13)', () => {
     const def: CircuitDef = {
       id: 'mixed',

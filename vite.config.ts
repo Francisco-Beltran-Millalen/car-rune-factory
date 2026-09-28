@@ -18,8 +18,9 @@ export default defineConfig(({ command }) => ({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     passWithNoTests: true,
-    // Las simulaciones largas de A13 (calentamiento ×20) compiten entre
-    // archivos en paralelo; el default de 5 s hacía fallar tests ajenos.
-    testTimeout: 30_000,
+    // Las simulaciones largas (A13: calentamiento ×20; A15: el vehículo
+    // fusionado) compiten por CPU entre archivos en paralelo; el default de
+    // 5 s (y luego 30 s) hacía fallar tests ajenos que solos son rápidos.
+    testTimeout: 60_000,
   },
 }));

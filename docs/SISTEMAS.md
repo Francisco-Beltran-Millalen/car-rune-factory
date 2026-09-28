@@ -163,10 +163,10 @@ síntoma de "motor" causado por "frenos". Es un caso clásico para el juego.
 
 ## Integración
 
-- **Vehículo** ⏳ A10 (plan) y A15 (código) — `compileVehicle` une los
-  circuitos de cada sistema, con una variante por sistema, buses compartidos
-  y señales con dueño (P23 §14; reemplaza el orquestador del plan maestro
-  §11).
+- **Vehículo** ✅ A10 (plan) y A15 (código, `vehicle-70`/`vehicle-2000`) —
+  `compileVehicle` une los circuitos de cada sistema, con una variante por
+  sistema, buses compartidos y señales con dueño (P23 §14; reemplaza el
+  orquestador del plan maestro §11).
 
 ## Juegos (ver `plans/2026-09-22-hoja-de-ruta-juego.md`)
 

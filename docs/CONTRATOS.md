@@ -209,6 +209,92 @@ de retraso (las `sameStep`, apenas se escriben). A6 no migra el combustible:
 sigue con su `FuelSignals`; A15 arma el bus del vehículo con varios dueños
 sobre este mismo contrato.
 
+### 4.12 `VehicleDef` — `src/sim/vehicle/types.ts` (A15)
+
+```ts
+export interface VehicleSystemDef {
+  id: string;                      // 'ignition', 'cooling'… (prefijo `sistema:`, §4.13)
+  kind: 'circuit' | 'mechanism';   // red del solver o mecanismo sin nodos (D-V10, four-stroke)
+  circuit?: string;                // id del circuito/variante registrado; requerido si kind='circuit'
+  at: readonly [number, number];   // región del diagrama del vehículo (esquina sup. izq.)
+}
+export interface VehicleBusDef {
+  id: string;                      // '12v', 'chassis'
+  domain: 'electric' | 'hydraulic';
+  fluid?: Fluid;                   // obligatorio si domain='hydraulic' (§30)
+  provider: string | null;         // sistema que aporta la fuente; null = sin fuente (chassis)
+}
+export interface VehicleSignalDef {
+  id: string;                      // 'engine.rpm' (§28)
+  owner: string | null;            // sistema dueño; null = stub ideal (§29)
+  unit: string;
+  label: string;
+  latency?: 'step' | 'same-step';  // 'same-step' sólo señales de fase (§5.2 del plan)
+}
+export interface VehicleDef {
+  id: string;                      // 'vehicle-70' (genérico, no un auto real)
+  title: string;
+  summary: string;
+  viewBox: readonly [number, number, number, number];
+  systems: readonly VehicleSystemDef[];
+  buses: readonly VehicleBusDef[];
+  signals: readonly VehicleSignalDef[];
+}
+```
+
+`createVehicleBus` (`src/sim/signals/bus.ts`) implementa `LabBus` con **varios
+dueños validados** (uno por señal, según `VehicleDef.signals`) en vez de uno
+solo para todo el bus; una señal con `owner: null` cae al stub ideal de
+`SIGNAL_STUBS`, igual que el laboratorio.
+
+### 4.13 `compileVehicle` — `src/modules/vehicle/` (A15)
+
+`compileVehicle(def: VehicleDef)` vive en `src/modules/vehicle/compile.ts`,
+**fuera** de `sim/` (única excepción a §11: conoce todos los módulos a la vez,
+por diseño). Pasos (plan del vehículo §4):
+
+1. **Prefijo `sistema:pieza`, nunca `sistema.pieza`** (el `.` sigue separando
+   `part.port`): `translateCircuit(def, at, prefix)`
+   (`src/sim/circuit/translate.ts`) desplaza `parts[].x/y` y los `via` de los
+   enlaces, y prefija ids, `joinedBy`, `links[].from/to`,
+   `links[].visual.owner`, `probes` (nombre y `node`/`element`), `fixed`,
+   `initial` y `buses` (`ports` y `source`).
+2. **`CircuitDef.buses`** (nuevo campo): `Record<busId, { ports: string[],
+   source?: string }>`. Un sistema que **no** es el proveedor de un bus
+   (`VehicleBusDef.provider`) tiene su parte `source` (p. ej. `battery`)
+   excluida de la red — `compileNet` (`src/sim/circuit/net.ts`) igual
+   registra sus puertos (vienen de `buses[...].ports`, no de un elemento) para
+   que los enlaces que los mencionan se funden con el nodo compartido.
+3. **Un solo solver** para todo el vehículo (simplificación de A15 sobre
+   D-V3, documentada en `compile.ts`; el benchmark de §10 mide que sobra
+   margen; particionar en componentes queda como optimización futura).
+4. **`params`/`faults` planos**: compartidos sin prefijo
+   (`ignitionKey`, `throttle`, `rpm`, `vehicleSpeedKmh`) o con el prefijo del
+   sistema. Cada controlador recibe una vista (`ctx.params`/`ctx.faults`/
+   `ctx.elements`) sin el prefijo, como si siguiera en su laboratorio; `cooling`,
+   `carburetor` e `ignition` además ven `rpm`/`load` **reales** del bus
+   (`engine.rpm`/`engine.load`), no el slider (spec §12 de cada uno).
+5. **`engineCore` hoisted**: `createVehicleEngineCore` (`sim/controllers/engineCore.ts`)
+   reemplaza al `engineCore` de A6 en el vehículo (mismo cerebro, entradas
+   reales del bus en vez de stubs ideales, plan §4.8); `four-stroke` es dueño
+   de `engine.crankAngle`/`camAngle` ahí (D-V6). `fuel` (A6, con su propio
+   `FuelSignals`, no `LabBus`) se conecta con un puente chico
+   (`src/modules/vehicle/fuelBridge.ts`) que no toca `modules/fuel/controllers.ts`.
+6. **`state`** publica sondas y estado de controladores con el prefijo del
+   sistema (`sistema:sonda`, `sistema:clave`), las señales del bus
+   (`signal.<id>`) y `time`.
+
+`vehicleModule(def)` (`src/modules/vehicle/index.ts`, D-V1) arma el
+`ModuleDescriptor` a partir de `compileVehicle`: traduce `controls`/`faults`/
+`faultCatalog`/`readouts`/`parts`/`present`/`narrate` de cada sistema con su
+prefijo (deduplicando los controles de los params compartidos). El circuito de
+render es la unión de cada sistema **tal cual dibuja su propio laboratorio**
+(no un riel compartido cruzando regiones todavía); el sistema `mechanism`
+(4 tiempos) se dibuja como una caja simple (`mechanismInset`), no el inset con
+vista propia que el plan describe — ambas son simplificaciones de este primer
+corte, anotadas en la cabecera de `modules/vehicle/index.ts` y en el CERRADO
+de A15.
+
 ## Shell de la UI
 
 ### 5.1 Layout (escritorio ≥ 1024 px)

@@ -5,8 +5,8 @@ import { createRng, type Rng } from '../../core/rng.ts';
 import type { Model, ParamRecord, ParamValue } from '../../core/types.ts';
 import { createControllers, type ControllerContext, type ControllerDef } from '../controllers/index.ts';
 import { createSolver } from '../solver/nodal.ts';
-import type { ElementDef, Solver, SolverElement } from '../solver/types.ts';
-import { buildParts } from './parts.ts';
+import type { Solver } from '../solver/types.ts';
+import { compileNet, solverElementsOf } from './net.ts';
 import type {
   CircuitBinding,
   CircuitState,
@@ -20,102 +20,14 @@ export function compileCircuit<S extends CircuitState = CircuitState>(
 ): CompiledCircuit<S> {
   const { def, types, state } = options;
   const issues = validateCircuit(def, types, options.controllerTypes);
-  const parts = buildParts(def, types);
-
-  const elements: Record<string, ElementDef> = {};
-  let maxPorts = 1;
-  for (const [id, built] of parts) {
-    const element = built.element;
-    if (!element) continue;
-    elements[id] = element;
-    if (element.ports.length > maxPorts) maxPorts = element.ports.length;
-  }
+  const net = compileNet(def, types);
+  const { elements, portToNode, linkToNodes } = net;
+  const { count: nodeCount, fixed } = net.nodes;
 
   const initOverrides = options.init ?? {};
   for (const element of Object.values(elements)) element.init?.(initOverrides);
 
-  // Union-find de puertos: las conexiones y los elementos `joint` unen nodos.
-  const portKeys: string[] = [];
-  const parent: number[] = [];
-  const indexOf = new Map<string, number>();
-  function register(key: string): number {
-    const existing = indexOf.get(key);
-    if (existing !== undefined) return existing;
-    const index = parent.length;
-    indexOf.set(key, index);
-    parent.push(index);
-    portKeys.push(key);
-    return index;
-  }
-  function find(index: number): number {
-    let root = index;
-    while ((parent[root] ?? root) !== root) {
-      root = parent[root] ?? root;
-    }
-    let walk = index;
-    while ((parent[walk] ?? root) !== root) {
-      const next = parent[walk] ?? root;
-      parent[walk] = root;
-      walk = next;
-    }
-    return root;
-  }
-  function union(a: number, b: number): void {
-    const rootA = find(a);
-    const rootB = find(b);
-    if (rootA !== rootB) parent[rootB] = rootA;
-  }
-
-  for (const [id, built] of parts) {
-    for (const port of built.ports) register(`${id}.${port.id}`);
-  }
-  for (const [id, built] of parts) {
-    if (!built.info?.joint || built.ports.length === 0) continue;
-    const first = register(`${id}.${built.ports[0]?.id ?? ''}`);
-    for (const port of built.ports) union(first, register(`${id}.${port.id}`));
-  }
-  for (const link of def.links) {
-    const from = indexOf.get(link.from);
-    const to = indexOf.get(link.to);
-    if (from !== undefined && to !== undefined) union(from, to);
-  }
-
-  const rootToNode = new Map<number, number>();
-  const portToNode: Record<string, number> = {};
-  const nodePorts: string[][] = [];
-  for (const key of portKeys) {
-    const root = find(indexOf.get(key) ?? 0);
-    let node = rootToNode.get(root);
-    if (node === undefined) {
-      node = nodePorts.length;
-      rootToNode.set(root, node);
-      nodePorts.push([]);
-    }
-    portToNode[key] = node;
-    nodePorts[node]?.push(key);
-  }
-  const nodeCount = nodePorts.length;
-  const fixed = new Float64Array(nodeCount).fill(NaN);
-  for (const [key, value] of Object.entries(def.fixed ?? {})) {
-    const node = portToNode[key];
-    if (node !== undefined) fixed[node] = value;
-  }
-  const linkToNodes: Record<string, { from: number; to: number }> = {};
-  for (const link of def.links) {
-    const from = portToNode[link.from];
-    const to = portToNode[link.to];
-    if (from !== undefined && to !== undefined) linkToNodes[link.id] = { from, to };
-  }
-
-  const solverElements: SolverElement[] = [];
-  for (const [id, built] of parts) {
-    const element = built.element;
-    if (!element) continue;
-    solverElements.push({
-      def: element,
-      nodes: built.ports.map((port) => portToNode[`${id}.${port.id}`] ?? 0),
-    });
-  }
+  const solverElements = solverElementsOf(elements, portToNode);
 
   const initialParams: ParamRecord = { ...(def.params ?? {}), ...(options.params ?? {}) };
   const initialFaults: ParamRecord = { ...(def.faults ?? {}), ...(options.faults ?? {}) };
@@ -133,7 +45,7 @@ export function compileCircuit<S extends CircuitState = CircuitState>(
   const probeDefs = def.probes ?? {};
   let probeValues: Record<string, number> = {};
   const published: CircuitState = {};
-  const pot = new Float64Array(maxPorts);
+  const pot = new Float64Array(net.maxPorts);
   let time = 0;
 
   function readProbe(name: string): number {
@@ -239,7 +151,7 @@ export function compileCircuit<S extends CircuitState = CircuitState>(
     get controllers(): readonly ControllerDef[] {
       return controllers;
     },
-    nodes: { count: nodeCount, ports: nodePorts, fixed },
+    nodes: net.nodes,
     portToNode,
     linkToNodes,
     issues,

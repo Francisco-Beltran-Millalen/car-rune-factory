@@ -92,6 +92,13 @@ export const IGNITION_POINTS_DEF: CircuitDef = {
   params: DEFAULT_PARAMS,
   faults: DEFAULT_FAULTS,
   fixed: { 'battery.-': 0 },
+  // A15, plan del vehículo §8: en `vehicle-70` este sistema provee el bus
+  // `12v` (su batería/llave); si no es el proveedor, `compileVehicle` excluye
+  // `battery` (§3.1, §4 paso 3) y sus puertos quedan igual fundidos al riel.
+  buses: {
+    '12v': { ports: ['battery.+'], source: 'battery' },
+    chassis: { ports: ['battery.-'] },
+  },
 };
 
 /** Baja tensión del COP: batería → llave → bus → 4 bobinas → masa. */
@@ -139,6 +146,13 @@ export const IGNITION_COP_DEF: CircuitDef = {
   params: DEFAULT_PARAMS,
   faults: DEFAULT_FAULTS,
   fixed: { 'battery.-': 0 },
+  // A15, plan del vehículo §8: en `vehicle-70` este sistema provee el bus
+  // `12v` (su batería/llave); si no es el proveedor, `compileVehicle` excluye
+  // `battery` (§3.1, §4 paso 3) y sus puertos quedan igual fundidos al riel.
+  buses: {
+    '12v': { ports: ['battery.+'], source: 'battery' },
+    chassis: { ports: ['battery.-'] },
+  },
 };
 
 export function ignitionDef(variant: IgnitionVariant): CircuitDef {

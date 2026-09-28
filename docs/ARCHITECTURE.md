@@ -35,8 +35,15 @@ Código que viole estas leyes no se implementa ni mergea.
 - **§10** Toda pieza clickeable lleva `data-part="<partId>"`, y ese `partId`
   existe en `parts`.
 - **§11** Aislamiento de módulos: ningún modelo importa ni lee a otro. La
-  integración futura ("motor completo") la hace un orquestador que copia
-  señales de un `state` al `params` de otro.
+  integración del vehículo la hace `compileVehicle` (A15, `src/modules/vehicle/`):
+  compila los circuitos de sus sistemas en un solo modelo, con los buses
+  compartidos fundidos en nodos comunes (§30) y un bus de señales de dueño
+  único (§28) leído con un paso de retraso (§25), salvo las señales de fase
+  (`engine.crankAngle`/`camAngle`, same-step). Un sistema nunca importa ni lee
+  a otro; los stubs (§29) cubren lo que falta. `compileVehicle` es la única
+  excepción a esta ley: es el orquestador que el plan del vehículo diseñó en
+  vez del que este párrafo describía antes (copiar señales de un `state` al
+  `params` de otro).
 - **§12** Propiedad de archivos: un módulo vive en `src/modules/<id>/` y
   `tests/<id>/`. `src/core/` sólo se toca en tareas de core. Los pedidos van
   a `docs/core-requests.md`.

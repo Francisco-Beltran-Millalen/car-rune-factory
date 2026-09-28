@@ -36,6 +36,14 @@ export function validateCircuit(
         part: id,
       });
     }
+    if (built.part.fluid2 !== undefined && built.info && !built.info.crossFluid) {
+      issues.push({
+        level: 'error',
+        code: 'invalid-cross-fluid',
+        message: `La parte '${id}' declara 'fluid2' pero su tipo '${built.part.type}' no es crossFluid (§30).`,
+        part: id,
+      });
+    }
   }
 
   const seenLinks = new Set<string>();

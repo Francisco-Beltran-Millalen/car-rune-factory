@@ -18,6 +18,8 @@ export interface CircuitPartDef {
   params?: Readonly<Record<string, number>>;
   /** Fluido propio; si no, el del circuito (§30). */
   fluid?: Fluid;
+  /** Segundo fluido, sólo para elementos `crossFluid` (`breach`, A15 §10.4). */
+  fluid2?: Fluid;
   label?: string;
   /** Pieza cuya conexión dibuja el drawer de otra (inyectores del riel):
    *  el chequeo de layout (plan V1) pide que sus cajas se toquen. */
@@ -88,6 +90,13 @@ export interface CircuitDef {
   fixed?: Readonly<Record<string, number>>;
   /** Potencial inicial de nodos libres: `'part.port'` → valor (A13). */
   initial?: Readonly<Record<string, number>>;
+  /**
+   * Puertos que pertenecen a un bus del vehículo (A15, plan §3): `id` del bus
+   * (`'12v'`, `'chassis'`), sus `ports` locales (`'part.port'`) y, si aporta
+   * la fuente del bus, el `source` (`partId`). `compileVehicle` los funde en
+   * nodos compartidos entre sistemas; un laboratorio suelto los ignora.
+   */
+  buses?: Readonly<Record<string, { ports: readonly string[]; source?: string }>>;
 }
 
 /** Enlaza un param/falla del modelo con el `control` de una parte. */
@@ -117,7 +126,8 @@ export type CircuitIssueCode =
   | 'duplicate-controller'
   | 'unknown-controller'
   | 'invalid-probe'
-  | 'invalid-fixed';
+  | 'invalid-fixed'
+  | 'invalid-cross-fluid';
 
 export interface CircuitIssue {
   level: CircuitIssueLevel;
