@@ -47,6 +47,84 @@ git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 - **Cómo mirar un layout sin navegador**: `npm run layout` y
   `rsvg-convert layout-sheets/<id>.svg -o <id>.png`.
 
+## REVISIÓN EN FIREFOX 2026-09-29 (usuario) — hallazgos
+
+Se revisa en orden: primero A15 (`vehicle-70`, luego `vehicle-2000`), después
+los laboratorios sueltos. Aquí se anota lo que salga mal, tal cual lo dijo el
+usuario, con la causa probable cuando ya se conoce. Nada de esto está
+diagnosticado ni arreglado todavía.
+
+**`#/lab/vehicle-70` — primera impresión (no son fallas de física, son de
+legibilidad):**
+
+1. **Todo se ve muy pequeño y no se entiende nada.** Los cinco sistemas
+   están a la vez en pantalla. Causa probable: grilla de 2 columnas × 3
+   filas con celdas de 1400×800 (ver CERRADO de A15), escalada para caber en
+   una sola vista.
+2. **Los sliders no dan feedback inmediato en los diagramas**, o el cambio
+   es demasiado pequeño para verse (mismo problema de escala). Falta
+   comprobar cuáles controles sí se reflejan en el diagrama y cuáles no.
+3. **No se entiende que es un auto de los 70**: se ven sólo los sistemas
+   sueltos, sin nada que los una como un vehículo (carrocería, silueta,
+   motor como pieza central, o un esquema que muestre cómo se relacionan).
+
+**En todas las rutas — el panel de controles salía vacío (ARREGLADO, sin
+commitear):** los datos estaban bien (cada módulo declara 6–26 controles)
+y el modo de laboratorio pide `controls: 'all'`. La causa era una regresión
+de la migración a TS (`09d4923`, TS2): `createControlsPanel`
+(`src/core/ui/controls.ts`) creaba cada `fieldset` de grupo y le agregaba
+los controles, pero perdió el `container.append(fs)` que sí tenía el
+`controls.js` original. Los controles existían y se sincronizaban, pero
+nunca entraban al DOM. Ningún test lo veía (los tests corren en Node, sin
+DOM, y no hay test de `createControlsPanel`). Arreglo: una línea. `npm run
+check` verde. Los otros paneles (fallas, mediciones, ficha, HUD, timebar)
+sí agregan sus nodos. Pendiente para el usuario: recargar y confirmar que
+los sliders, toggles y selects aparecen y se mueven; con eso se puede
+reevaluar el hallazgo 2 de arriba (sliders sin feedback), que pudo ser
+consecuencia de esto.
+
+**Auditoría de código (2026-09-29, a pedido del usuario: "legibilidad del
+diagrama" y "feedback de controles", en todos los laboratorios):**
+
+- **Escala del vehículo, con la cuenta.** El `viewBox` de `vehicle-70` y
+  `vehicle-2000` es 2840×2440 (`modules/vehicle/defs.ts`); el de un
+  laboratorio suelto es ~1200–1400×680–760. El SVG usa `width/height:100%` con
+  `preserveAspectRatio: meet` (`render/svg/index.ts`, `styles.css`), así que
+  la escala es `min(ancho/2840, alto/2440)`. Con el área central de un monitor
+  1920×1080 (1920 − 180 nav − 360 panel ≈ 1380 × ~990) sale ≈ 0,41; el
+  laboratorio suelto sale ≈ 1,06: el texto y las piezas del vehículo quedan
+  ~2,6× más chicos. En una laptop 1366×768 (≈ 826 × ~630) sale ≈ 0,26 contra
+  0,63: ~2,4× más chico, y el texto de 12–14 unidades pasa a ~3–4 px. Es la
+  causa de "muy pequeños"; no es un bug de un drawer.
+- **Feedback de controles: medición.** Script desechable (borrado): por cada
+  control, corre 2 s simulados con el control en mín y en máx (llave en
+  "Marcha" cuando existe) y cuenta cuántos valores del `VisualState` (los
+  canales de piezas y los caudales/potenciales de enlaces) difieren. Resultado
+  completo en la sesión; lo relevante:
+  - **Sin ningún cambio visible en ninguna ruta:** `vehicleSpeedKmh`
+    (también en `cooling-viscous` y `cooling-electric`, donde no es un
+    override del vehículo), `ignition:humidity` (`ignition-points`).
+  - **Sin cambio en el vehículo, con cambio en el laboratorio suelto:**
+    `cooling:load` (en `paramsView`, `compile.ts`, `load` se pisa con
+    `engine.load` del bus: el slider es letra muerta ahí, y sigue mostrándose),
+    `ignition:compression`, `fuel:fastConsumption`.
+  - **Controles de un sistema que no es el proveedor de la batería:**
+    `ignition:batteryV` y `cooling:batteryV` en `vehicle-2000` cambian 1 valor
+    de 357: consecuencia de la batería fundida (PARA RETOMAR); en el vehículo
+    hay que esconder o redirigir esos controles.
+  - **Cambian pocos valores en total** (1 a 3 canales, probablemente sólo una
+    etiqueta): `throttle` en 4 tiempos, `lateralG`, `engineTempC` en el
+    carburador suelto, `camOffset` en COP, `batteryV` de refrigeración.
+  - **Límite de la medición (no concluir de más):** `crankDeg`,
+    `sparkAdvance` y `oilPressure` de 4 tiempos dieron 0, pero sólo se probó
+    el `mode` por defecto; probablemente sólo actúan en otro modo y no son
+    fallas. La medición cuenta *cuánto* del VisualState cambia, no cuánto se
+    ve: un drawer puede ignorar el canal, o el cambio ser de 1 px. Tampoco
+    prueba fallas. Falta comprobar en Firefox los casos "cambian poco".
+
+Pendiente: seguir con `vehicle-2000` y los laboratorios sueltos, y anotar
+aquí cada hallazgo nuevo.
+
 ## PENDIENTE — FIX 2026-09-25 (encontrado por el usuario) — el feedback del quiz usa tiempo simulado
 
 En las etapas del quiz, al bajar la velocidad con el timebar (p. ej. 0.05×) el
@@ -119,6 +197,18 @@ plan): `informes/2026-09-25-bloque-s-a4-a6.md`.
 | V1 | Conexiones visuales: geometría de drawers, `via`, chequeo y hoja de layout (`plans/2026-09-26-conexiones-visuales.md`) | A14 | ✅ |
 | A16 | Carburador (spec + plan listos) | A10 | ✅ |
 | A15 | Laboratorio del vehículo: `vehicle-70` y `vehicle-2000` (plan del vehículo) | A11–A14, A16 | ✅ |
+
+**Bloque L — legibilidad y foco** (nace de la revisión del 2026-09-29; plan
+`plans/2026-09-29-legibilidad-y-foco.md`, fichas en `FICHAS.md`; propuesto,
+pendiente de que el usuario responda §6 del plan y lo apruebe):
+
+| # | Tarea | Depende de | Estado |
+|---|---|---|---|
+| L0 | `realDt` hasta el modo y el renderer (cierra el FIX del quiz) | — | ⏳ |
+| H1 | `ControlSpec.affects` y resaltado de lo que cada control toca | L0 | ⏳ |
+| H2 | Controles sin efecto: deshabilitar con motivo o corregir | H1 | ⏳ |
+| V2 | Regiones, cámara y atenuado en el vehículo | H1, L0 | ⏳ |
+| V3 | Chasis y vista de conjunto con indicadores en vivo | V2 | ⏳ |
 
 **Bloque S2 — resto del auto** (después de A15; el usuario elige el orden,
 pendiente — ver PARA RETOMAR). Spec y plan listos para todos (`FICHAS.md`):

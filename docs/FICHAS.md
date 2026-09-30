@@ -141,6 +141,58 @@ ellos ya está en las specs, los planes nuevos y aquí.
 
 ---
 
+## Bloque L — legibilidad y foco (antes del bloque S2)
+
+Nace de la revisión en Firefox del 2026-09-29. Plan único, lectura lineal:
+`docs/plans/2026-09-29-legibilidad-y-foco.md`. Orden: L0 → H1 → H2 → V2 → V3.
+Cada ficha nombra las secciones del plan que cubre; el plan trae los
+archivos, los pasos, las decisiones (D1–D7) y la checklist de Firefox.
+
+## L0 — `realDt` hasta el modo y el renderer
+
+- **Plan**: §2 (D6) y §3 "L0". Cierra también el "PENDIENTE — FIX
+  2026-09-25" de `AHORA.md` (feedback del quiz con tiempo simulado).
+- **Aceptación**: con `timeScale = 0,05`, el feedback del quiz dura ~1 s
+  reales. Tarea de core: toca `loop`, `session`, `types`, `shell`, `quiz` y la
+  firma de `renderer.update`.
+
+## H1 — `affects` y resaltado de controles y de fallas
+
+- **Plan**: §2 (D1, D1b, D2) y §3 "H1". **Necesita**: L0.
+- **Qué es**: cada control declara las piezas que toca (`ControlSpec.affects`)
+  y el shell las resalta mientras se lo usa; lo mismo para las fallas (pieza
+  dueña + síntomas al tocarlas, aro fijo mientras estén activas y visibles,
+  pulso al activarse; el renderer por fin consume `faultCues`). Datos en los
+  10 laboratorios y en el vehículo. Tests que validan los `partId` (§10) y que
+  una falla oculta no se delata.
+- **Aceptación**: en cada laboratorio, al arrastrar un slider se ilumina la
+  pieza correcta y se apaga ~1,5 s tras soltarlo; al tocar o activar una
+  falla se ve dónde está y dónde se nota; tema oscuro incluido.
+
+## H2 — Controles sin efecto
+
+- **Plan**: §2 (D7) y §3 "H2". **Necesita**: H1.
+- **Qué es**: deshabilitar con motivo los controles que el vehículo pisa, y
+  decidir con la spec qué pasa con `vehicleSpeedKmh` e `ignition:humidity`
+  (falta un canal, o sobra el control). No se cambia física sin un test con
+  rango (§14).
+
+## V2 — Regiones, cámara y atenuado del vehículo
+
+- **Plan**: §2 (D3, D4, D4b) y §3 "V2". **Necesita**: H1 y L0.
+- **Aceptación**: en `vehicle-70` y `vehicle-2000`, tocar un control lleva la
+  cámara al sistema, el texto se lee sin acercar el navegador, y `Esc`
+  vuelve al conjunto.
+
+## V3 — Chasis y vista de conjunto
+
+- **Plan**: §2 (D5) y §3 "V3". **Necesita**: V2.
+- **Aceptación**: se reconoce un auto, distinto el de 1970 del de 2000, con
+  indicadores en vivo por sistema.
+- **No empezar** hasta que el usuario responda las preguntas de §6 del plan.
+
+---
+
 ## Bloque S2 — resto del auto (después de A15; el orden lo elige el usuario)
 
 Orden sugerido por dependencias: A17 → A18 → A19 → A20 → A21 → A22 → A23 →
