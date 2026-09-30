@@ -189,6 +189,7 @@ export function createControlsPanel(
     if (!fs) {
       fs = h('fieldset', { class: 'ctl-group' }, gname ? h('legend', {}, gname) : null);
       groups.set(gname, fs);
+      container.append(fs);
     }
     fs.append(item.node);
     items.push(item);
