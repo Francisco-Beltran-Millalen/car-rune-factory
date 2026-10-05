@@ -143,43 +143,67 @@ ellos ya está en las specs, los planes nuevos y aquí.
 
 ## Bloque L — legibilidad y foco (antes del bloque S2)
 
-Nace de la revisión en Firefox del 2026-09-29. Plan único, lectura lineal:
-`docs/plans/2026-09-29-legibilidad-y-foco.md`. Orden: L0 → H1 → H2 → V2 → V3.
-Cada ficha nombra las secciones del plan que cubre; el plan trae los
-archivos, los pasos, las decisiones (D1–D7) y la checklist de Firefox.
+Nace de la revisión en Firefox del 2026-09-29. Se hace en dos checkpoints:
 
-## L0 — `realDt` hasta el modo y el renderer
+- **C1 — los 10 laboratorios sueltos se entienden y están revisados**:
+  R0 → U1 → H1 → H2 → R1. Plan: `docs/plans/2026-10-05-checkpoint-c1.md`
+  (lectura lineal; para H1 y H2 reemplaza al plan del 09-29).
+- **C2 — el vehículo se entiende**: V2 → V3. Plan:
+  `docs/plans/2026-09-29-legibilidad-y-foco.md`, con los ajustes de §4 del
+  plan de C1 (D-C1: el `realDt` del renderer entra en V2).
 
-- **Plan**: §2 (D6) y §3 "L0". Cierra también el "PENDIENTE — FIX
-  2026-09-25" de `AHORA.md` (feedback del quiz con tiempo simulado).
-- **Aceptación**: con `timeScale = 0,05`, el feedback del quiz dura ~1 s
-  reales. Tarea de core: toca `loop`, `session`, `types`, `shell`, `quiz` y la
-  firma de `renderer.update`.
+**L0** (realDt hasta el modo) quedó cerrado el 2026-10-05 (`AHORA.md`).
+
+## R0 — Revisión del usuario en Firefox (sin código)
+
+- **Plan**: C1 §5 "R0". El agente sólo anota lo que diga el usuario en
+  `AHORA.md`. Un bug de física o de dibujo que salga se arregla antes de U1,
+  como FIX aparte con su test.
+
+## U1 — Tests de UI en DOM y `shell.ts` partido
+
+- **Plan**: C1 §4 (D-C2, D-C3, D-C4) y §5 "U1". **Necesita**: R0 y la
+  respuesta del usuario a C1 §7.1 (`happy-dom`).
+- **Qué es**: tests que arman los paneles y el shell en un DOM de test (los
+  de los paneles se escriben primero, contra el código de hoy);
+  `renderer.highlight` limpia sólo su estilo; `core/shell.ts` partido en
+  `shell.ts`, `mount.ts` y `ui/sidePanels.ts` sin cambio de conducta.
+- **Aceptación**: los tests nuevos fallan si se quita el `container.append(fs)`
+  de `createControlsPanel`; `shell.ts` ≤ ~300 líneas; un laboratorio y el quiz
+  se ven igual en Firefox.
 
 ## H1 — `affects` y resaltado de controles y de fallas
 
-- **Plan**: §2 (D1, D1b, D2) y §3 "H1". **Necesita**: L0.
-- **Qué es**: cada control declara las piezas que toca (`ControlSpec.affects`)
-  y el shell las resalta mientras se lo usa; lo mismo para las fallas (pieza
-  dueña + síntomas al tocarlas, aro fijo mientras estén activas y visibles,
+- **Plan**: C1 §5 "H1" (que retoma D1, D1b y D2 del plan del 09-29 y los
+  corrige). **Necesita**: U1.
+- **Qué es**: cada control declara las piezas que toca (`affects`), y el
+  panel las resalta mientras se lo usa (y 1,5 s después); lo mismo para las
+  fallas (pieza dueña + síntomas; aro fijo mientras estén activas y visibles;
   pulso al activarse; el renderer por fin consume `faultCues`). Datos en los
-  10 laboratorios y en el vehículo. Tests que validan los `partId` (§10) y que
-  una falla oculta no se delata.
-- **Aceptación**: en cada laboratorio, al arrastrar un slider se ilumina la
-  pieza correcta y se apaga ~1,5 s tras soltarlo; al tocar o activar una
-  falla se ve dónde está y dónde se nota; tema oscuro incluido.
+  10 laboratorios y prefijados en el vehículo. Cada `affects` se decide
+  leyendo el controlador, no el nombre.
+- **Aceptación**: el test de `affects` recorre todo el registro; en cada
+  laboratorio, al arrastrar un slider se ilumina la pieza correcta y se apaga
+  ~1,5 s tras soltarlo; tocar un control no borra la selección ni el `target`
+  del quiz; en el quiz no aparece ningún aro de falla.
 
-## H2 — Controles sin efecto
+## H2 — Controles con efecto lento, condicional o pisado
 
-- **Plan**: §2 (D7) y §3 "H2". **Necesita**: H1.
-- **Qué es**: deshabilitar con motivo los controles que el vehículo pisa, y
-  decidir con la spec qué pasa con `vehicleSpeedKmh` e `ignition:humidity`
-  (falta un canal, o sobra el control). No se cambia física sin un test con
-  rango (§14).
+- **Plan**: C1 §4 (D-C5, D-C7) y §5 "H2". **Necesita**: H1.
+- **Qué es**: `hint` en los controles de efecto lento o condicional
+  (`vehicleSpeedKmh`, `ambientC`, `humidity`: **sí** tienen efecto, ver
+  D-C7); `VehicleDef.overridden` con motivo para los controles que el
+  vehículo pisa. No se cambia física sin un test con rango (§14).
+
+## R1 — Revisión de cierre de C1 (usuario)
+
+- **Plan**: C1 §5 "R1" y §6. Al cerrar, preguntar al usuario: ¿C2 o S2?
 
 ## V2 — Regiones, cámara y atenuado del vehículo
 
-- **Plan**: §2 (D3, D4, D4b) y §3 "V2". **Necesita**: H1 y L0.
+- **Plan**: plan del 09-29 §2 (D3, D4, D4b) y §3 "V2", más C1 §4 D-C1:
+  `renderer.update(visual, simDt, realDt)`; la cámara usa `realDt`, las
+  partículas siguen con `simDt`. **Necesita**: C1 cerrado.
 - **Aceptación**: en `vehicle-70` y `vehicle-2000`, tocar un control lleva la
   cámara al sistema, el texto se lee sin acercar el navegador, y `Esc`
   vuelve al conjunto.
@@ -194,6 +218,11 @@ archivos, los pasos, las decisiones (D1–D7) y la checklist de Firefox.
 ---
 
 ## Bloque S2 — resto del auto (después de A15; el orden lo elige el usuario)
+
+**Desde C1** (plan de C1, D-C6): todo sistema nuevo declara `affects` en
+sus controles y en su catálogo de fallas, y `hint`/`disabledReason` donde
+corresponda; el test de `affects` recorre el registro, así que sin eso
+`npm run check` no pasa.
 
 Orden sugerido por dependencias: A17 → A18 → A19 → A20 → A21 → A22 → A23 →
 A24 → A25. Cada ficha dice qué necesita antes.

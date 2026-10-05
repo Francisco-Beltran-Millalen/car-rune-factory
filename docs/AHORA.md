@@ -4,6 +4,13 @@ Trabajo vivo entre sesiones (≤500 líneas). Lo cerrado se recorta y queda en
 git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 `plans/2026-09-22-plan-maestro.md`.
 
+## SIGUIENTE (2026-10-05) — Checkpoint C1
+
+Plan: `plans/2026-10-05-checkpoint-c1.md`; fichas en `FICHAS.md`, bloque L.
+Orden: **R0** (revisión del usuario en Firefox, con el panel de controles
+ya arreglado) → U1 → H1 → H2 → R1. Antes de U1 hace falta la respuesta del
+usuario sobre `happy-dom` (plan §7.1). Después de C1: C2 (vehículo) o S2.
+
 ## PARA RETOMAR (escrito al cerrar la sesión del 2026-09-28)
 
 - **Estado**: A15 (laboratorio del vehículo, `vehicle-70` y `vehicle-2000`)
