@@ -11,7 +11,9 @@ import type {
 } from './types.ts';
 
 const DEFAULT_GMIN = 1e-9;
-const DEFAULT_MAX_ITERATIONS = 25;
+// Con |Δx| ≤ 1 por iteración, cortar la llave (12 V → ~0) ya gasta 12
+// iteraciones de recorrido; el peor caso medido usa 38 (solver.md §4).
+const DEFAULT_MAX_ITERATIONS = 50;
 const DEFAULT_MAX_DELTA = 1;
 const DEFAULT_TOLERANCE = 1e-7;
 const RESIDUAL_ABS = 1e-6;

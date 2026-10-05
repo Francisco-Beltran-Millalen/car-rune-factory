@@ -7,6 +7,7 @@ import { createControllers, type ControllerContext, type ControllerDef } from '.
 import { createSolver } from '../solver/nodal.ts';
 import type { Solver } from '../solver/types.ts';
 import { compileNet, solverElementsOf } from './net.ts';
+import { snapshotElements } from './snapshot.ts';
 import type {
   CircuitBinding,
   CircuitState,
@@ -26,6 +27,7 @@ export function compileCircuit<S extends CircuitState = CircuitState>(
 
   const initOverrides = options.init ?? {};
   for (const element of Object.values(elements)) element.init?.(initOverrides);
+  const restoreElements = snapshotElements(elements);
 
   const solverElements = solverElementsOf(elements, portToNode);
 
@@ -40,7 +42,8 @@ export function compileCircuit<S extends CircuitState = CircuitState>(
   const controllerTypes = options.controllerTypes ?? {};
   let controllers: ControllerDef[] = createControllers(controllerDefs, controllerTypes);
   let solver: Solver = createSolver({ nodeCount, elements: solverElements, ground: fixed });
-  const rng: Rng = createRng(options.seed ?? 12345);
+  const seed = options.seed ?? 12345;
+  let rng: Rng = createRng(seed);
 
   const probeDefs = def.probes ?? {};
   let probeValues: Record<string, number> = {};
@@ -118,7 +121,10 @@ export function compileCircuit<S extends CircuitState = CircuitState>(
   function reset(): void {
     Object.assign(params, initialParams);
     Object.assign(faults, initialFaults);
+    restoreElements();
     for (const element of Object.values(elements)) element.init?.(initOverrides);
+    options.onReset?.();
+    rng = createRng(seed);
     solver = createSolver({ nodeCount, elements: solverElements, ground: fixed });
     applyInitial();
     controllers = createControllers(controllerDefs, controllerTypes);

@@ -29,6 +29,7 @@ export function airMassFlowStub(params: Readonly<ParamRecord>): number {
 export interface PhaseStub {
   step(dt: number, params: Readonly<ParamRecord>): void;
   get(): number;
+  reset(): void;
   /** `engine.camAngle` para unos params. */
   cam(params: Readonly<ParamRecord>): number;
 }
@@ -41,6 +42,9 @@ export function createPhaseStub(): PhaseStub {
     },
     get(): number {
       return angle;
+    },
+    reset(): void {
+      angle = 0;
     },
     cam(params): number {
       return wrap(angle - num(params['camOffset']), 720);

@@ -71,3 +71,13 @@ describe('compileVehicle — vehicle-2000 (A15)', () => {
     expect(typeof runningMixture).toBe('number');
   });
 });
+
+describe('compileVehicle — potenciales de arranque (CircuitDef.initial)', () => {
+  it('la refrigeración arranca a 25 °C como en su laboratorio, también tras reset', () => {
+    const v = compileVehicle(VEHICLE_70);
+    expect(v.model.state['cooling:tEngine']).toBe(25);
+    run(v.model, 0.5);
+    v.model.reset();
+    expect(v.model.state['cooling:tEngine']).toBe(25);
+  });
+});

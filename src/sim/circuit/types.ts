@@ -163,6 +163,9 @@ export interface CompileOptions<S extends CircuitState = CircuitState> {
   faults?: Readonly<ParamRecord>;
   actions?: ModelActions;
   seed?: number;
+  /** Estado del módulo que vive fuera del circuito (bus, señales): `reset()`
+   *  lo llama para que el modelo quede igual a uno recién creado (§3). */
+  onReset?: () => void;
 }
 
 export interface CompiledCircuit<S extends CircuitState = CircuitState> {

@@ -143,6 +143,24 @@ describe('session', () => {
     expect(session.recorder.series.get('pos')!.size).toBe(0);
   });
 
+  it('reset descarta la fracción de paso pendiente del loop', () => {
+    const session = createSession({ createModel: createTestModel, driver: 'external' });
+    expect(session.tick(0.0006)).toBe(0); // 0,6 ms acumulados, sin paso
+    session.reset();
+    expect(session.tick(0.0006)).toBe(0); // sin el 0,6 ms de antes del ⟲
+    expect(session.tick(0.0006)).toBe(1);
+  });
+
+  it('onFrame entrega también el tiempo real del frame', () => {
+    const session = createSession({ createModel: createTestModel, driver: 'external' });
+    const frames: number[][] = [];
+    session.onFrame((simDt, steps, realDt) => frames.push([simDt, steps, realDt]));
+    session.loop.setTimeScale(0.05);
+    session.tick(0.04);
+    expect(frames[0]![1]).toBe(2);
+    expect(frames[0]![2]).toBeCloseTo(0.04, 9);
+  });
+
   it('destroy detiene el loop y desconecta listeners', () => {
     const session = createSession({
       createModel: createTestModel,

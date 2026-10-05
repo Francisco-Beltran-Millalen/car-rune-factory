@@ -198,6 +198,9 @@ function buildLubrication(
     actions,
     init: { tankLevel: state.level },
     seed: overrides.seed ?? 12345,
+    onReset: () => {
+      bus.reset();
+    },
   });
   return { circuit, params, faults, state, bus };
 }

@@ -24,7 +24,9 @@ export interface LoopOptions<M extends SteppableModel = SteppableModel> {
   model: M;
   fixedDt?: number;
   maxStepsPerFrame?: number;
-  onFrame?: (simDt: number, steps: number) => void;
+  /** `realDt`: segundos reales del frame (ya limitados), para tiempos de UI
+   *  que no deben estirarse con la cámara lenta (el feedback del quiz). */
+  onFrame?: (simDt: number, steps: number, realDt: number) => void;
   /** Inyectables para tests (D9 del plan de juego). */
   raf?: (cb: FrameRequestCallback) => number;
   caf?: (id: number) => void;
@@ -38,6 +40,8 @@ export interface Loop {
   setPaused(b: boolean): void;
   /** Da exactamente un paso aunque esté en pausa (botón "paso a paso"). */
   stepOnce(): void;
+  /** Descarta la fracción de paso acumulada (lo usa el ⟲ de la sesión). */
+  clearPending(): void;
   readonly timeScale: number;
   readonly paused: boolean;
   readonly running: boolean;
@@ -78,7 +82,7 @@ export function createLoop<M extends SteppableModel = SteppableModel>({
       if (steps >= maxStepsPerFrame) acc = 0;
       simDt = steps * fixedDt;
     }
-    onFrame(simDt, steps);
+    onFrame(simDt, steps, dt);
     return steps;
   }
 
@@ -110,7 +114,10 @@ export function createLoop<M extends SteppableModel = SteppableModel>({
     },
     stepOnce() {
       model.step(fixedDt);
-      onFrame(fixedDt, 1);
+      onFrame(fixedDt, 1, 0);
+    },
+    clearPending() {
+      acc = 0;
     },
     get timeScale() {
       return timeScale;

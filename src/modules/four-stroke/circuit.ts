@@ -118,6 +118,9 @@ function buildFourStroke(variant: FourStrokeVariant, overrides: FourStrokeOverri
     faults,
     actions,
     seed: overrides.seed ?? 12345,
+    onReset: () => {
+      bus.reset();
+    },
   });
   return { circuit, params, faults, state, bus };
 }

@@ -34,9 +34,9 @@ git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
   tubo a la galería (es un instrumento `visual`); las dos baterías dibujadas
   por sistema en el vehículo son la misma cosa eléctricamente (nota de
   arriba).
-- **Pendiente aparte** (sin fecha): el fix del feedback del quiz (sección
-  siguiente); un pedido de core sobre `displacementPump` en
-  `docs/core-requests.md` (2026-09-27, no bloquea).
+- **Pendiente aparte** (sin fecha): un pedido de core sobre
+  `displacementPump` en `docs/core-requests.md` (2026-09-27, no bloquea). El
+  fix del feedback del quiz quedó hecho (CERRADO 2026-10-05).
 - **Benchmark del vehículo sensible a la CPU de la corrida completa**: solo
   (`npx vitest run tests/vehicle/benchmark.test.ts`) da ~5000 pasos/s, por
   encima del presupuesto de 4000 (§10); compitiendo con el resto de la
@@ -125,24 +125,61 @@ diagrama" y "feedback de controles", en todos los laboratorios):**
 Pendiente: seguir con `vehicle-2000` y los laboratorios sueltos, y anotar
 aquí cada hallazgo nuevo.
 
-## PENDIENTE — FIX 2026-09-25 (encontrado por el usuario) — el feedback del quiz usa tiempo simulado
+## CERRADO 2026-10-05 — revisión de `main`: ⟲, solver, quiz y guardado
 
-En las etapas del quiz, al bajar la velocidad con el timebar (p. ej. 0.05×) el
-1 s de feedback antes de pasar a la siguiente pregunta se estira igual que la
-simulación. Esos tiempos son de **UI** y no deberían depender de `timeScale`.
+Revisión de código de `main` (`0dc4eef`) a pedido del usuario, con los bugs
+arreglados. `npm run check` verde, 498 tests (+42).
 
-- Causa: `core/shell.ts:378` llama `mode.update(simDt)` y `game/modes/quiz.ts:328`
-  descuenta el `timer` con ese `simDt` (`simDt = realDt × timeScale`,
-  CONTRATOS 4.5). El laboratorio no tiene timers de UI, por eso sólo se nota
-  en el quiz.
-- Arreglo propuesto: pasar también el `realDt` al modo (`GameMode.update(simDt,
-  realDt)` + `session.onFrame`/`core/loop.ts` entregando el `realDt`, que hoy
-  se descarta) y que `quiz.ts` descuente el feedback con `realDt`. Revisar si
-  el HUD/log u otro modo tienen timers de UI con el mismo problema.
-- Test: con `timeScale = 0.05`, el feedback debe durar ~1 s **real** aunque el
-  reloj de la sesión avance 50 ms de simulación.
-- Toca `core/loop.ts`, `game/session.ts`, `game/types.ts`, `core/shell.ts` y
-  `game/modes/quiz.ts`: es una tarea de core + modo, no de un módulo.
+- **⟲ y los presets no dejaban el modelo como uno nuevo (§3).** Probado: la
+  misma secuencia de llave daba otro estado tras `reset()` en `fuel`,
+  `four-stroke` (con fallas), `ignition-*` y los dos vehículos. Causas: el
+  `rng` no se recreaba; el `switch` con `rampMs` (relé) guardaba su
+  progreso sin `init()`; el `LabBus` (stub de fase) y las `FuelSignals`
+  vivían fuera del circuito. Arreglo general: `compileCircuit` y
+  `compileVehicle` guardan una instantánea del `state`/`control` de los
+  elementos al compilar y la restauran (`sim/circuit/snapshot.ts`),
+  recrean el `rng`, y llaman `CompileOptions.onReset` (cada módulo reinicia
+  su bus o sus señales); `LabBus.reset()` y `StubState.reset?()` nuevos.
+  Test: `tests/sim/reset.test.ts` (nuevo == reiniciado, 12 laboratorios, con y
+  sin fallas; 11 de 24 casos fallaban antes).
+- **El vehículo ignoraba `CircuitDef.initial`**: la refrigeración arrancaba
+  en 0 °C el primer paso (25 °C en su laboratorio). `compileVehicle` lo aplica
+  al compilar y en `reset()`. Test en `tests/vehicle/compile.test.ts`.
+- **El solver dejaba de converger al apagar la llave** en el encendido (y en
+  `vehicle-70`): 150–210 pasos seguidos sin converger con algunas
+  combinaciones de fallas, y el estado congelado mientras tanto. Causa: el
+  tope de 25 iteraciones no alcanza con `|Δx| ≤ 1 V` por iteración (12 V →
+  ~0 ya son 12). Sube a 50; el peor caso medido en 480 corridas al azar usa
+  38. Cuenta en `docs/modules/solver.md` §4. Test nuevo:
+  `tests/sim/solver-health.test.ts` (antes sólo lubricación miraba
+  `stats.failures`).
+- **Feedback del quiz atado a `timeScale`** (el PENDIENTE del 2026-09-25):
+  `onFrame` del loop y de la sesión entregan `realDt`, `GameMode.update(simDt,
+  realDt)`, y el quiz descuenta el feedback con `realDt`. No hay otros timers
+  de UI. Test en `tests/game/quiz.test.ts`.
+- **`session.reset()` no vaciaba el acumulador del loop**: `Loop.clearPending()`.
+  Test en `tests/game/session.test.ts`.
+- **Guardado**: una clave `__proto__` en el JSON cambiaba el prototipo de
+  `stages`/`mastery` y el registro se perdía; ahora se arman con
+  `Object.fromEntries`. Test en `tests/game/save.test.ts`.
+- Sin arreglar (no son bugs, quedan anotados): ningún test arma
+  `createControlsPanel` (la regresión de `a23e1a9` pasó por eso; hace falta un
+  DOM de test, decisión de core); `core/shell.ts` (503 líneas),
+  `vehicle/compile.ts`, `sim/elements/hydraulic.ts` e `ignition/core.ts`
+  pasan bastante la señal de §16.
+
+**Revisar en Firefox** (`npm run dev`):
+1. `#/lab/fuel`: llave en "Marcha", esperar a que arranque, ⟲ → todo vuelve
+   al estado de recién abierto. Aplicar el mismo caso de "Casos para probar"
+   dos veces seguidas: las dos veces debe evolucionar igual.
+2. `#/lab/ignition-points`: con varias fallas activas (p. ej. condensador en
+   corto, platinos picados, distribuidor fisurado), llave en "Marcha" y
+   después en "Apagado": las mediciones bajan enseguida, sin quedarse
+   congeladas unos 0,2 s.
+3. `#/lab/vehicle-70`: recién cargado, la temperatura del motor marca 25 °C
+   (no 0 °C).
+4. Una etapa del quiz con la velocidad en 0.05×: tras responder, la
+   siguiente pregunta aparece a ~1 s, no a ~20 s.
 
 ## CERRADO 2026-09-22 — Fase 1: sistema de combustible
 

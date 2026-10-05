@@ -15,12 +15,12 @@ export function createSession<M extends Model>({
 }: SessionOptions<M>): Session<M> {
   const model = createModel();
   const recorder = createRecorder(readouts);
-  const listeners = new Set<(simDt: number, steps: number) => void>();
+  const listeners = new Set<(simDt: number, steps: number, realDt: number) => void>();
 
-  function onFrame(simDt: number, steps: number): void {
+  function onFrame(simDt: number, steps: number, realDt: number): void {
     recorder.sample(model);
     for (const cb of listeners) {
-      cb(simDt, steps);
+      cb(simDt, steps, realDt);
     }
   }
 
@@ -63,6 +63,7 @@ export function createSession<M extends Model>({
     },
     reset(): void {
       model.reset();
+      loop.clearPending();
       recorder.clear();
     },
     destroy(): void {

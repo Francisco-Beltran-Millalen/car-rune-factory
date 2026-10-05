@@ -100,23 +100,31 @@ function parseSave(raw: unknown): SaveData {
     return defaults();
   }
 
-  const stages: Record<string, StageRecord> = {};
-  for (const [id, v] of Object.entries(data['stages'])) {
-    if (!isRecord(v)) continue;
-    stages[id] = {
-      bestScore: Math.max(0, num(v['bestScore'])),
-      stars: Math.min(3, Math.max(0, num(v['stars']))),
-      completedAt: typeof v['completedAt'] === 'string' ? v['completedAt'] : '',
-    };
-  }
-  const mastery: SaveData['mastery'] = {};
-  for (const [key, v] of Object.entries(data['mastery'])) {
-    if (!isRecord(v)) continue;
-    mastery[key] = {
-      seen: Math.max(0, num(v['seen'])),
-      correct: Math.max(0, num(v['correct'])),
-    };
-  }
+  // `Object.fromEntries` define propiedades propias: una clave `__proto__`
+  // del JSON no puede cambiar el prototipo (con `obj[k] = v` sí podía).
+  const stages: Record<string, StageRecord> = Object.fromEntries(
+    Object.entries(data['stages']).flatMap(([id, v]) =>
+      isRecord(v)
+        ? [
+            [
+              id,
+              {
+                bestScore: Math.max(0, num(v['bestScore'])),
+                stars: Math.min(3, Math.max(0, num(v['stars']))),
+                completedAt: typeof v['completedAt'] === 'string' ? v['completedAt'] : '',
+              },
+            ] as const,
+          ]
+        : [],
+    ),
+  );
+  const mastery: SaveData['mastery'] = Object.fromEntries(
+    Object.entries(data['mastery']).flatMap(([key, v]) =>
+      isRecord(v)
+        ? [[key, { seen: Math.max(0, num(v['seen'])), correct: Math.max(0, num(v['correct'])) }] as const]
+        : [],
+    ),
+  );
   return { version: SAVE_VERSION, stages, mastery };
 }
 

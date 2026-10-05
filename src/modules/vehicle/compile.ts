@@ -12,6 +12,7 @@
 import { createRng, type Rng } from '../../core/rng.ts';
 import type { Model, ParamRecord } from '../../core/types.ts';
 import { compileNet, solverElementsOf } from '../../sim/circuit/net.ts';
+import { snapshotElements } from '../../sim/circuit/snapshot.ts';
 import { translateCircuit } from '../../sim/circuit/translate.ts';
 import type { CircuitDef } from '../../sim/circuit/types.ts';
 import { createVehicleEngineCore } from '../../sim/controllers/engineCore.ts';
@@ -245,6 +246,7 @@ export function compileVehicle(def: VehicleDef): CompiledVehicle {
     }
   }
   initElements();
+  const restoreElements = snapshotElements(elements);
 
   // 5. Bus del vehículo (§5, D-V4).
   const bus = createVehicleBus({
@@ -292,6 +294,18 @@ export function compileVehicle(def: VehicleDef): CompiledVehicle {
   // de 4 tiempos va primero entre los sistemas para que la fase same-step,
   // §5.2, llegue antes a quien la lee: encendido, combustible/carburador).
   let solver: Solver = createSolver({ nodeCount, elements: solverElements, ground: Float64Array.from(fixed) });
+
+  /** `CircuitDef.initial` de cada sistema (ya con prefijo): potencial de
+   *  arranque de nodos libres, igual que `compileCircuit` en el laboratorio. */
+  function applyInitial(): void {
+    for (const b of built) {
+      for (const [key, value] of Object.entries(b.translated?.initial ?? {})) {
+        const node = portToNode[key];
+        if (node !== undefined) solver.setPotential(node, value);
+      }
+    }
+  }
+  applyInitial();
 
   function ownedControllerOf(owner: string | undefined, controller: ControllerDef): OwnedController {
     if (!owner) {
@@ -359,7 +373,7 @@ export function compileVehicle(def: VehicleDef): CompiledVehicle {
     Object.assign(probeDefs, b.translated.probes);
   }
   const state: Record<string, unknown> = {};
-  const rng: Rng = createRng(12345);
+  let rng: Rng = createRng(12345);
   let time = 0;
 
   // Buffer reusado entre sondas (como `compileCircuit`): una sonda por
@@ -433,8 +447,12 @@ export function compileVehicle(def: VehicleDef): CompiledVehicle {
   function reset(): void {
     Object.assign(params, initialParams);
     Object.assign(faults, initialFaults);
+    restoreElements();
     initElements();
+    bus.reset();
+    rng = createRng(12345);
     solver = createSolver({ nodeCount, elements: solverElements, ground: Float64Array.from(fixed) });
+    applyInitial();
     controllers = buildControllers();
     probeValues = {};
     time = 0;

@@ -313,7 +313,7 @@ export function createQuizMode(ctx: ModeContext): QuizMode {
       }
       return [];
     },
-    update(simDt): ModeEvent[] {
+    update(_simDt, realDt): ModeEvent[] {
       const q = question();
       if (phase === 'question') {
         // El HUD no puede resaltar solo: el modo avisa una única vez por pregunta.
@@ -325,7 +325,8 @@ export function createQuizMode(ctx: ModeContext): QuizMode {
         return [highlight([q.partId], 'target')];
       }
       if (phase !== 'feedback') return [];
-      timer -= simDt;
+      // Tiempo de UI: real, no simulado (con 0.05× el feedback dura 1 s igual).
+      timer -= realDt;
       if (timer > 0) return [];
       index++;
       if (index >= total) return finish();

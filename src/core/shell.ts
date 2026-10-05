@@ -381,15 +381,15 @@ export function createShell(
     readouts.update(session.model.state);
     narr.set(desc.narrate(session.model));
     if (hud) hud.update(mode.hud());
-    applyEvents(mode.update(0)); // anuncio inicial del modo (p. ej. la pieza a nombrar)
+    applyEvents(mode.update(0, 0)); // anuncio inicial del modo (p. ej. la pieza a nombrar)
     renderer.update(visualNow(), 0);
 
-    const unframe = session.onFrame((simDt) => {
+    const unframe = session.onFrame((simDt, _steps, realDt) => {
       const now = performance.now();
       const real = (now - lastReal) / 1000;
       lastReal = now;
 
-      applyEvents(mode.update(simDt));
+      applyEvents(mode.update(simDt, realDt));
       renderer.update(visualNow(), simDt);
       readouts.update(session.model.state);
       timebar.setClock(session.model.time);

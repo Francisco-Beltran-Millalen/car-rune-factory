@@ -246,6 +246,9 @@ function buildCooling(variant: CoolingVariant, overrides: CoolingOverrides = {})
     faults,
     actions,
     seed: overrides.seed ?? 12345,
+    onReset: () => {
+      bus.reset();
+    },
   });
   return { circuit, params, faults, state, bus, controller };
 }

@@ -150,6 +150,16 @@ const FUEL_BINDINGS: readonly CircuitBinding[] = [
   { source: 'params', key: 'fastConsumption', part: 'tank', input: 'fast' },
 ];
 
+const INITIAL_SIGNALS: Readonly<FuelSignals> = {
+  engineState: 'off',
+  rpmEff: 0,
+  crankAngle: 0,
+  pMan: 0,
+  pRef: 0,
+  mixture: 0,
+  relayOn: false,
+};
+
 interface FuelBuild {
   circuit: CompiledCircuit<FuelState>;
   params: FuelParams;
@@ -162,15 +172,7 @@ function buildFuelCircuit(overrides: FuelOverrides = {}): FuelBuild {
   const state: FuelState = createInitialFuelState(overrides);
   const params: FuelParams = { ...DEFAULT_PARAMS, ...overrides.params };
   const faults: FuelFaults = { ...DEFAULT_FAULTS, ...overrides.faults };
-  const signals: FuelSignals = {
-    engineState: 'off',
-    rpmEff: 0,
-    crankAngle: 0,
-    pMan: 0,
-    pRef: 0,
-    mixture: 0,
-    relayOn: false,
-  };
+  const signals: FuelSignals = { ...INITIAL_SIGNALS };
   const controllerTypes: Readonly<Record<string, ControllerFactory>> = {
     engineCore: (id, controllerParams) => createEngineCore(id, controllerParams, { signals }),
     ecuFuel: (id, controllerParams) => createEcuFuel(id, controllerParams, signals),
@@ -187,6 +189,9 @@ function buildFuelCircuit(overrides: FuelOverrides = {}): FuelBuild {
     params,
     faults,
     seed: overrides.seed ?? 12345,
+    onReset: () => {
+      Object.assign(signals, INITIAL_SIGNALS);
+    },
   });
   return { circuit, params, faults, state };
 }

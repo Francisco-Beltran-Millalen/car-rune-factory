@@ -61,7 +61,13 @@ prellena `flow` y `jac` con ceros antes de cada llamada.
 1. **Dirichlet del paso**: se parte del `ground` base y se aplican los
    `fixed()` de los elementos (así una fuente sigue a su `control`).
 2. Se parte del potencial del paso anterior (`xStart`).
-3. Newton-Raphson, hasta 25 iteraciones:
+3. Newton-Raphson, hasta 50 iteraciones. (Hasta 2026-10-05 eran 25, y no
+   alcanzaba: con el tope de 1 V por iteración, cortar la llave con la bobina
+   cargando baja el nodo de 12 V a ~0 en 12 iteraciones de recorrido más las
+   de convergencia; el peor caso medido (480 corridas con controles y fallas
+   al azar, todos los laboratorios) usa 38, en el encendido. Con 25, el solver fallaba ~150–210 pasos seguidos después de
+   apagar la llave y el estado quedaba congelado. Lo fija
+   `tests/sim/solver-health.test.ts`.)
    - **Residuo** `F_i = −Σ flow[p] + Ĉ_i·(x_i − x_i^prev)/dt` = flujos que
      **salen** del nodo hacia los elementos + término capacitivo. En los
      puertos de nodos fijos el flujo no es incógnita: alimenta

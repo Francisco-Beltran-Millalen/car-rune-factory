@@ -86,10 +86,10 @@ geometría una vez y en `update` sólo muta atributos.
 ### 4.5 Bucle — `core/loop.ts`
 ```js
 createLoop({ model, fixedDt = 0.001, maxStepsPerFrame = 4000, onFrame })
-// → { tick(realDt), start(), stop(), stepOnce(), setTimeScale(x), setPaused(b), get timeScale, get paused, get running, destroy() }
-// onFrame(simDt, steps). El historial: createRecorder(readouts) de core/history.ts, .sample(model) en onFrame.
+// → { tick(realDt), start(), stop(), stepOnce(), clearPending(), setTimeScale(x), setPaused(b), get timeScale, get paused, get running, destroy() }
+// onFrame(simDt, steps, realDt). clearPending() descarta la fracción de paso acumulada (⟲ de la sesión). El historial: createRecorder(readouts) de core/history.ts, .sample(model) en onFrame.
 ```
-- En cada frame: `realDt = min(ahora - antes, 0.1)`. Luego `acc += realDt * timeScale`. Mientras `acc ≥ fixedDt` (y sin pasar `maxStepsPerFrame`) se llama `model.step(fixedDt)`. Al final, `onFrame(realDt * timeScale)`.
+- En cada frame: `realDt = min(ahora - antes, 0.1)`. Luego `acc += realDt * timeScale`. Mientras `acc ≥ fixedDt` (y sin pasar `maxStepsPerFrame`) se llama `model.step(fixedDt)`. Al final, `onFrame(simDt, steps, realDt)`: `simDt = steps·fixedDt` mide la simulación; `realDt` (el del frame, ya limitado) mide los tiempos de UI que no deben estirarse con la cámara lenta (2026-10-05).
 - `timeScale` va de 0.01 a 4, con valores predefinidos: 0.01, 0.05, 0.25, 1, 2, 4. La cámara lenta es clave para ver los inyectores y el ciclo de 4 tiempos.
 - El registro de historial (`history.ts`) toma muestras de las lecturas con `history: true` cada 50 ms de tiempo simulado. Guarda los últimos 400 puntos.
 
@@ -158,7 +158,11 @@ validateCircuit(def, types, controllerTypes?): CircuitIssue[]
 //   fixed ('part.port' → potencial: atm/chasis), initial ('part.port' →
 //   potencial de arranque de un nodo libre, A13), fluid
 // CompileOptions: types, controllerTypes?, bindings?, init?, state, params?,
-//   faults?, actions?, seed?
+//   faults?, actions?, seed?, onReset? (estado del módulo fuera del circuito:
+//   bus, señales; reset() lo llama)
+// reset() deja el modelo igual a uno recién creado (§3): restaura state/control
+//   de los elementos a la instantánea de compilación, vuelve a correr init,
+//   recrea solver, controladores y rng (tests/sim/reset.test.ts).
 // CircuitBinding: { source: 'params'|'faults', key, part, input } copia un
 //   valor del modelo al `control` del elemento en cada paso
 // CompiledCircuit: model (contrato Model), solver, elements, controllers,
@@ -187,6 +191,7 @@ export interface SignalBus {
 export interface LabBus extends SignalBus {
   bindParams(params: Readonly<ParamRecord>): void;
   step(dt: number): void;                         // avanza los stubs con estado
+  reset(): void;                                  // olvida lo escrito y reinicia los stubs (StubState.reset?)
 }
 export function createLabBus(options: {
   owner: string;
@@ -327,7 +332,8 @@ createSession<M extends Model>(o: SessionOptions<M>): Session<M>
 ```
 
 `SessionOptions` y `Session` están en `src/game/types.ts`: `model`, `loop`, `recorder`,
-`tick(realDt)`, `onFrame(cb)`, `start()`, `stop()`, `reset()`, `destroy()`.
+`tick(realDt)`, `onFrame(cb)` (cb recibe `simDt, steps, realDt`), `start()`, `stop()`,
+`reset()` (modelo + fracción de paso pendiente del loop + historial), `destroy()`.
 `driver: 'external'` significa que alguien llama `session.tick(realDt)` (Phaser, tests).
 
 ### 6.2 Intents — `src/game/intents.ts`
@@ -372,7 +378,7 @@ La pausa, la velocidad y el reinicio del reloj **no** son intents: son control d
   id,                        // 'lab' | 'quiz' | 'diagnosis' | 'assembly'
   get ui(): ModeUi,
   handle(intent: Intent | null): ModeEvent[],
-  update(simDt: number): ModeEvent[],
+  update(simDt: number, realDt: number): ModeEvent[],  // realDt: tiempos de UI (feedback del quiz)
   hud(): HudModel | null,    // datos para el panel HUD (6.7)
   onReset?(),                // opcional: lo llama el botón ⟲ en vez de session.reset()
   get status(): 'playing'|'won'|'lost'|'free',

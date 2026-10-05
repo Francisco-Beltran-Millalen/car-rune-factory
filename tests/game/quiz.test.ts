@@ -168,14 +168,28 @@ describe('modo quiz', () => {
     expect(save.recordAnswer).toHaveBeenCalledWith(expected[0]!.validIds[0]!, true);
     expect(mode.hud().stats.find((s) => s.label === 'Aciertos')!.value).toBe(1);
 
-    const next = mode.update(FEEDBACK_SECONDS + 0.05);
+    const next = mode.update(0, FEEDBACK_SECONDS + 0.05);
     expect(next.some((e) => e.type === 'highlight')).toBe(true);
 
     mode.handle(intents.selectPart(expected[1]!.validIds[0]!));
-    const end = mode.update(FEEDBACK_SECONDS + 0.05);
+    const end = mode.update(0, FEEDBACK_SECONDS + 0.05);
     expect(mode.status).toBe('won');
     expect(end.some((e) => e.type === 'stageEnd')).toBe(true);
     expect(save.recordStage).toHaveBeenCalledWith(stage.id, expect.objectContaining({ stars: 3 }));
+  });
+
+  it('el feedback dura 1 s real aunque la simulación vaya en cámara lenta', () => {
+    const stage = quizStage({ questions: 2, types: ['find'], parts: ['tank', 'pump'] });
+    const { mode } = makeMode(stage);
+    const expected = generateQuestions(createRng(SEED), parts, stage.config) as FindQuestion[];
+    mode.handle(intents.selectPart(expected[0]!.validIds[0]!));
+
+    // A 0.05×, 0,6 s reales son 30 ms simulados: todavía en feedback.
+    expect(mode.update(0.03, 0.6)).toEqual([]);
+    // Mucho tiempo simulado sin tiempo real (no debería pasar, pero no cuenta).
+    expect(mode.update(5, 0)).toEqual([]);
+    // 0,6 s reales más: pasó 1,2 s real y avanza a la siguiente pregunta.
+    expect(mode.update(0.03, 0.6).some((e) => e.type === 'highlight')).toBe(true);
   });
 
   it('`find`: fallo da feedback malo, corta la racha y no avanza solo', () => {
@@ -197,9 +211,9 @@ describe('modo quiz', () => {
     const { mode } = makeMode(stage);
     const q = generateQuestions(createRng(SEED), parts, stage.config)[0]!;
 
-    const announce = mode.update(0);
+    const announce = mode.update(0, 0);
     expect(announce).toEqual([{ type: 'highlight', data: { partIds: [q.partId], style: 'target' } }]);
-    expect(mode.update(0.016)).toEqual([]); // no repite el anuncio cada frame
+    expect(mode.update(0.016, 0.016)).toEqual([]); // no repite el anuncio cada frame
 
     const hud = mode.hud();
     const choices = hud.prompt!.choices!;
@@ -240,7 +254,7 @@ describe('modo quiz', () => {
 
     for (const q of expected) {
       mode.handle(intents.selectPart(q.validIds[0]!));
-      mode.update(FEEDBACK_SECONDS + 0.05);
+      mode.update(0, FEEDBACK_SECONDS + 0.05);
     }
     const stats = mode.hud().stats;
     expect(stats.find((s) => s.label === 'Aciertos')!.value).toBe(3);

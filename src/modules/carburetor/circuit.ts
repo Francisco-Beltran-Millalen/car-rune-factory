@@ -142,6 +142,9 @@ function buildCarburetor(overrides: CarburetorOverrides = {}): CarburetorBuild {
     faults,
     actions,
     seed: overrides.seed ?? 12345,
+    onReset: () => {
+      bus.reset();
+    },
   });
   circuitRef = circuit;
   applyLevels(circuit, overrides);

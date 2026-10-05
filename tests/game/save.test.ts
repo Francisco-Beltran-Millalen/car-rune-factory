@@ -112,4 +112,17 @@ describe('save v1 (CONTRATOS.md §6.8, ley §27)', () => {
     expect(save.reset()).toEqual({ version: SAVE_VERSION, stages: {}, mastery: {} });
     expect(createSave(storage).get().stages).toEqual({});
   });
+
+  it('una clave __proto__ del JSON no cambia el prototipo ni se pierde', () => {
+    const storage = createMemoryStorage();
+    storage.setItem(
+      SAVE_KEY,
+      '{"version":1,"stages":{"__proto__":{"bestScore":5,"stars":2}},"mastery":{"__proto__":{"seen":1,"correct":1}}}',
+    );
+    const data = createSave(storage).get();
+    expect(Object.getPrototypeOf(data.stages)).toBe(Object.prototype);
+    expect(Object.getPrototypeOf(data.mastery)).toBe(Object.prototype);
+    expect(Object.keys(data.stages)).toEqual(['__proto__']);
+    expect(Object.getOwnPropertyDescriptor(data.stages, '__proto__')?.value).toMatchObject({ bestScore: 5, stars: 2 });
+  });
 });

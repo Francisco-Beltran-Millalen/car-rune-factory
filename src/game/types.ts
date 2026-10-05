@@ -25,7 +25,7 @@ export interface Session<M extends Model = Model> {
   readonly loop: Loop;
   readonly recorder: Recorder;
   tick(realDt: number): number;
-  onFrame(cb: (simDt: number, steps: number) => void): () => void;
+  onFrame(cb: (simDt: number, steps: number, realDt: number) => void): () => void;
   start(): void;
   stop(): void;
   reset(): void;
@@ -192,7 +192,9 @@ export interface GameMode {
   readonly id: string;
   readonly ui: ModeUi;
   handle(intent: Intent | null): ModeEvent[];
-  update(simDt: number): ModeEvent[];
+  /** `simDt` avanza la simulación; `realDt` (segundos reales) mide los tiempos
+   *  de UI, que no se estiran con la cámara lenta. */
+  update(simDt: number, realDt: number): ModeEvent[];
   hud(): HudModel | null;
   readonly status: GameStatus;
   onReset?(): void;

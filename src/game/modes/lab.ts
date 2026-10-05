@@ -114,7 +114,7 @@ export function createLabMode(ctx: ModeContext): LabMode {
       activePreset = null;
       session.reset();
     },
-    update(_simDt): ModeEvent[] {
+    update(_simDt, _realDt): ModeEvent[] {
       return [];
     },
     hud() {

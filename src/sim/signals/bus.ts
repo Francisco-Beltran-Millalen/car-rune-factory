@@ -20,6 +20,8 @@ export interface SignalBus {
 export interface StubState {
   step(dt: number, params: Readonly<ParamRecord>): void;
   get(): number;
+  /** Vuelve al valor de arranque (lo llama `LabBus.reset`). */
+  reset?(): void;
 }
 
 export type StubSource = number | ((params: Readonly<ParamRecord>) => number) | StubState;
@@ -38,6 +40,18 @@ export interface LabBus extends SignalBus {
   bindParams(params: Readonly<ParamRecord>): void;
   /** Avanza los stubs con estado (el controlador `labBus` llama esto). */
   step(dt: number): void;
+  /** Olvida lo escrito y reinicia los stubs con estado: el ⟲ del modelo (§3). */
+  reset(): void;
+}
+
+function resetStubs(stubs: Readonly<Record<string, StubSource>>): void {
+  for (const source of Object.values(stubs)) {
+    if (typeof source === 'object') source.reset?.();
+  }
+}
+
+function clearRecord(record: Record<string, number>): void {
+  for (const key of Object.keys(record)) Reflect.deleteProperty(record, key);
 }
 
 export function createLabBus(options: LabBusOptions): LabBus {
@@ -86,6 +100,11 @@ export function createLabBus(options: LabBusOptions): LabBus {
         seen.add(source);
         source.step(dt, params);
       }
+    },
+    reset(): void {
+      clearRecord(written);
+      clearRecord(settled);
+      resetStubs(options.stubs);
     },
   };
 }
@@ -166,6 +185,11 @@ export function createVehicleBus(options: VehicleBusOptions): LabBus {
         seen.add(source);
         source.step(dt, params);
       }
+    },
+    reset(): void {
+      clearRecord(written);
+      clearRecord(settled);
+      resetStubs(options.stubs);
     },
   };
 }

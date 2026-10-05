@@ -140,7 +140,7 @@ describe('labMode', () => {
     expect(mode.handle(null)).toEqual([]);
     const unknownIntent = { type: 'unknown' } as unknown as Intent;
     expect(mode.handle(unknownIntent)).toEqual([]);
-    expect(mode.update(0.01)).toEqual([]);
+    expect(mode.update(0.01, 0.01)).toEqual([]);
   });
 
   it('setParam/setFault rechazan NaN, Infinity y tipos distintos (§6)', () => {
