@@ -170,7 +170,10 @@ sola caja (`data-part="four-stroke"`): `scopedControls` y
 `createControlsPanel(container, specs, getValue, emit, modelContext)` y
 `createFaultsPanel(container, specs, getValue, emit, defaultFaults)` reciben
 hoy argumentos posicionales y no tienen `destroy`. H1 les agrega un último
-argumento `options: { onFocus?: (partIds: readonly string[] | null) => void }`
+argumento `options: { onFocus?: (partIds: readonly string[] | null, reason: 'hover' | 'use') => void }`
+(`'use'` = `pointerdown`, `input`/`change` o foco por teclado; `'hover'` =
+pasar el mouse. En C1 los dos sólo resaltan; C2 mueve la cámara sólo con
+`'use'`, para que no salte al recorrer el panel: plan de C2, E4)
 (no se cambian los posicionales: hay tests que los usan) y un `destroy()` que
 limpia el temporizador de 1,5 s; `mount` lo llama al desmontar.
 
@@ -178,7 +181,13 @@ limpia el temporizador de 1,5 s; `mount` lo llama al desmontar.
 
 `R0 → U1 → H1 → H2 → R1`. Un agente a la vez.
 
-### R0 — Revisión del usuario en Firefox (sin código, ~45 min)
+### R0 — Revisión del usuario en Firefox (opcional)
+
+**Decisión del usuario (2026-10-05)**: R0 se salta; la revisión completa se
+hace en R1, con H1 y H2 ya hechos ("no entiendo mucho lo que veo; mejor
+terminar y después revisar todo"). Lo que ya anotó está en `AHORA.md`, "R0".
+U1 puede empezar sin R0. Lo que sigue queda como guía para quien quiera
+mirar antes:
 
 El agente sólo anota en `AHORA.md`, bajo "REVISIÓN EN FIREFOX", lo que diga
 el usuario, tal cual. `npm run dev` y, en orden:

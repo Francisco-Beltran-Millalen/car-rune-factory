@@ -148,21 +148,21 @@ Nace de la revisión en Firefox del 2026-09-29. Se hace en dos checkpoints:
 - **C1 — los 10 laboratorios sueltos se entienden y están revisados**:
   R0 → U1 → H1 → H2 → R1. Plan: `docs/plans/2026-10-05-checkpoint-c1.md`
   (lectura lineal; para H1 y H2 reemplaza al plan del 09-29).
-- **C2 — el vehículo se entiende**: V2 → V3. Plan:
-  `docs/plans/2026-09-29-legibilidad-y-foco.md`, con los ajustes de §4 del
-  plan de C1 (D-C1: el `realDt` del renderer entra en V2).
+- **C2 — el vehículo se entiende**: V2 → V3 → R2. Plan:
+  `docs/plans/2026-10-05-checkpoint-c2.md` (revisado contra el código;
+  reemplaza a V2 y V3 del plan del 09-29).
 
 **L0** (realDt hasta el modo) quedó cerrado el 2026-10-05 (`AHORA.md`).
 
-## R0 — Revisión del usuario en Firefox (sin código)
+## R0 — Revisión del usuario en Firefox (opcional)
 
-- **Plan**: C1 §5 "R0". El agente sólo anota lo que diga el usuario en
-  `AHORA.md`. Un bug de física o de dibujo que salga se arregla antes de U1,
-  como FIX aparte con su test.
+- **Decisión del usuario (2026-10-05)**: se salta; la revisión completa es
+  R1. U1 no la espera. Lo ya anotado está en `AHORA.md`, "R0".
 
 ## U1 — Tests de UI en DOM y `shell.ts` partido
 
-- **Plan**: C1 §4 (D-C2, D-C3, D-C4) y §5 "U1". **Necesita**: R0.
+- **Plan**: C1 §4 (D-C2, D-C3, D-C4) y §5 "U1". **Necesita**: nada (es
+  la primera tarea de código del bloque L).
   `happy-dom` ya está instalado; patrón en `tests/render/parts-dom.test.ts`.
 - **Qué es**: tests que arman los paneles y el shell en un DOM de test (los
   de los paneles se escriben primero, contra el código de hoy);
@@ -203,22 +203,29 @@ Nace de la revisión en Firefox del 2026-09-29. Se hace en dos checkpoints:
 
 ## V2 — Regiones, cámara y atenuado del vehículo
 
-- **Plan**: plan del 09-29 §2 (D3, D4, D4b) y §3 "V2", más C1 §4 D-C1:
-  `renderer.update(visual, simDt, realDt)`; la cámara usa `realDt`, las
-  partículas siguen con `simDt`. **Necesita**: C1 cerrado.
-- **Aceptación**: en `vehicle-70` y `vehicle-2000`, tocar un control lleva la
-  cámara al sistema, el texto se lee sin acercar el navegador, y `Esc`
-  vuelve al conjunto.
+- **Plan**: `docs/plans/2026-10-05-checkpoint-c2.md` §2, §3 (E1–E5) y §4
+  "V2". **Necesita**: C1 cerrado (H1 con `onFocus(ids, reason)` y U1 con
+  `core/mount.ts`).
+- **Qué es**: la cámara anima el `viewBox` hasta el sistema que se usa
+  (no el que se sobrevuela); los demás quedan atenuados; `Esc` o clic en el
+  fondo vuelve al conjunto. La región sale de `scope`, no del id.
+- **Aceptación**: en los dos vehículos, mover un slider lleva la cámara al
+  sistema en <0,5 s y el texto se lee; pasar el mouse por el panel no mueve
+  la cámara; a 0,05× la cámara va igual de rápido.
 
 ## V3 — Chasis y vista de conjunto
 
-- **Plan**: §2 (D5) y §3 "V3". **Necesita**: V2.
-- **Aceptación**: se reconoce un auto, distinto el de 1970 del de 2000, con
-  indicadores en vivo por sistema.
+- **Plan**: C2 §3 (E6, E7) y §4 "V3". **Necesita**: V2.
 - **Silueta decidida** (usuario, 2026-10-05): sedán para `vehicle-70` y
-  compacto para `vehicle-2000`, vistos desde arriba (ids `sedan70` y
-  `compact00`). La pregunta 3 del §6 del plan la respondió C1 (D-C7).
-  **Necesita**: V2.
+  compacto para `vehicle-2000`, vistos desde arriba (`sedan70`,
+  `compact00`), con los sistemas en una grilla 3×2 dentro del chasis.
+- **Aceptación**: se reconoce un auto, distinto el de 1970 del de 2000, con
+  indicadores en vivo por región (la batería, medida del bus real, no del
+  stub de 12,6 V).
+
+## R2 — Revisión de cierre de C2 (usuario)
+
+- **Plan**: C2 §4 "R2". Después, S2 empezando por A17.
 
 ---
 

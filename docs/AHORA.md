@@ -7,10 +7,11 @@ git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 ## SIGUIENTE (2026-10-05) — Checkpoint C1
 
 Plan: `plans/2026-10-05-checkpoint-c1.md`; fichas en `FICHAS.md`, bloque L.
-Orden: **R0** (revisión del usuario en Firefox, con el panel de controles
-ya arreglado) → U1 → H1 → H2 → R1. El plan es la v2, revisada contra el
-código (su §9 lista lo que corrigió de la v1). Después de C1: C2 (vehículo)
-o S2.
+Orden: **U1 → H1 → H2 → R1** (R0 se salta por decisión del usuario: la
+revisión completa es R1). Plan v2, revisado contra el código. Después:
+**C2** (V2 → V3 → R2), plan `plans/2026-10-05-checkpoint-c2.md`, también
+revisado contra el código; luego S2. El bloque L queda planificado entero;
+lo implementa otro agente.
 
 ## PARA RETOMAR (escrito al cerrar la sesión del 2026-09-28)
 

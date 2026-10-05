@@ -1,8 +1,8 @@
 # Plan — legibilidad y foco (resaltado de controles, cámara, chasis)
 
-> **Aviso (2026-10-05)**: L0 está cerrado; H1 y H2 los reemplaza
-> `plans/2026-10-05-checkpoint-c1.md` (corrige D2 y D7). V2 y V3 siguen
-> aquí, con el ajuste D-C1 de ese plan. Manda `FICHAS.md`.
+> **Aviso (2026-10-05)**: este plan queda como registro. L0 está cerrado; H1
+> y H2 los reemplaza `plans/2026-10-05-checkpoint-c1.md`, y V2 y V3
+> `plans/2026-10-05-checkpoint-c2.md`. Manda `FICHAS.md`.
 
 Fecha: 2026-09-29. Autor: agente planificador. Origen: revisión del usuario en
 Firefox (`AHORA.md`, sección "REVISIÓN EN FIREFOX 2026-09-29"). Este plan se
