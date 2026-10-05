@@ -133,6 +133,30 @@ diagrama" y "feedback de controles", en todos los laboratorios):**
 Pendiente: seguir con `vehicle-2000` y los laboratorios sueltos, y anotar
 aquí cada hallazgo nuevo.
 
+## R0 — REVISIÓN EN FIREFOX (usuario, desde 2026-10-05)
+
+Lo que el usuario anota, tal cual, con la causa cuando se conoce.
+
+1. **"El ventilador de la refrigeración no gira."**
+   - `cooling-viscous`: **bug de dibujo, arreglado** (FIX abajo). Giraba,
+     pero a 25 °/s en ralentí frío (escala de 45 °/s por m/s de aire): se
+     veía quieto.
+   - `cooling-electric`: **correcto, no es bug**. El termocontacto cierra
+     sobre 100 °C (`cooling/constants.ts`, `fanOnC`) y, con los valores por
+     defecto, el termostato sostiene el motor en ~91 °C (medido: 30 min de
+     ralentí a 25 °C). Para verlo prenderse: "Calentamiento ×20" con carga, o
+     el caso "Tráfico…" sin la falla. Candidato a `hint` en H2 (que la UI
+     diga que se prende sobre 100 °C).
+
+### FIX 2026-10-05 — aspas del ventilador viscoso
+
+`render/svg/drawers/cooling/loop.ts`: 200 °/s por m/s de aire (antes 45). En
+ralentí frío gira 112 °/s; a tope, 1800 °/s = 30° por cuadro a 60 fps, bajo
+los 36° en que 5 aspas parecen girar al revés. Test en DOM:
+`tests/render/fan-dom.test.ts` (falla con la escala vieja). **Revisar**: en
+`#/lab/cooling-viscous` las aspas giran apenas se abre; más rápido al subir
+las rpm.
+
 ## CERRADO 2026-10-05 — vehículo: `bindings` y sub-piezas con prefijo
 
 Encontrados al revisar el plan de C1 contra el código. `npm run check`

@@ -70,6 +70,12 @@ export const fanGeometry: GeometryFn = (part, def) => {
   };
 };
 
+// Giro dibujado por m/s de aire (`speed`). Con 45 el viscoso en ralentí frío
+// (0,56 m/s) giraba 25 °/s y parecía quieto; con 200 gira 112 °/s, y a tope
+// (9 m/s) 1800 °/s = 30° por cuadro a 60 fps, bajo los 36° en que 5 aspas
+// parecen girar al revés.
+const FAN_DEG_PER_S_PER_MS = 200;
+
 /** Ventilador: aspas, motor/termocontacto (eléctrico) o embrague (viscoso).
  *  Canales: `speed`, `dead`, `relay` (relé cerrado), `switch` (termocontacto). */
 export const fanDrawer: DrawerFactory = ({ part, def, layers }) => {
@@ -116,7 +122,7 @@ export const fanDrawer: DrawerFactory = ({ part, def, layers }) => {
     g,
     update(channels, dt): void {
       const speed = channelNumber(channels, 'speed');
-      angle = (angle + speed * dt * 45) % 360;
+      angle = (angle + speed * dt * FAN_DEG_PER_S_PER_MS) % 360;
       blades.setAttribute('transform', `rotate(${angle.toFixed(1)} ${cx} ${cy})`);
       const nowDead = channelNumber(channels, 'dead') > 0.5;
       if (nowDead !== dead) {
