@@ -62,7 +62,7 @@ ellos ya está en las specs, los planes nuevos y aquí.
    (por defecto la más antigua y la más común) y qué queda registrado.
 5. **Carrocería y chasis**: sólo inspección visual (A25). La soldadura es
    un minijuego muy a futuro (`HORIZONTE_JUEGO.md`).
-6. **Un agente a la vez, en orden, todo en `main`.** Cada tarea cierra con
+6. **Un agente a la vez, en orden, en una sola línea de trabajo** (`main` en local; la rama de la sesión en la nube, ver `AGENTS.md` regla 8). Cada tarea cierra con
    `npm run check` en verde, un bloque CERRADO en `AHORA.md` (con la
    checklist de Firefox del plan) y un commit.
 7. Al empezar cada tarea: `npm view typescript-eslint peerDependencies`. Si
@@ -162,11 +162,12 @@ Nace de la revisión en Firefox del 2026-09-29. Se hace en dos checkpoints:
 
 ## U1 — Tests de UI en DOM y `shell.ts` partido
 
-- **Plan**: C1 §4 (D-C2, D-C3, D-C4) y §5 "U1". **Necesita**: R0 y la
-  respuesta del usuario a C1 §7.1 (`happy-dom`).
+- **Plan**: C1 §4 (D-C2, D-C3, D-C4) y §5 "U1". **Necesita**: R0.
+  `happy-dom` ya está instalado; patrón en `tests/render/parts-dom.test.ts`.
 - **Qué es**: tests que arman los paneles y el shell en un DOM de test (los
   de los paneles se escriben primero, contra el código de hoy);
-  `renderer.highlight` limpia sólo su estilo; `core/shell.ts` partido en
+  el resaltado por capas (la de juego se comporta como hoy, `affected` aparte);
+  `core/shell.ts` partido en
   `shell.ts`, `mount.ts` y `ui/sidePanels.ts` sin cambio de conducta.
 - **Aceptación**: los tests nuevos fallan si se quita el `container.append(fs)`
   de `createControlsPanel`; `shell.ts` ≤ ~300 líneas; un laboratorio y el quiz
@@ -174,14 +175,14 @@ Nace de la revisión en Firefox del 2026-09-29. Se hace en dos checkpoints:
 
 ## H1 — `affects` y resaltado de controles y de fallas
 
-- **Plan**: C1 §5 "H1" (que retoma D1, D1b y D2 del plan del 09-29 y los
-  corrige). **Necesita**: U1.
+- **Plan**: C1 §4 (D-C2, D-C8, D-C9) y §5 "H1". **Necesita**: U1.
 - **Qué es**: cada control declara las piezas que toca (`affects`), y el
   panel las resalta mientras se lo usa (y 1,5 s después); lo mismo para las
   fallas (pieza dueña + síntomas; aro fijo mientras estén activas y visibles;
   pulso al activarse; el renderer por fin consume `faultCues`). Datos en los
   10 laboratorios y prefijados en el vehículo. Cada `affects` se decide
-  leyendo el controlador, no el nombre.
+  leyendo el controlador, no el nombre, y sólo con piezas dibujadas (D-C8:
+  se valida en DOM).
 - **Aceptación**: el test de `affects` recorre todo el registro; en cada
   laboratorio, al arrastrar un slider se ilumina la pieza correcta y se apaga
   ~1,5 s tras soltarlo; tocar un control no borra la selección ni el `target`
@@ -191,9 +192,10 @@ Nace de la revisión en Firefox del 2026-09-29. Se hace en dos checkpoints:
 
 - **Plan**: C1 §4 (D-C5, D-C7) y §5 "H2". **Necesita**: H1.
 - **Qué es**: `hint` en los controles de efecto lento o condicional
-  (`vehicleSpeedKmh`, `ambientC`, `humidity`: **sí** tienen efecto, ver
-  D-C7); `VehicleDef.overridden` con motivo para los controles que el
-  vehículo pisa. No se cambia física sin un test con rango (§14).
+  (`vehicleSpeedKmh`, `ambientC`, `humidity`, `lateralG`: **sí** tienen
+  efecto, ver D-C7); `VehicleDef.overridden` con la tabla medida de D-C5 y un
+  test de paridad que la mantiene honesta. No se cambia física sin un test
+  con rango (§14).
 
 ## R1 — Revisión de cierre de C1 (usuario)
 

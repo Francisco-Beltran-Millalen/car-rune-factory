@@ -33,10 +33,11 @@ Reglas para cualquier agente/asistente que trabaje en este repo.
 7. **Al cerrar una tarea**: `npm run check` en verde (tipos, lint sin
    warnings, knip, tests y build) y un bloque `CERRADO AAAA-MM-DD — …` en
    `docs/AHORA.md` con lo verificado (tests + qué se miró en el navegador).
-8. **Todo se commitea directo en `main`.** No se crean ramas ni worktrees
-   salvo que el usuario lo pida: hay una sola persona trabajando y el
-   proyecto está empezando. Incluye las pruebas desechables (se borran
-   después en un commit propio).
+8. **Una sola línea de trabajo.** En local, todo se commitea directo en
+   `main`. En la nube (sesiones remotas), se trabaja en la rama de la sesión
+   y se mergea a `main` por checkpoint (decisión del usuario, 2026-10-05). No
+   se crean otras ramas ni worktrees salvo que el usuario lo pida. Las
+   pruebas desechables se borran antes del commit o en un commit propio.
 9. **Planificar e implementar son dos roles.** El agente planificador
    escribe las specs (`docs/modules/<id>.md`) y los planes de todas las
    tareas antes de pasarlas. El agente que implementa **no diseña ni

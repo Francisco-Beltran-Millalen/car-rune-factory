@@ -8,8 +8,9 @@ git. Reglas en `ARCHITECTURE.md`, visión en `NORTE.md`, plan original en
 
 Plan: `plans/2026-10-05-checkpoint-c1.md`; fichas en `FICHAS.md`, bloque L.
 Orden: **R0** (revisión del usuario en Firefox, con el panel de controles
-ya arreglado) → U1 → H1 → H2 → R1. Antes de U1 hace falta la respuesta del
-usuario sobre `happy-dom` (plan §7.1). Después de C1: C2 (vehículo) o S2.
+ya arreglado) → U1 → H1 → H2 → R1. El plan es la v2, revisada contra el
+código (su §9 lista lo que corrigió de la v1). Después de C1: C2 (vehículo)
+o S2.
 
 ## PARA RETOMAR (escrito al cerrar la sesión del 2026-09-28)
 
@@ -132,6 +133,33 @@ diagrama" y "feedback de controles", en todos los laboratorios):**
 Pendiente: seguir con `vehicle-2000` y los laboratorios sueltos, y anotar
 aquí cada hallazgo nuevo.
 
+## CERRADO 2026-10-05 — vehículo: `bindings` y sub-piezas con prefijo
+
+Encontrados al revisar el plan de C1 contra el código. `npm run check`
+verde, 512 tests (+14).
+
+- **`compileVehicle` no aplicaba los `bindings`**: en `vehicle-2000`,
+  `filterClog`, `strainerClog`, `pumpWear`, `injectorLeak`, `lineLeak` y
+  `fastConsumption` no hacían nada (la presión del riel no se movía: 2,427
+  bar con y sin bomba gastada; en el laboratorio baja a 1,949). Ahora
+  `SystemWiring.bindings` los trae con su prefijo y se aplican en cada paso.
+  Test nuevo `tests/vehicle/faults-parity.test.ts`: toda falla que actúa en
+  su laboratorio actúa en el vehículo (a 3000 rpm y acelerador 0,5).
+- **Sub-piezas de los drawers sin prefijo en el vehículo** (§10): los
+  platinos, los surtidores, el tapón del cárter… tenían `data-part="points"`
+  en vez de `ignition:points`; el clic no mostraba ficha y no se podían
+  resaltar. `translateCircuit` anota `scope` en cada pieza y el renderer
+  prefija lo que dibuja cada drawer.
+- Fichas que faltaban (§10): cuerpo del carburador, excéntrica de la bomba y
+  la caja del motor de 4 tiempos en el vehículo.
+- `happy-dom` (dev) y el primer test en DOM, `tests/render/parts-dom.test.ts`
+  (las 12 rutas: todo `data-part` visible tiene ficha).
+
+**Revisar en Firefox**: en `vehicle-70`, clic en los platinos (dentro del
+distribuidor) → su ficha; en `vehicle-2000`, "Filtro tapado" al máximo → baja
+la presión del riel; en `carburetor`, clic en el cuerpo y en la excéntrica de
+la bomba → sus fichas.
+
 ## CERRADO 2026-10-05 — revisión de `main`: ⟲, solver, quiz y guardado
 
 Revisión de código de `main` (`0dc4eef`) a pedido del usuario, con los bugs
@@ -216,7 +244,7 @@ vigentes (laboratorio antes que juego; el auto completo de 1970 a 2010,
 modelado por sistema con arquetipos). No leas los planes de 2026-09-25 y
 2026-09-26 por tu cuenta: lo vigente ya está en las fichas.
 
-Un agente a la vez, en orden, todo en `main`. Cada tarea cierra con
+Un agente a la vez, en orden, en una sola línea de trabajo (`AGENTS.md` regla 8). Cada tarea cierra con
 `npm run check` verde, un CERRADO aquí y un commit.
 
 Informe del bloque ya hecho (qué se hizo, dificultades del solver y gaps del
