@@ -101,6 +101,20 @@ export const parts: Readonly<Record<string, PartInfo>> = {
     how: 'Rota (diafragma roto), pisar de golpe empobrece un instante y el motor tironea.',
     failures: ['Rota → tironeo al pisar de golpe'],
   },
+  carbBody: {
+    name: 'Cuerpo del carburador',
+    what: 'La pieza de fundición que reúne la cuba, el venturi, los surtidores y la mariposa.',
+    why: 'Todo lo que mide y mezcla la bencina con el aire vive adentro de este cuerpo.',
+    how: 'El aire entra por la boca, acelera en el venturi y arrastra la bencina de los surtidores; la mariposa, abajo, decide cuánta mezcla pasa al motor.',
+    failures: [],
+  },
+  pumpCam: {
+    name: 'Excéntrica de la bomba',
+    what: 'Un resalte del árbol de levas que empuja la palanca de la bomba mecánica.',
+    why: 'Es lo que mueve la bomba: por eso bombea sólo con el motor girando.',
+    how: 'Da un empujón por vuelta del árbol de levas (la mitad de las rpm del cigüeñal); cada empujón es una carrera del diafragma.',
+    failures: [],
+  },
   airHorn: {
     name: 'Boca de aire',
     what: 'La entrada de aire del carburador, donde va el filtro de aire.',

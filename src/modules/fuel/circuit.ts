@@ -141,7 +141,7 @@ export const FUEL_DEF: CircuitDef = {
 };
 
 /** Fallas planas → `control` del elemento (P25 §3.1). Los enums van por ECU. */
-const FUEL_BINDINGS: readonly CircuitBinding[] = [
+export const FUEL_BINDINGS: readonly CircuitBinding[] = [
   { source: 'faults', key: 'filterClog', part: 'filter', input: 'clog' },
   { source: 'faults', key: 'strainerClog', part: 'strainer', input: 'clog' },
   { source: 'faults', key: 'pumpWear', part: 'pump', input: 'wear' },

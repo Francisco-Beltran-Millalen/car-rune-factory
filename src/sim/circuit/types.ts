@@ -24,6 +24,10 @@ export interface CircuitPartDef {
   /** Pieza cuya conexión dibuja el drawer de otra (inyectores del riel):
    *  el chequeo de layout (plan V1) pide que sus cajas se toquen. */
   joinedBy?: string;
+  /** Prefijo del sistema (lo pone `translateCircuit` en el vehículo): el
+   *  renderer lo antepone a las sub-piezas que el drawer marca con su propio
+   *  `data-part` (`points`, `drainPlug`…), para que existan en `parts` (§10). */
+  scope?: string;
 }
 
 /** Datos de trazo de una conexión (A7); el renderer sólo los lee. */

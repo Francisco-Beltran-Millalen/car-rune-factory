@@ -426,7 +426,29 @@ export function compileVehicle(def: VehicleDef): CompiledVehicle {
     state['time'] = time;
   }
 
+  // `bindings` de cada sistema con su prefijo, como `compileCircuit` en el
+  // laboratorio: sin esto, las fallas que el combustible ata por binding
+  // (filtro, colador, bomba, fugas) no hacían nada en el vehículo.
+  const bindings = built.flatMap((b) =>
+    b.wiring.kind === 'circuit'
+      ? (b.wiring.bindings ?? []).map((binding) => ({
+          ...binding,
+          key: `${b.id}:${binding.key}`,
+          part: `${b.id}:${binding.part}`,
+        }))
+      : [],
+  );
+  function applyBindings(): void {
+    for (const binding of bindings) {
+      const value = binding.source === 'faults' ? faults[binding.key] : params[binding.key];
+      if (typeof value !== 'number' && typeof value !== 'boolean') continue;
+      const element = elements[binding.part];
+      if (element) element.control[binding.input] = value;
+    }
+  }
+
   function step(dt: number): void {
+    applyBindings();
     for (const oc of controllers) {
       oc.refresh();
       const ctx: ControllerContext = {

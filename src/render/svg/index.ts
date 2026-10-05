@@ -41,6 +41,17 @@ interface LinkView {
   flow: Flow | null;
 }
 
+/** Sub-piezas que un drawer marcó con un id propio (`points` dentro del
+ *  distribuidor): en el vehículo llevan el prefijo de su sistema (§10). */
+function scopeSubParts(svg: SVGSVGElement, before: ReadonlySet<Element>, scope: string, partId: string): void {
+  for (const node of svg.querySelectorAll('[data-part]')) {
+    if (before.has(node)) continue;
+    const sub = node.getAttribute('data-part') ?? '';
+    if (sub === '' || sub === partId || sub.startsWith(`${scope}:`)) continue;
+    node.setAttribute('data-part', `${scope}:${sub}`); // mismo formato que `translateCircuit`
+  }
+}
+
 export function createSvgRenderer({
   container,
   circuit,
@@ -81,7 +92,10 @@ export function createSvgRenderer({
   const drawers = new Map<string, Drawer>();
   for (const [id, { part, geo }] of layout.parts) {
     const entry = DRAWERS[part.visual ?? part.type];
-    if (entry) drawers.set(id, entry.draw({ part, def: circuit, layers, geo }));
+    if (!entry) continue;
+    const before = part.scope === undefined ? null : new Set(svg.querySelectorAll('[data-part]'));
+    drawers.set(id, entry.draw({ part, def: circuit, layers, geo }));
+    if (before && part.scope !== undefined) scopeSubParts(svg, before, part.scope, part.id);
   }
 
   const links: LinkView[] = [];

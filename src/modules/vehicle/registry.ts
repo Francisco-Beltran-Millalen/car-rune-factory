@@ -5,7 +5,7 @@
 // orquestador que el propio plan describe.
 
 import type { ModuleDescriptor } from '../../core/types.ts';
-import type { CircuitDef } from '../../sim/circuit/types.ts';
+import type { CircuitBinding, CircuitDef } from '../../sim/circuit/types.ts';
 import type { ControllerDef, ControllerFactory } from '../../sim/controllers/index.ts';
 import type { LabBus } from '../../sim/signals/bus.ts';
 import type { ElementDef } from '../../sim/solver/types.ts';
@@ -25,6 +25,7 @@ import { lubricationGauge, lubricationLamp } from '../lubrication/index.ts';
 import { createLubrication } from '../lubrication/controllers.ts';
 import { K as LUBRICATION_K } from '../lubrication/constants.ts';
 import { K as CARBURETOR_K } from '../carburetor/constants.ts';
+import { FUEL_BINDINGS } from '../fuel/circuit.ts';
 import fuelModule from '../fuel/index.ts';
 import { createEcuFuel, type FuelSignals } from '../fuel/controllers.ts';
 import {
@@ -45,6 +46,9 @@ export interface CircuitSystemWiring {
   kind: 'circuit';
   moduleDescriptor: ModuleDescriptor;
   rawDef: CircuitDef;
+  /** Los `bindings` del laboratorio (param/falla → `control` de un elemento),
+   *  sin prefijo: `compileVehicle` los prefija y los aplica en cada paso. */
+  bindings?: readonly CircuitBinding[];
   buildControllerTypes(ctx: SystemWiringContext): Readonly<Record<string, ControllerFactory>>;
   /**
    * Nivel inicial de un `tank` que no sea el genérico de `createTank`
@@ -69,6 +73,7 @@ export const SYSTEM_REGISTRY: Readonly<Record<string, SystemWiring>> = {
     kind: 'circuit',
     moduleDescriptor: fuelModule,
     rawDef: FUEL_DEF,
+    bindings: FUEL_BINDINGS,
     buildControllerTypes: ({ bus }) => {
       const signals: FuelSignals = {
         engineState: 'off',

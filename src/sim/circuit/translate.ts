@@ -27,6 +27,7 @@ function translatePart(part: CircuitPartDef, dx: number, dy: number, prefix: str
   return {
     ...part,
     id: prefixId(prefix, part.id),
+    scope: prefix,
     x: part.x + dx,
     y: part.y + dy,
     ...(part.joinedBy !== undefined ? { joinedBy: prefixId(prefix, part.joinedBy) } : {}),

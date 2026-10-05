@@ -139,6 +139,16 @@ export function vehicleModule(def: VehicleDef, order: number): ModuleDescriptor 
     faultCatalog.push(...scopedFaultCatalog(desc.faultCatalog, sys.id));
     readouts.push(...scopedReadouts(desc.readouts, sys.id));
     Object.assign(parts, scopedParts(desc.parts, sys.id));
+    // La caja del mecanismo (el motor de 4 tiempos) también es clickeable (§10).
+    if (sys.wiring.kind === 'mechanism') {
+      parts[sys.id] = {
+        name: desc.title,
+        what: desc.summary,
+        why: 'Es el motor: los demás sistemas leen de él las rpm, la carga y la fase.',
+        how: `En el vehículo se ve como una caja; el detalle está en su laboratorio (#/lab/${desc.id}).`,
+        failures: [],
+      };
+    }
     if (desc.present) presentSchemes.push(scopePresentScheme(desc.present, sys.id));
     narrators.push({ id: sys.id, narrate: (m) => desc.narrate(m) });
   }
