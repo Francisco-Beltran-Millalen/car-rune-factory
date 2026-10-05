@@ -215,7 +215,10 @@ Nace de la revisión en Firefox del 2026-09-29. Se hace en dos checkpoints:
 - **Plan**: §2 (D5) y §3 "V3". **Necesita**: V2.
 - **Aceptación**: se reconoce un auto, distinto el de 1970 del de 2000, con
   indicadores en vivo por sistema.
-- **No empezar** hasta que el usuario responda las preguntas de §6 del plan.
+- **Silueta decidida** (usuario, 2026-10-05): sedán para `vehicle-70` y
+  compacto para `vehicle-2000`, vistos desde arriba (ids `sedan70` y
+  `compact00`). La pregunta 3 del §6 del plan la respondió C1 (D-C7).
+  **Necesita**: V2.
 
 ---
 

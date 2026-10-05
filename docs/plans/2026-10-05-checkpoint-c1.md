@@ -336,7 +336,7 @@ cada falla **sin leer la ficha**? Lo que salga se anota. Después: C2 o S2.
 
 - **C2 — el vehículo se entiende**: V2 (regiones, cámara, atenuado, con
   `realDt` en el renderer, D-C1) y V3 (chasis y vista de conjunto), plan del
-  09-29. V3 necesita la respuesta de §8.
+  09-29. La silueta de V3 ya está decidida (§8).
 - **S2**: A17 (eléctrico) primero; le da dueño a la batería y cambia la
   tabla de D-C5 (el test de paridad lo va a avisar).
 
@@ -356,12 +356,13 @@ hoy no se lee).
   suman ~20 s; si `npm run check` se vuelve lento, se separan en un
   `npm run test:slow` que también corre en `check`.
 
-## 8. Pregunta abierta para el usuario
+## 8. Preguntas al usuario (todas respondidas)
 
-Sólo bloquea V3 (C2): ¿sedán para los 70 y compacto para 2000, u otra
-silueta? (Las preguntas de la v1 sobre `happy-dom` y la rama ya están
-respondidas: se usa `happy-dom`, y se trabaja en la rama de la nube con merge
-a `main` por checkpoint.)
+- `happy-dom`: sí, como dependencia de desarrollo.
+- Rama: se trabaja en la rama de la nube y se mergea a `main` por checkpoint
+  (`AGENTS.md`, regla 8).
+- Silueta del chasis para V3 (2026-10-05): **sedán para los 70 y compacto
+  para 2000**, vistos desde arriba (`sedan70`, `compact00`).
 
 ## 9. Errores de la v1 que corrige la v2
 

@@ -204,10 +204,10 @@ cámara entra a ese sistema, se lee todo el texto sin acercar el navegador, y
 los otros se ven atenuados; `Esc` vuelve al conjunto.
 
 ### V3 — Chasis y vista de conjunto (vehículo)
-1. Dibujo del chasis en planta, dos versiones (`sedán70`, `compacto00`),
+1. Dibujo del chasis en planta, dos versiones (`sedan70`, `compact00`; identificadores en inglés, §18),
    colores por variables CSS, drawer nuevo `chassis` en el catálogo (§23).
 2. `VehicleDef`: posición de cada sistema **dentro** del chasis (regiones de
-   V2 recolocadas) y `chassis: 'sedan70' | 'compacto00'`. El `checkLayout`
+   V2 recolocadas) y `chassis: 'sedan70' | 'compact00'`. El `checkLayout`
    sigue en 0 problemas.
 3. Vista de conjunto: por región, nombre grande e indicadores en vivo. Nuevos
    canales del presenter del vehículo: `rpm`, `coolantC`, `oilBar`, `batteryV`
@@ -247,7 +247,8 @@ mueven al arrancar; al tocar un control o clicar una zona, la cámara entra.
    cambio de valor que no venga de un control ni de una falla (p. ej. una
    presión que baja sola por el calentamiento); si hace falta se agrega después
    con el mismo estilo `affected`.
-2. ¿Sedán para los 70 y compacto para 2000 (D5), o prefieres otra silueta
+2. **Respondida 2026-10-05**: sedán para los 70 y compacto para 2000 (D5).
+   (Pregunta original:) ¿Sedán para los 70 y compacto para 2000 (D5), o prefieres otra silueta
    (pickup, coupé)?
 3. ¿Se acepta que `vehicleSpeedKmh` e `ignition:humidity` se quiten si la spec
    no les da efecto (D7)?
